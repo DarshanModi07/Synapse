@@ -47,6 +47,7 @@ model User {
   password String
   avatar   String?
   isActive Boolean @default(true)
+  refreshToken String?
 
   ownedWorkspaces    Workspace[]       @relation("WorkspaceOwner")
   workspaceMembers   WorkspaceMember[]
