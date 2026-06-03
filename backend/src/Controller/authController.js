@@ -13,8 +13,7 @@ export const registerUser = async (req, res) => {
             })
         }
 
-        const existingUser =
-            await prisma.user.findUnique({
+        const existingUser = await prisma.user.findUnique({
                 where: {
                     email
                 }
@@ -26,14 +25,9 @@ export const registerUser = async (req, res) => {
             })
         }
 
-        const hashedPassword =
-            await bcrypt.hash(
-                password,
-                10
-            )
+        const hashedPassword = await bcrypt.hash( password,10 )
 
-        const createdUser =
-            await prisma.user.create({
+        const createdUser = await prisma.user.create({
                 data: {
                     email,
                     password: hashedPassword,
@@ -41,18 +35,14 @@ export const registerUser = async (req, res) => {
                 }
             })
 
-        const accessToken =
-            await createAuthSession(
+        const accessToken = await createAuthSession(
                 createdUser,
                 res
             )
 
         return res.status(201).json({
-            message:
-                "User Registered Successfully",
-
+            message: "User Registered Successfully",
             accessToken,
-
             user: {
                 id: createdUser.id,
                 email: createdUser.email
@@ -61,20 +51,16 @@ export const registerUser = async (req, res) => {
 
     }
     catch (error) {
-
         console.error(error)
-
         return res.status(500).json({
             message:
                 "Internal Server Error"
         })
-
     }
 
 }
 
 export const loginUser = async (req, res) => {
-
     try {
 
         const { email, password , name } = req.body
@@ -85,8 +71,7 @@ export const loginUser = async (req, res) => {
             })
         }
 
-        const user =
-            await prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
                 where: {
                     email
                 }
@@ -99,30 +84,26 @@ export const loginUser = async (req, res) => {
             })
         }
 
-        const isPasswordCorrect =
-            await bcrypt.compare(
+        const isPasswordCorrect = await bcrypt.compare(
                 password,
                 user.password
             )
 
-        if (!isPasswordCorrect) {
+        if (!isPasswordCorrect) { 
             return res.status(401).json({
                 message:
                     "Invalid Credentials"
             })
         }
 
-        const accessToken =
-            await createAuthSession(
+        const accessToken = await createAuthSession(
                 user,
                 res
             )
 
         return res.status(200).json({
             message: "Login Successful",
-
             accessToken,
-
             user: {
                 id: user.id,
                 email: user.email
@@ -131,20 +112,15 @@ export const loginUser = async (req, res) => {
 
     }
     catch (error) {
-
         console.error(error)
-
         return res.status(500).json({
             message:
                 "Internal Server Error"
         })
-
     }
-
 }
 
 export const refreshAccessToken = async (req, res) => {
-
     try {
 
         const refreshToken =
@@ -157,14 +133,12 @@ export const refreshAccessToken = async (req, res) => {
             })
         }
 
-        const decoded =
-            jwt.verify(
+        const decoded = jwt.verify(
                 refreshToken,
                 process.env.REFRESH_TOKEN_SECRET
             )
 
-        const user =
-            await prisma.user.findUnique({
+        const user = await prisma.user.findUnique({
                 where: {
                     id: decoded.userId
                 }
@@ -177,38 +151,26 @@ export const refreshAccessToken = async (req, res) => {
             })
         }
 
-        if (
-            user.refreshToken !==
-            refreshToken
-        ) {
+        if (user.refreshToken !== refreshToken) {
             return res.status(401).json({
-                message:
-                    "Invalid Refresh Token"
+                message: "Invalid Refresh Token"
             })
         }
 
-        const newAccessToken =
-            generateAccessToken(
-                user.id
-            )
+        const newAccessToken = generateAccessToken(user.id)
 
         return res.status(200).json({
-            accessToken:
-                newAccessToken
+            accessToken: newAccessToken
         })
 
     }
     catch (error) {
-
         console.error(error)
-
         return res.status(401).json({
             message:
                 "Invalid Refresh Token"
         })
-
     }
-
 }
 
 export const logoutUser = async (req, res) => {

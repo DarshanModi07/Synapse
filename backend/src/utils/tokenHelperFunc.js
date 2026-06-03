@@ -29,11 +29,9 @@ export const generateRefreshToken = (userId) => {
 
 export const createAuthSession = async (user, res) => {
 
-    const accessToken =
-        generateAccessToken(user.id)
+    const accessToken = generateAccessToken(user.id)
 
-    const refreshToken =
-        generateRefreshToken(user.id)
+    const refreshToken = generateRefreshToken(user.id)
 
     await prisma.user.update({
         where: {
