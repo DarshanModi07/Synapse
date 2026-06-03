@@ -76,3 +76,136 @@ export const createWorkSpace = async (req,res) => {
     }
 }
 
+export const getUserWorkSpaces = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        if (!userId) {
+            return res.status(400).json({
+                message: "User ID not found"
+            });
+        }
+
+        const workspaces = await prisma.workspaceMember.findMany({
+            where: {
+                userId
+            },
+            select: {
+                sys_role: true,
+                work_role: true,
+                joinedAt: true,
+                workspace: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        logo: true,
+                        ownerId: true,
+                        createdAt: true
+                    }
+                }
+            }
+        });
+
+        if (workspaces.length === 0) {
+            return res.status(200).json({
+                message: "No workspaces found",
+                data: []
+            });
+        }
+
+        return res.status(200).json({
+            message: "User workspaces fetched successfully",
+            data: workspaces
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Server error while fetching workspaces"
+        });
+    }
+};
+
+export const getWorkspace = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const userId = req.user?.userId;
+
+        if (!slug) {
+            return res.status(400).json({
+                message: "Workspace slug is required"
+            });
+        }
+
+        if (!userId) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
+
+        const workspace = await prisma.workspace.findUnique({
+            where: {
+                slug
+            },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                logo: true,
+                ownerId: true,
+                createdAt: true,
+                updatedAt: true,
+                workspaceMembers: {
+                    where: {
+                        userId
+                    },
+                    select: {
+                        id: true,
+                        sys_role: true,
+                        work_role: true
+                    }
+                }
+            }
+        });
+
+        if (!workspace) {
+            return res.status(404).json({
+                message: "Workspace not found"
+            });
+        }
+
+        if (workspace.workspaceMembers.length === 0) {
+            return res.status(403).json({
+                message: "You do not have access to this workspace"
+            });
+        }
+
+        const memberInfo = workspace.workspaceMembers[0];
+
+        return res.status(200).json({
+            message: "Workspace fetched successfully",
+            data: {
+                id: workspace.id,
+                name: workspace.name,
+                slug: workspace.slug,
+                logo: workspace.logo,
+                ownerId: workspace.ownerId,
+                createdAt: workspace.createdAt,
+                updatedAt: workspace.updatedAt,
+                memberRole: {
+                    sysRole: memberInfo.sys_role,
+                    workRole: memberInfo.work_role
+                }
+            }
+        });
+
+    } catch (err) {
+        console.error("Get Workspace Error:", err);
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
