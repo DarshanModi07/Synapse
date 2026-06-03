@@ -1,7 +1,7 @@
 import prisma from "../DB/db.config.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { generateAccessToken, generateRefreshToken , createAuthSession } from "../utils/jwt.js"
+import { generateAccessToken, generateRefreshToken , createAuthSession } from "../utils/tokenHelperFunc.js  "
 
 export const registerUser = async (req, res) => {
     try {
@@ -35,10 +35,15 @@ export const registerUser = async (req, res) => {
                 }
             })
 
+        console.log("User created");
+        console.log(createdUser);
+
         const accessToken = await createAuthSession(
-                createdUser,
-                res
-            )
+            createdUser,
+            res
+        );
+
+console.log("Session created");
 
         return res.status(201).json({
             message: "User Registered Successfully",
@@ -63,9 +68,9 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
 
-        const { email, password , name } = req.body
+        const { email, password } = req.body
 
-        if (!email || !password || !name) {
+        if (!email || !password) {
             return res.status(400).json({
                 message: "All fields are required"
             })
@@ -176,6 +181,7 @@ export const refreshAccessToken = async (req, res) => {
 export const logoutUser = async (req, res) => {
     try {
 
+
         const refreshToken = req.cookies.refreshToken
 
         if (refreshToken) {
@@ -195,6 +201,11 @@ export const logoutUser = async (req, res) => {
                     }
                 })
             }
+        }
+        else{
+            return res.status(400).json({
+                message:"Already Logged Out"
+            })
         }
 
         res.clearCookie("refreshToken")

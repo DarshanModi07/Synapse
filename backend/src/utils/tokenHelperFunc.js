@@ -1,3 +1,7 @@
+import jwt from "jsonwebtoken"
+import prisma from "../DB/db.config.js"
+
+
 // * Helper Functions
 export const generateAccessToken = (userId) => {
 
@@ -7,7 +11,7 @@ export const generateAccessToken = (userId) => {
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn:"15m"
+            expiresIn:"1d"
         }
     )
 

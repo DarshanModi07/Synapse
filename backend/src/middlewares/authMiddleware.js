@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken"
+import prisma from "../DB/db.config.js"
 
-export const authMiddleware = (req,res,next) => {
+export const authMiddleware = async (req,res,next) => {
     try{
 
         if(!req.headers.authorization){
@@ -18,8 +19,22 @@ export const authMiddleware = (req,res,next) => {
                 process.env.ACCESS_TOKEN_SECRET
             )
 
+        const id = decoded.userId
+
+        const checkUser = await prisma.user.findUnique({
+            where:{
+                id
+            }
+        })
+
+        if(!checkUser){
+            return res.status(401).json({
+                message:"Unauthorized"
+             })
+        }
+
         if(decoded){
-            req.user = decoded.userId
+            req.user = decoded
             next()
         }
         else{
@@ -27,6 +42,7 @@ export const authMiddleware = (req,res,next) => {
         }
     }
     catch(err){
-        return res.status(500).json({message:"Error while login"})
+        console.log(err)
+        return res.status(500).json({message:"Token Verification Failed"})
     }
 }

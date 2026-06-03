@@ -1,6 +1,6 @@
 import prisma from "../DB/db.config.js" 
 
-export const userProfile = (req,res) => {
+export const userProfile = async (req,res) => {
     try{
         const id = req.user.userId
 
@@ -29,6 +29,7 @@ export const userProfile = (req,res) => {
 
     }
     catch(err){
+        console.log(err)
         return res.status(500).json({message:"Error while Fetching ProfileData"})
     }
 }

@@ -79,10 +79,10 @@ model Workspace {
   workspaceMembers WorkspaceMember[]
   departments      Department[]
   files            File[]
+  auditLogs AuditLog[]
 
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  auditLogs AuditLog[]
 
   @@index([ownerId])
   @@map("workspaces")

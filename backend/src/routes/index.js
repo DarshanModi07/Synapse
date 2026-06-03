@@ -1,8 +1,12 @@
 import { Router } from 'express';
-import authRouter from './authRoute';
+import authRouter from './authRoute.js';
+import userRouter from "./userRoute.js"
+import workspaceRouter from "./workspaceRoute.js"
 
 const router = Router();
 
-router.use('/auth/api/user', authRouter);
+router.use('/api/auth', authRouter);
+router.use('/api/users', userRouter);
+router.use('/api/workspace', workspaceRouter);
 
 export default router;

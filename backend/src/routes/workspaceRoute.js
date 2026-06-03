@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { userProfile } from '../Controller/userController.js';
+import { createWorkSpace } from '../Controller/workSpaceController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
-router.get('/profile', authMiddleware , userProfile);
-
+router.post('/createWorkspace', authMiddleware , createWorkSpace);
 
 export default router;
