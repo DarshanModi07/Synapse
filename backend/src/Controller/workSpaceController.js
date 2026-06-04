@@ -1,6 +1,7 @@
 import prisma from "../DB/db.config.js" 
 import { SysRole } from "@prisma/client";
 import slugify from "slugify";
+import crypto from "crypto"
 
 export const createWorkSpace = async (req,res) => {
     try {
@@ -209,3 +210,131 @@ export const getWorkspace = async (req, res) => {
         });
     }
 };
+
+export const inviteUser = async (req,res) => {
+    try{
+        const { email , workspaceId , sys_role , work_role } = req.body
+        const invitedBy = req.user.userId
+        const token = crypto.randomBytes(32).toString("hex");
+
+        if(!email || !workspaceId || !sys_role){
+            return res.status(400).json({
+                message:"Please Provide all Credential"
+            })
+        }
+
+        const findWorkspace = await prisma.workspace.findUnique({
+            where:{
+                id:workspaceId
+            },
+            include:{
+                workspaceMembers:{
+                    where:{
+                        userId:invitedBy
+                    }
+                }
+            }
+        })
+
+        if(!findWorkspace){
+            return res.status(404).json({
+                message:"Invalid Request , No Workspace Found"
+            })
+        }
+
+        if(findWorkspace.workspaceMembers.length <= 0){
+            return res.status(400).json({
+                message:"You are No longer Member of this Workspace"
+            })
+        }
+
+
+
+        const inviterMembership = findWorkspace.workspaceMembers[0]
+
+        const allowedRoles = ["owner","manager"]
+
+        if(!allowedRoles.includes(inviterMembership.sys_role)){
+            return res.status(403).json({
+                message:"You don't have permission to invite users"
+            })
+        }
+
+        const user = await prisma.user.findUnique({
+            where:{
+                email
+            },
+            select:{
+                id:true
+            }
+        })
+
+
+        const alreadyMember = await prisma.workspaceMember.findFirst({
+            where:{
+                workspaceId,
+                userId:user.id
+            }
+        })
+
+        if(alreadyMember != null){
+            return res.status(409).json({
+                message:"The user is already a Member"
+            })
+        }
+
+        const alreadyInvited = await prisma.workspaceInvite.findFirst({
+            where:{
+                workspaceId,
+                email,
+                status:"pending"
+            }
+        })
+
+        if(alreadyInvited){
+            return res.status(409).json({
+                "message":"user is already invited"
+            })
+        }
+
+        const createUserInvite = await prisma.workspaceInvite.create({
+              data: {
+                workspaceId,
+                email,
+                sys_role,
+                work_role,
+                token,
+                invitedBy,
+                expiresAt: new Date(
+                Date.now() + 7 * 24 * 60 * 60 * 1000
+                )
+            }
+        })
+
+        return res.status(200).json({
+            message:"Invite Sent",
+            data:createUserInvite
+        })
+
+    } 
+    catch(err){
+        console.log(err)
+        return res.status(500).json({
+            message:"Server Error during User Invite"
+        })
+    }
+}
+
+export const acceptInvite = async (req,res) => {
+    try{
+        const { token } = req.params
+
+        if(!token){
+            ret
+        }
+
+    }
+    catch(err){
+
+    }
+}

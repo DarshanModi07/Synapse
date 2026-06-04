@@ -30,6 +30,13 @@ enum EmbedStatus {
   failed
 }
 
+enum InviteStatus {
+  pending
+  accepted
+  expired
+  rejected
+}
+
 enum notificationType {
   mention
   file_shared
@@ -41,25 +48,26 @@ enum notificationType {
 }
 
 model User {
-  id       String  @id @default(cuid())
-  name     String
-  email    String  @unique
-  password String
-  avatar   String?
-  isActive Boolean @default(true)
+  id           String  @id @default(cuid())
+  name         String
+  email        String  @unique
+  password     String
+  avatar       String?
+  isActive     Boolean @default(true)
   refreshToken String?
 
-  ownedWorkspaces    Workspace[]       @relation("WorkspaceOwner")
-  workspaceMembers   WorkspaceMember[]
-  managedDepartments Department[]      @relation("DepartmentManager")
-  teamLeaders        Team[]            @relation("TeamLeader")
-  teamMembers        TeamMember[]      @relation("UserTeamMembership")
-  messages           Message[]         @relation("MessageSender")
-  deletedMessages    Message[]         @relation("MessageDeletedBy")
-  MessageReactions   MessageReaction[]
-  uploadedFile       File[]            @relation("FileUploader")
-  notifications      Notification[]
-  auditLogs          AuditLog[]        @relation("AuditActor")
+  ownedWorkspaces      Workspace[]       @relation("WorkspaceOwner")
+  workspaceMembers     WorkspaceMember[]
+  managedDepartments   Department[]      @relation("DepartmentManager")
+  teamLeaders          Team[]            @relation("TeamLeader")
+  teamMembers          TeamMember[]      @relation("UserTeamMembership")
+  messages             Message[]         @relation("MessageSender")
+  deletedMessages      Message[]         @relation("MessageDeletedBy")
+  MessageReactions     MessageReaction[]
+  uploadedFile         File[]            @relation("FileUploader")
+  notifications        Notification[]
+  auditLogs            AuditLog[]        @relation("AuditActor")
+  workspaceInviteByYou WorkspaceInvite[] @relation("InvitedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,10 +87,11 @@ model Workspace {
   workspaceMembers WorkspaceMember[]
   departments      Department[]
   files            File[]
-  auditLogs AuditLog[]
+  auditLogs        AuditLog[]
+  workspaceInvites WorkspaceInvite[] @relation("WorkspaceInvites")
 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([ownerId])
   @@map("workspaces")
@@ -103,6 +112,25 @@ model WorkspaceMember {
   @@unique([workspaceId, userId])
   @@index([workspaceId])
   @@index([userId])
+}
+
+model WorkspaceInvite {
+  id            String       @id @default(cuid())
+  workspace     Workspace    @relation("WorkspaceInvites", fields: [workspaceId], references: [id])
+  workspaceId   String
+  email         String
+  sys_role      SysRole
+  work_role     String?
+  token         String       @unique
+  invitedByUser User         @relation("InvitedBy", fields: [invitedBy], references: [id])
+  invitedBy     String
+  status        InviteStatus @default(pending)
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([email])
+  @@unique([workspaceId, email])
 }
 
 model Department {
