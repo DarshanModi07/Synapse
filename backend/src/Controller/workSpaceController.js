@@ -777,3 +777,108 @@ export const removeMember = async (req,res) => {
         })
     }
 }
+
+export const changeRole = async (req,res) => {
+    try{
+        const { workspaceId, userId } = req.params
+        const sys_role = req.body.sys_role
+        const targetUserId = userId
+        const currentUserId = req.user.userId
+
+        const allowedRoles = [
+            "manager",
+            "team_leader",
+            "employee"
+        ];
+
+        if(currentUserId === targetUserId){
+            return res.status(403).json({
+                message:"You cannot change your own role"
+            })
+        }
+
+        if(!allowedRoles.includes(sys_role)){
+            return res.status(400).json({
+                message:"Invalid role"
+            })
+        }
+
+        if(!workspaceId || !targetUserId){
+            return res.status(400).json({
+                message:"Credentials needed"
+            })
+        }
+
+        const currentUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId:currentUserId
+                }
+            }
+        })
+
+        if(!currentUser){
+            return res.status(403).json({
+                message:"You are not the Member of Workspace"
+            })
+        }
+
+        if(currentUser.sys_role == "team_leader" || currentUser.sys_role == "employee"){
+            return res.status(400).json({
+                message:"you does not have authority to change the role"
+            })
+        }
+
+        const targetUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId:targetUserId
+                }
+            }
+        })
+
+        if(!targetUser){
+            return res.status(400).json({
+                message:"Target User not found"
+            })
+        }
+
+        if(currentUser.sys_role === "manager" && (sys_role === "manager" || sys_role === "owner")){
+            return res.status(403).json({
+                message:"Manager cannot assign this role"
+            })
+        }
+
+        if(currentUser.sys_role == "manager" && (targetUser.sys_role == "manager" || targetUser.sys_role == "owner")){
+            return res.status(403).json({
+                message:"Manager, You do not have authority to do this"
+            })
+        }
+
+        const updateRole = await prisma.workspaceMember.update({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId:targetUserId
+                }
+            },
+                data:{
+                    sys_role
+                }
+        })
+
+        return res.status(200).json({
+            message:"Role changed successfully",
+            data:updateRole
+        })
+
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server Error during change role"
+        })
+    }
+}
