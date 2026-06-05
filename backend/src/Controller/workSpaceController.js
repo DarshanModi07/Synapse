@@ -539,3 +539,241 @@ export const rejectInvite = async (req, res) => {
     }
 
 };
+
+export const getWorkspaceMembers = async (req,res) => {
+    try{
+        
+        const userId = req.user.userId;
+        const workspaceId = req.params.workspaceId;
+
+        let role = await prisma.workspaceMember.findFirst({
+            where:{
+                workspaceId,
+                userId
+            }
+        });
+
+        if(!role){
+            return res.status(403).json({
+                message:"You are not a member of this workspace"
+            });
+        }
+
+        role = role.sys_role;
+
+        if(role == "owner"){
+            const FetchAll = await prisma.workspaceMember.findMany({
+                where:{
+                    workspaceId,
+                    userId:{
+                        not:userId
+                    },
+                    OR:[
+                        { sys_role:"employee" },
+                        { sys_role:"manager" },
+                        { sys_role:"team_lead" }
+                    ]
+                },
+                include:{
+                    user:{
+                        select:{
+                            id:true,
+                            name:true,
+                            email:true,
+                            avatar:true
+                        }
+                    }
+                }
+            });
+
+            if(FetchAll.length == 0){
+                return res.status(200).json({
+                    message:"There is No Members in your Workspace",
+                    data:FetchAll
+                });
+            }
+
+            return res.status(200).json({
+                message:"All Members",
+                data:FetchAll
+            });
+
+        }
+        else if(role == "manager"){
+            const FetchAll = await prisma.workspaceMember.findMany({
+                where:{
+                    workspaceId,
+                    userId:{
+                        not:userId
+                    },
+                    OR:[
+                        { sys_role:"employee" },
+                        { sys_role:"team_lead" }
+                    ]
+                },
+                include:{
+                    user:{
+                        select:{
+                            id:true,
+                            name:true,
+                            email:true,
+                            avatar:true
+                        }
+                    }
+                }
+            });
+
+            if(FetchAll.length == 0){
+                return res.status(200).json({
+                    message:"There is No Members in your Department",
+                    data:FetchAll
+                });
+            }
+
+            return res.status(200).json({
+                message:"All Members",
+                data:FetchAll
+            });
+
+        }
+        else if(role == "team_lead"){
+            const FetchAll = await prisma.workspaceMember.findMany({
+                where:{
+                    workspaceId,
+                    userId:{
+                        not:userId
+                    },
+                    sys_role:"employee"
+                },
+                include:{
+                    user:{
+                        select:{
+                            id:true,
+                            name:true,
+                            email:true,
+                            avatar:true
+                        }
+                    }
+                }
+            });
+
+            if(FetchAll.length == 0){
+                return res.status(200).json({
+                    message:"There is No Members in your Team",
+                    data:FetchAll
+                });
+            }
+
+            return res.status(200).json({
+                message:"All Members",
+                data:FetchAll
+            });
+
+        }
+        else if(role == "employee"){
+            return res.status(403).json({
+                message:"You are not allowed to this action as an employee"
+            });
+        }
+        else{
+            return res.status(400).json({
+                message:"Invalid Role"
+            });
+        }
+
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server Error while Getting all Workspace Members"
+        });
+    }
+}
+
+export const removeMember = async (req,res) => {
+    try{
+        const { workspaceId,userId } = req.params
+
+        const currentUserId = req.user.userId
+
+        if(!workspaceId || !userId){
+            return res.status(400).json({
+                message:"Input Required"
+            })
+        }
+
+        const currentUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId: currentUserId
+                }
+            }
+        })
+
+        if(!currentUser){
+            return res.status(400).json({
+                message:"You Are Not the Member of this Workspace"
+            })
+        }
+
+        if(currentUser.sys_role == "team_leader" || currentUser.sys_role == "employee"){
+            return res.status(400).json({
+                message:"You Are Not Able to make this Changes"
+            })
+        }      
+        
+        if(currentUserId == userId){
+            return res.status(400).json({
+                message:"User can not delete it self"
+            })
+        }
+
+        const targetUser = await prisma.workspaceMember.findFirst({
+            where:{
+                userId,
+                workspaceId
+            }
+        })
+
+        if(!targetUser){
+            return res.status(400).json({
+                message:"target user is not exist"
+            })
+        }
+
+        if(targetUser.sys_role === "owner"){
+            return res.status(403).json({
+                message:"Owner cannot be removed"
+            })
+        }
+
+        if(currentUser.sys_role == "manager" && (targetUser.sys_role=="owner" || targetUser.sys_role=="manager")){
+            return res.status(403).json({
+                message:"Manager, You are not allowed to make this changes"
+            })
+        }
+
+        const deleteMember = await prisma.workspaceMember.delete({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId
+                }
+            }
+
+        }) 
+
+        return res.status(200).json({
+            message:"Deleted the Member",
+            data:deleteMember
+        })
+
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server Error"
+        })
+    }
+}
