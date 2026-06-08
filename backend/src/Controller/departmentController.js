@@ -28,7 +28,7 @@ export const createDepartment = async (req, res) => {
             });
         }
 
-        if (member.sys_role !== SysRole.owner) {
+        if (member.sys_role !== "owner") {
             return res.status(403).json({
                 message: "Only workspace owners can create departments"
             });

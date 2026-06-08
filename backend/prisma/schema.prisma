@@ -159,8 +159,8 @@ model Team {
   name         String
   department   Department @relation(fields: [departmentId], references: [id])
   departmentId String
-  leader       User       @relation("TeamLeader", fields: [leaderId], references: [id])
-  leaderId     String
+  leader       User?       @relation("TeamLeader", fields: [leaderId], references: [id])
+  leaderId     String?
   is_deleted   Boolean    @default(false)
   deletedAt    DateTime?
   createdAt    DateTime   @default(now())
