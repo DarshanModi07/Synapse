@@ -185,7 +185,10 @@ model TeamMember {
   @@unique([teamId, memberId])
   @@index([teamId])
   @@index([memberId])
-}
+}   
+// POST   /team/:teamId/member
+// GET    /team/:teamId/members
+// DELETE /team/:teamId/member/:memberId
 
 model Channel {
   id         String      @id @default(cuid())

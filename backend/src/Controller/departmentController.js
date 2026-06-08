@@ -173,6 +173,18 @@ export const updateDepartment = async (req,res) => {
                     message:"Employee can not become manager"
                 })
             }
+
+            const updateManager = await prisma.workspaceMember.update({
+                where:{
+                    workspaceId_userId:{
+                        workspaceId,
+                        userId
+                    }
+                },
+                    data:{
+                        sys_role:"manager"
+                    }
+            })
         }
 
         const findUser = await prisma.workspaceMember.findFirst({
@@ -222,16 +234,13 @@ export const updateDepartment = async (req,res) => {
             where:{
                 id:departmentId,
             },
-            data:{
-                name,
-                managerId,
-                is_deleted
-            }
+            data:updateData,
+            manager:updateManager
         })
 
         return res.status(200).json({
             message:"Department data modified",
-            data:updateData
+            data:updateDept
         })
 
     }
