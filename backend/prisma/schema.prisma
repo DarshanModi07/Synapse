@@ -126,11 +126,11 @@ model WorkspaceInvite {
   invitedBy     String
   status        InviteStatus @default(pending)
   expiresAt     DateTime
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  @@index([email])
   @@unique([workspaceId, email])
+  @@index([email])
 }
 
 model Department {
@@ -144,8 +144,8 @@ model Department {
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
   workspaceId String
 
-  manager   User   @relation("DepartmentManager", fields: [managerId], references: [id])
-  managerId String
+  manager   User?   @relation("DepartmentManager", fields: [managerId], references: [id])
+  managerId String?
 
   teams Team[]
 
