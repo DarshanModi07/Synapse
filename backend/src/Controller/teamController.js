@@ -353,3 +353,95 @@ export const updateTeam = async (req, res) => {
         });
     }
 };
+
+export const deleteTeam = async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        const currentUserId = req.user.userId;
+
+        if (!teamId) {
+            return res.status(400).json({
+                message: "Team ID is required"
+            });
+        }
+
+        const team = await prisma.team.findUnique({
+            where: {
+                id: teamId
+            }
+        });
+
+        if (!team) {
+            return res.status(404).json({
+                message: "Team not found"
+            });
+        }
+
+        const department = await prisma.department.findUnique({
+            where: {
+                id: team.departmentId
+            }
+        });
+
+        if (!department) {
+            return res.status(404).json({
+                message: "Department not found"
+            });
+        }
+
+        const currentUser = await prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId: department.workspaceId,
+                    userId: currentUserId
+                }
+            }
+        });
+
+        if (!currentUser) {
+            return res.status(403).json({
+                message: "You are not a member of this workspace"
+            });
+        }
+
+        if (currentUser.sys_role !== "owner") {
+            return res.status(403).json({
+                message: "Only owner can delete teams"
+            });
+        }
+
+        const memberCount = await prisma.teamMember.count({
+            where: {
+                teamId
+            }
+        });
+
+        if (memberCount > 0) {
+            return res.status(409).json({
+                message: "Cannot delete team because it contains team members"
+            });
+        }
+
+        const deletedTeam = await prisma.team.update({
+            where: {
+                id: teamId
+            },
+            data: {
+                is_deleted: true,
+                deletedAt: new Date()
+            }
+        });
+
+        return res.status(200).json({
+            message: "Team deleted successfully",
+            data: deletedTeam
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal Server Error during team deletion"
+        });
+    }
+};
