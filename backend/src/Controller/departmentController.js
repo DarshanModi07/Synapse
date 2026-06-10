@@ -37,7 +37,8 @@ export const createDepartment = async (req, res) => {
         const existingDepartment = await prisma.department.findFirst({
             where: {
                 workspaceId,
-                name: departmentName
+                name: departmentName,
+                is_deleted:false
             }
         });
 
@@ -72,63 +73,78 @@ export const createDepartment = async (req, res) => {
     }
 };
 
-export const getAllDepartment = async (req,res) => {
-    try{
-        const { workspaceId } = req.params
+export const getAllDepartment = async (req, res) => {
+    try {
+        const { workspaceId } = req.params;
 
-        if(!workspaceId){
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const userId = req.user.userId;
+
+        if (!workspaceId) {
             return res.status(400).json({
-                message:"credential needed"
-            })
+                message: "Workspace ID is required"
+            });
         }
 
-        const userId = req.user.userId
-
         const checkUser = await prisma.workspaceMember.findUnique({
-            where:{
-                workspaceId_userId:{
+            where: {
+                workspaceId_userId: {
                     workspaceId,
                     userId
                 }
             }
-        })
+        });
 
-        if(!checkUser){
+        if (!checkUser) {
             return res.status(403).json({
-                message:"You are not a member of this workspace"
-            })
+                message: "You are not a member of this workspace"
+            });
         }
 
-        const getAllDept = await prisma.department.findMany({
-            where:{
+        const totalDepartments = await prisma.department.count({
+            where: {
                 workspaceId,
-                is_deleted:false
-            },
-            orderBy:{
-                createdAt:"desc"
+                is_deleted: false
             }
-        })
+        });
 
-        if(getAllDept.length == 0){
-            return res.status(200).json({
-                message:"No Department found",
-                data:getAllDept
-            })
-        }
+        const departments = await prisma.department.findMany({
+            where: {
+                workspaceId,
+                is_deleted: false
+            },
+            orderBy: {
+                createdAt: "desc"
+            },
+            skip,
+            take: limit
+        });
 
         return res.status(200).json({
-            message:"All Department fetched",
-            data:getAllDept
-        })
+            message:
+                departments.length > 0
+                    ? "Departments fetched successfully"
+                    : "No departments found",
+            pagination: {
+                total: totalDepartments,
+                page,
+                limit,
+                totalPages: Math.ceil(totalDepartments / limit)
+            },
+            data: departments
+        });
 
-    }
-    catch(err){
-        console.log(err);
+    } catch (err) {
+        console.error(err);
+
         return res.status(500).json({
-            message:"Internal Server error during get all department"
-        })
+            message: "Internal Server Error while fetching departments"
+        });
     }
-}
+};
 
 export const updateDepartment = async (req,res) => {
     try{

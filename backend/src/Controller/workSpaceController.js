@@ -76,17 +76,27 @@ export const createWorkSpace = async (req,res) => {
         message: "Internal Server Error",
         });
     }
-}
+};
 
 export const getUserWorkSpaces = async (req, res) => {
     try {
         const userId = req.user.userId;
+
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
         if (!userId) {
             return res.status(400).json({
                 message: "User ID not found"
             });
         }
+
+        const totalWorkspaces = await prisma.workspaceMember.count({
+            where: {
+                userId
+            }
+        });
 
         const workspaces = await prisma.workspaceMember.findMany({
             where: {
@@ -106,18 +116,26 @@ export const getUserWorkSpaces = async (req, res) => {
                         createdAt: true
                     }
                 }
-            }
+            },
+            orderBy: {
+                joinedAt: "desc"
+            },
+            skip,
+            take: limit
         });
 
-        if (workspaces.length === 0) {
-            return res.status(200).json({
-                message: "No workspaces found",
-                data: []
-            });
-        }
-
         return res.status(200).json({
-            message: "User workspaces fetched successfully",
+            message:
+                workspaces.length > 0
+                    ? "User workspaces fetched successfully"
+                    : "No workspaces found",
+            pagination: {
+                total: totalWorkspaces,
+                page,
+                limit,
+                totalPages: Math.ceil(totalWorkspaces / limit)
+            },
+            count: workspaces.length,
             data: workspaces
         });
 
@@ -688,7 +706,7 @@ export const getWorkspaceMembers = async (req,res) => {
             message:"Internal Server Error while Getting all Workspace Members"
         });
     }
-}
+};
 
 export const removeMember = async (req,res) => {
     try{
@@ -776,7 +794,7 @@ export const removeMember = async (req,res) => {
             message:"Internal Server Error"
         })
     }
-}
+};
 
 export const changeRole = async (req,res) => {
     try{
@@ -881,4 +899,4 @@ export const changeRole = async (req,res) => {
             message:"Internal Server Error during change role"
         })
     }
-}
+};

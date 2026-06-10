@@ -47,6 +47,14 @@ enum notificationType {
   message_reaction
 }
 
+enum ProjectStatus {
+  planning
+  active
+  on_hold
+  completed
+  cancelled
+}
+
 model User {
   id           String  @id @default(cuid())
   name         String
@@ -68,6 +76,7 @@ model User {
   notifications        Notification[]
   auditLogs            AuditLog[]        @relation("AuditActor")
   workspaceInviteByYou WorkspaceInvite[] @relation("InvitedBy")
+  projects Project[] @relation("ProjectCreator")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,6 +98,7 @@ model Workspace {
   files            File[]
   auditLogs        AuditLog[]
   workspaceInvites WorkspaceInvite[] @relation("WorkspaceInvites")
+  projects Project[] @relation("projectsOfWorkspace")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -304,4 +314,34 @@ model AuditLog {
   @@index([workspaceId, createdAt])
   @@index([actorId])
   @@index([resourceType, resourceId])
+}
+
+model Project {
+  id           String   @id @default(cuid())
+
+  name         String
+  description  String?
+
+  workspaceId  String
+  workspace    Workspace @relation("projectsOfWorkspace",fields: [workspaceId], references: [id])
+
+  createdById  String
+  createdBy    User @relation("ProjectCreator", fields: [createdById], references: [id])
+
+  status       ProjectStatus @default(planning)
+
+  startDate    DateTime?
+  dueDate      DateTime?
+
+  is_deleted   Boolean @default(false)
+  deletedAt    DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([workspaceId, name])
+
+  @@index([workspaceId])
+  @@index([createdById])
+  @@index([status])
 }

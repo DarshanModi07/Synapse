@@ -568,10 +568,14 @@ export const addTeamMember = async (req,res) => {
     }
 }
 
-export const getTeamMembers = async (req,res) => {
-    try{
-        const { teamId } = req.params
+export const getTeamMembers = async (req, res) => {
+    try {
+        const { teamId } = req.params;
         const currentUserId = req.user.userId;
+
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
         if (!teamId) {
             return res.status(400).json({
@@ -618,61 +622,73 @@ export const getTeamMembers = async (req,res) => {
             });
         }
 
-        if(currentUser.sys_role === "employee"){
+        if (currentUser.sys_role === "employee") {
             const checkTeamEmployee = await prisma.teamMember.findUnique({
-                where:{
-                    teamId_memberId:{
+                where: {
+                    teamId_memberId: {
                         teamId,
-                        memberId:currentUserId
+                        memberId: currentUserId
                     }
                 }
-            })
-
-            if(!checkTeamEmployee){
-                return res.status(403).json({
-                    message:"You are not allowed to see other team member's details"
-                })
-            }
-        }
-
-        const getAllMembers = await prisma.teamMember.findMany({
-            where:{
-                teamId
-            },
-            include:{
-            member:{
-                select:{
-                    id:true,
-                    name:true,
-                    email:true,
-                    avatar:true
-                }
-            }
-        }
-        })
-
-        if(getAllMembers.length === 0){
-            return res.status(200).json({
-                message: "This Team does not have any members",
-                count: 0,
-                data: []
             });
+
+            if (!checkTeamEmployee) {
+                return res.status(403).json({
+                    message: "You are not allowed to see other team members' details"
+                });
+            }
         }
 
-        return res.status(200).json({
-            message: "Team members fetched successfully",
-            count: getAllMembers.length,
-            data: getAllMembers
+        const totalMembers = await prisma.teamMember.count({
+            where: {
+                teamId
+            }
         });
 
-    }   
-    catch(err){
-        console.log(err);
+        const members = await prisma.teamMember.findMany({
+            where: {
+                teamId
+            },
+            include: {
+                member: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true
+                    }
+                }
+            },
+            orderBy: {
+                joinedAt: "desc"
+            },
+            skip,
+            take: limit
+        });
+
+        return res.status(200).json({
+            message:
+                members.length > 0
+                    ? "Team members fetched successfully"
+                    : "This team does not have any members",
+            pagination: {
+                total: totalMembers,
+                page,
+                limit,
+                totalPages: Math.ceil(totalMembers / limit)
+            },
+            count: members.length,
+            data: members
+        });
+
+    } catch (err) {
+        console.error(err);
+
         return res.status(500).json({
-            message:"Internal Server Error while getting all members"
-        })
+            message: "Internal Server Error while getting team members"
+        });
     }
-}
+};
 
 export const removeTeamMember = async (req,res) => {
     try{
