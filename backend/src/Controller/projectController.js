@@ -424,6 +424,18 @@ export const deleteProject = async (req,res) => {
             })
         }
 
+        const checkWorkspace = await prisma.workspace.findUnique({
+            where: {
+                id: singleProject.workspaceId
+            }
+        });
+
+        if (!checkWorkspace) {
+            return res.status(404).json({
+                message: "Workspace not found"
+            });
+        }
+
         const checkUser = await prisma.workspaceMember.findUnique({
             where:{
                 workspaceId_userId:{

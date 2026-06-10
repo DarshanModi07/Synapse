@@ -6,6 +6,7 @@ import notificationRouter from './notificationRoute.js';
 import departmentRouter from "./departmentRoute.js"
 import teamRouter from "./teamRoute.js"
 import projectRouter from "./projectRoute.js"
+import projectTeamRouter from "./projectTeamRoute.js"
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/api/notification', notificationRouter)
 router.use('/api/department',departmentRouter)
 router.use('/api/team',teamRouter)
 router.use('/api/project',projectRouter)
+router.use('/api/project-team/',projectTeamRouter)
 
 export default router;
