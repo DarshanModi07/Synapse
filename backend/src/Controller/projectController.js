@@ -252,3 +252,219 @@ export const getAllProjects = async (req, res) => {
         });
     }
 };
+
+export const updateProject = async (req,res) => {
+    try{
+        const { projectId } = req.params
+
+        let { startDate , dueDate , name , description , is_deleted , status } = req.body
+
+        if(!projectId){
+            return res.status(400).json({
+                message:"credential needed"
+            })
+        }
+
+        const checkProject = await prisma.project.findFirst({
+            where:{
+                id:projectId,
+                is_deleted:false
+            }
+        })
+
+        if(!checkProject){
+            return res.status(404).json({
+                message:"Project Not found"
+            })
+        }
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId:checkProject.workspaceId,
+                    userId:req.user.userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not member of the workspace"
+            })
+        }
+
+        const allowedRoles = ["owner","manager"];
+
+        if(!allowedRoles.includes(checkUser.sys_role)){
+            return res.status(403).json({
+                message:"You do not have permission to update projects"
+            });
+        }
+
+        const existingProject = await prisma.project.findFirst({
+            where:{
+                workspaceId: checkProject.workspaceId,
+                name,
+                is_deleted:false,
+                id:{
+                    not: projectId
+                }
+            }
+        });
+
+        if(existingProject){
+            return res.status(409).json({
+                message:"Project name already exists"
+            });
+        }
+
+        const updateData = {}
+
+        const allowedStatus = [
+            "planning",
+            "active",
+            "on_hold",
+            "completed",
+            "cancelled"
+        ];
+
+        if(name){
+            name = name.trim()
+            if(!name || name === ""){
+                return res.status(404).json({
+                    message:"Give Proper Name"
+                })
+            }
+            else{
+                updateData.name = name
+            }
+        }
+        if(description){
+            description = description.trim()
+            if(!description || description === ""){
+                return res.status(404).json({
+                    message:"Give Proper description"
+                })
+            }
+            else{
+                updateData.description = description
+            }
+        }
+        if(typeof is_deleted === "boolean"){
+            updateData.is_deleted = is_deleted;
+
+            updateData.deletedAt = is_deleted ? new Date() : null;
+        }
+        const finalStartDate = startDate ? new Date(startDate) : checkProject.startDate;
+
+        const finalDueDate = dueDate ? new Date(dueDate) : checkProject.dueDate;
+
+        if( finalStartDate && finalDueDate && finalStartDate > finalDueDate){
+            return res.status(400).json({
+                message:"Due date must be after start date"
+            });
+        }
+        if (status !== undefined) {
+            status = status.trim().toLowerCase();
+
+            if (!allowedStatus.includes(status)) {
+                return res.status(400).json({
+                    message: `Status must be one of: ${allowedStatus.join(", ")}`
+                });
+            }
+
+            updateData.status = status;
+        }
+
+        if(Object.keys(updateData).length === 0){
+            return res.status(400).json({
+                message:"No valid fields provided for update"
+            });
+        }
+
+        const updateProject = await prisma.project.update({
+            where:{
+                id:projectId
+            },
+            data:updateData
+        })
+
+        return res.status(200).json({
+            message:"Project data updated",
+            data:updateProject
+        })
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server Error during updating Error"
+        })
+    }
+}
+
+export const deleteProject = async (req,res) => {
+    try{
+        const { projectId } = req.params
+
+        if(!projectId){
+            return res.status(400).json({
+                message:"Credentials needed"
+            })
+        }
+
+        const singleProject = await prisma.project.findUnique({
+            where:{
+                id:projectId
+            }
+        })
+
+        if(!singleProject || singleProject.is_deleted){
+            return res.status(404).json({
+                message:"Project Not Found"
+            })
+        }
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId:singleProject.workspaceId,
+                    userId:req.user.userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are Not the Member of the Workspace"
+            })
+        }
+
+        if(checkUser.sys_role !== "owner" && checkUser.sys_role !== "manager"){
+            return res.status(403).json({
+                message:"You can not delete the Project"
+            })
+        }
+
+        const deletedProject = await prisma.project.update({
+            where:{
+                id:projectId
+            },
+            data:{
+                is_deleted:true,
+                deletedAt:new Date()
+            }
+        })
+
+        return res.status(200).json({
+            message:"Project deleted successfully",
+            data:deletedProject
+        })
+
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server Error while deleting a Project"
+        })
+    }
+}

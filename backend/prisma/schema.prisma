@@ -178,6 +178,7 @@ model Team {
 
   teamMembers TeamMember[]
   channels    Channel[]
+  teamProjects ProjectTeam[] @relation("team Projects")
 
   @@unique([departmentId, name])
   @@index([departmentId])
@@ -339,9 +340,28 @@ model Project {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  teams ProjectTeam[] @relation("project Team")
+
   @@unique([workspaceId, name])
 
   @@index([workspaceId])
   @@index([createdById])
   @@index([status])
+}
+
+model ProjectTeam {
+  id         String   @id @default(cuid())
+
+  projectId  String
+  project    Project  @relation("project Team",fields:[projectId], references:[id])
+
+  teamId     String
+  team       Team     @relation("team Projects",fields:[teamId], references:[id])
+
+  assignedAt DateTime @default(now())
+
+  @@unique([projectId, teamId])
+
+  @@index([projectId])
+  @@index([teamId])
 }
