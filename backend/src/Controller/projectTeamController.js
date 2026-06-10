@@ -125,7 +125,6 @@ export const assignTeam = async (req,res) => {
 export const getTeams = async (req,res) => {
     try{
         const { projectId } = req.params
-        const { page,limits } = req.query
 
         if(!projectId){
             return res.status(400).json({
@@ -133,8 +132,88 @@ export const getTeams = async (req,res) => {
             })
         }
 
-        
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
+        const checkProject = await prisma.project.findUnique({
+            where:{
+                id:projectId
+            }
+        })
+
+        if(!checkProject){
+            return res.status(404).json({
+                message:"Project not found"
+            })   
+        }
+
+        const workspaceId = checkProject.workspaceId
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId:req.user.userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not the Member of this Workspace"
+            })
+        }
+
+        const findTeams = await prisma.projectTeam.findMany({
+            where:{
+                projectId
+            }
+        })
+
+        const teamIds = findTeams.map(team => team.teamId);
+
+        if(teamIds.length === 0){
+            return res.status(200).json({
+                message:"No teams assigned to this project",
+                data:[]
+            })
+        }
+
+        const findData = await prisma.team.findMany({
+            where:{
+                id:{
+                    in: teamIds
+                },
+                is_deleted:false
+            },
+            skip,
+            take:limit,
+            select:{
+                id:true,
+                name:true,
+                department:{
+                    select:{
+                        id:true,
+                        name:true
+                    }
+                },
+                leader:{
+                    select:{
+                        id:true,
+                        name:true,
+                        email:true,
+                        avatar:true
+                    }
+                }
+            }
+        })
+
+        return res.status(200).json({
+            message:"Teams fetched successfully",
+            count: findData.length,
+            data: findData
+        })
     }
     catch(err){
         console.log(err);
@@ -142,4 +221,4 @@ export const getTeams = async (req,res) => {
             message:"Internal server error while getting all teams of a project"
         })
     }
-}
+} 
