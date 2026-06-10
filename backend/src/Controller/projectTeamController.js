@@ -222,3 +222,99 @@ export const getTeams = async (req,res) => {
         })
     }
 } 
+
+export const RemoveTeams = async (req,res) => {
+    try{
+        const { projectId , teamId} = req.params
+
+        if(!projectId || !teamId){
+            return res.status(400).json({
+                message:"credentials needed"
+            })
+        }
+
+        const checkProject = await prisma.project.findUnique({
+            where:{
+                id:projectId
+            }
+        })
+
+        if(!checkProject || checkProject.is_deleted){
+            return res.status(404).json({
+                message:"Project not found"
+            })
+        }
+
+        const workspaceId = checkProject.workspaceId
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId:req.user.userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not the Member of this Workspace"
+            })
+        }
+
+        if(checkUser.sys_role !== "owner" && checkUser.sys_role !== "manager"){
+            return res.status(403).json({
+                message:"Only Owner and Manger can perform this action"
+            })
+        }
+
+        const checkTeam = await prisma.team.findUnique({
+            where:{
+                id:teamId
+            }
+        })
+
+        if(!checkTeam || checkTeam.is_deleted){
+            return res.status(404).json({
+                message:"Team not found"
+            })
+        }
+
+        const findTeam = await prisma.projectTeam.findUnique({
+            where:{
+                projectId_teamId:{
+                    projectId,
+                    teamId
+                }
+            }
+        })
+
+        if(!findTeam){
+            return res.status(404).json({
+                message:"This Team does not belongs to this Project"
+            })
+        }
+
+        const removeFromProject = await prisma.projectTeam.delete({
+            where:{
+                projectId_teamId:{
+                    projectId,
+                    teamId
+                }
+            }
+        })
+
+        return res.status(200).json({
+            message:"Team removed from project successfully",
+            deleted_team:removeFromProject
+        })
+
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal server error while deleting a team of a project"
+        })
+    }
+} 
+
