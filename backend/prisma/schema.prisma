@@ -55,6 +55,21 @@ enum ProjectStatus {
   cancelled
 }
 
+enum TaskStatus {
+  todo
+  in_progress
+  in_review
+  done
+  cancelled
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+  urgent
+}
+
 model User {
   id           String  @id @default(cuid())
   name         String
@@ -64,19 +79,25 @@ model User {
   isActive     Boolean @default(true)
   refreshToken String?
 
-  ownedWorkspaces      Workspace[]       @relation("WorkspaceOwner")
-  workspaceMembers     WorkspaceMember[]
-  managedDepartments   Department[]      @relation("DepartmentManager")
-  teamLeaders          Team[]            @relation("TeamLeader")
-  teamMembers          TeamMember[]      @relation("UserTeamMembership")
-  messages             Message[]         @relation("MessageSender")
-  deletedMessages      Message[]         @relation("MessageDeletedBy")
-  MessageReactions     MessageReaction[]
-  uploadedFile         File[]            @relation("FileUploader")
-  notifications        Notification[]
-  auditLogs            AuditLog[]        @relation("AuditActor")
-  workspaceInviteByYou WorkspaceInvite[] @relation("InvitedBy")
-  projects Project[] @relation("ProjectCreator")
+  ownedWorkspaces            Workspace[]         @relation("WorkspaceOwner")
+  workspaceMembers           WorkspaceMember[]
+  managedDepartments         Department[]        @relation("DepartmentManager")
+  teamLeaders                Team[]              @relation("TeamLeader")
+  teamMembers                TeamMember[]        @relation("UserTeamMembership")
+  messages                   Message[]           @relation("MessageSender")
+  deletedMessages            Message[]           @relation("MessageDeletedBy")
+  MessageReactions           MessageReaction[]
+  uploadedFile               File[]              @relation("FileUploader")
+  notifications              Notification[]
+  auditLogs                  AuditLog[]          @relation("AuditActor")
+  workspaceInviteByYou       WorkspaceInvite[]   @relation("InvitedBy")
+  projects                   Project[]           @relation("ProjectCreator")
+  projectTeamsAssigned       ProjectTeam[]       @relation("ProjectTeamAssigner")
+  projectDepartmentsAssigned ProjectDepartment[] @relation("ProjectDepartmentAssigner")
+  tasksCreated               Task[]              @relation("TaskCreator")
+  subtasksCreated            SubTask[]           @relation("SubTaskCreator")
+  workItemsAssigned          WorkItem[]          @relation("AssignedWorkItems")
+  workItemsCreated           WorkItem[]          @relation("CreatedWorkItems")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -98,7 +119,7 @@ model Workspace {
   files            File[]
   auditLogs        AuditLog[]
   workspaceInvites WorkspaceInvite[] @relation("WorkspaceInvites")
-  projects Project[] @relation("projectsOfWorkspace")
+  projects         Project[]         @relation("projectsOfWorkspace")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -157,7 +178,8 @@ model Department {
   manager   User?   @relation("DepartmentManager", fields: [managerId], references: [id])
   managerId String?
 
-  teams Team[]
+  teams    Team[]
+  projects ProjectDepartment[] @relation("departmentsOfProject")
 
   @@unique([workspaceId, name])
   @@index([workspaceId])
@@ -169,16 +191,16 @@ model Team {
   name         String
   department   Department @relation(fields: [departmentId], references: [id])
   departmentId String
-  leader       User?       @relation("TeamLeader", fields: [leaderId], references: [id])
+  leader       User?      @relation("TeamLeader", fields: [leaderId], references: [id])
   leaderId     String?
   is_deleted   Boolean    @default(false)
   deletedAt    DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  teamMembers TeamMember[]
-  channels    Channel[]
-  teamProjects ProjectTeam[] @relation("team Projects")
+  teamMembers  TeamMember[]
+  channels     Channel[]
+  teamProjects ProjectTeam[] @relation("teams")
 
   @@unique([departmentId, name])
   @@index([departmentId])
@@ -196,7 +218,8 @@ model TeamMember {
   @@unique([teamId, memberId])
   @@index([teamId])
   @@index([memberId])
-}   
+}
+
 // POST   /team/:teamId/member
 // GET    /team/:teamId/members
 // DELETE /team/:teamId/member/:memberId
@@ -318,50 +341,179 @@ model AuditLog {
 }
 
 model Project {
-  id           String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  name         String
-  description  String?
+  name        String
+  description String?
 
-  workspaceId  String
-  workspace    Workspace @relation("projectsOfWorkspace",fields: [workspaceId], references: [id])
+  workspaceId String
+  workspace   Workspace @relation("projectsOfWorkspace", fields: [workspaceId], references: [id])
 
-  createdById  String
-  createdBy    User @relation("ProjectCreator", fields: [createdById], references: [id])
+  createdById String
+  createdBy   User   @relation("ProjectCreator", fields: [createdById], references: [id])
 
-  status       ProjectStatus @default(planning)
+  status ProjectStatus @default(planning)
 
-  startDate    DateTime?
-  dueDate      DateTime?
+  startDate DateTime?
+  dueDate   DateTime?
 
-  is_deleted   Boolean @default(false)
-  deletedAt    DateTime?
+  is_deleted Boolean   @default(false)
+  deletedAt  DateTime?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  teams ProjectTeam[] @relation("project Team")
+  projectDepartments ProjectDepartment[] @relation("projectDepartments")
 
   @@unique([workspaceId, name])
-
   @@index([workspaceId])
   @@index([createdById])
   @@index([status])
 }
 
-model ProjectTeam {
-  id         String   @id @default(cuid())
 
-  projectId  String
-  project    Project  @relation("project Team",fields:[projectId], references:[id])
+model ProjectDepartment {
+  id String @id @default(cuid())
 
-  teamId     String
-  team       Team     @relation("team Projects",fields:[teamId], references:[id])
+  projectId String
+  project   Project @relation("projectDepartments", fields: [projectId], references: [id])
+
+  departmentId String
+  department   Department @relation("departmentsOfProject", fields: [departmentId], references: [id])
+
+  assignedById String
+  assignedBy   User   @relation("ProjectDepartmentAssigner", fields: [assignedById], references: [id])
 
   assignedAt DateTime @default(now())
 
-  @@unique([projectId, teamId])
+  projectTeams ProjectTeam[] @relation("projectDepartment")
 
+  @@unique([projectId, departmentId])
   @@index([projectId])
+  @@index([departmentId])
+}
+ model ProjectTeam {
+  id String @id @default(cuid())
+
+  projectDepartmentId String
+  projectDepartment   ProjectDepartment @relation("projectDepartment", fields: [projectDepartmentId], references: [id])
+
+  teamId String
+  team   Team   @relation("teams", fields: [teamId], references: [id])
+
+  assignedById String
+  assignedBy   User   @relation("ProjectTeamAssigner", fields: [assignedById], references: [id])
+
+  assignedAt DateTime @default(now())
+
+  tasks Task[] @relation("taskAndProjectTeam")
+
+  @@unique([projectDepartmentId, teamId])
+  @@index([projectDepartmentId])
   @@index([teamId])
+}
+
+
+model Task {
+  id String @id @default(cuid())
+
+  title String
+  description String?
+
+  projectTeamId String
+  projectTeam ProjectTeam @relation("taskAndProjectTeam",fields:[projectTeamId],references:[id])
+
+  createdById String
+  createdBy User @relation("TaskCreator",fields:[createdById],references:[id])
+
+  status TaskStatus @default(todo)
+
+  priority TaskPriority @default(medium)
+
+  progress Int @default(0)
+
+  dueDate DateTime?
+
+  is_deleted Boolean @default(false)
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subtasks SubTask[]    @relation("SubTaskOfTask")
+
+  @@index([projectTeamId])
+  @@index([createdById])
+  @@index([status])
+}
+
+
+model SubTask {
+  id String @id @default(cuid())
+
+  title String
+  description String?
+
+  taskId String
+  task Task @relation("SubTaskOfTask",fields:[taskId],references:[id])
+
+  assignedById String
+  assignedBy User @relation("SubTaskCreator",fields:[assignedById],references:[id])
+
+  status TaskStatus @default(todo)
+
+  priority TaskPriority @default(medium)
+
+  progress Int @default(0)
+
+  dueDate DateTime?
+
+  is_deleted Boolean @default(false)
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workItems WorkItem[]
+
+  @@index([taskId])
+  @@index([assignedById])
+  @@index([status])
+}
+
+model WorkItem {
+  id String @id @default(cuid())
+
+  title String
+  description String?
+
+  subTaskId String
+  subTask SubTask @relation(fields:[subTaskId],references:[id])
+
+  assignedToId String
+  assignedTo User @relation("AssignedWorkItems",fields:[assignedToId],references:[id])
+
+  assignedById String
+  assignedBy User @relation("CreatedWorkItems",fields:[assignedById],references:[id])
+
+  status TaskStatus @default(todo)
+
+  priority TaskPriority @default(medium)
+
+  estimatedHours Int?
+
+  actualHours Int?
+
+  completedAt DateTime?
+
+  is_deleted Boolean @default(false)
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subTaskId])
+  @@index([assignedToId])
+  @@index([assignedById])
+  @@index([status])
 }

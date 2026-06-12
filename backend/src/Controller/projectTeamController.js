@@ -1,320 +1,301 @@
 import prisma from "../DB/db.config.js"
 
-export const assignTeam = async (req,res) => {
-    try{
-        const { projectId } = req.params
-        const { teamId } = req.body
+export const assignTeam = async (req, res) => {
+    try {
+        const { projectDepartmentId } = req.params;
+        const { teamId } = req.body;
 
-        if(!projectId || !teamId){
+        const userId = req.user.userId;
+
+        if (!projectDepartmentId || !teamId) {
             return res.status(400).json({
-                message:"credential needed"
-            })
+                message: "Credentials needed"
+            });
         }
 
-        const checkProject = await prisma.project.findUnique({
-            where:{
-                id:projectId
-            }
-        })
+        const projectDepartment =
+            await prisma.projectDepartment.findUnique({
+                where: {
+                    id: projectDepartmentId
+                },
+                include: {
+                    project: true,
+                    department: true
+                }
+            });
 
-        if(!checkProject || checkProject.is_deleted){
+        if (!projectDepartment) {
             return res.status(404).json({
-                message:"Project Not Found"
-            })
+                message: "Project Department not found"
+            });
         }
 
-        const checkWorkspace = await prisma.workspace.findUnique({
-            where:{
-                id:checkProject.workspaceId
-            }
-        })
+        const checkUser =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId:
+                            projectDepartment.project.workspaceId,
+                        userId
+                    }
+                }
+            });
 
-        if(!checkWorkspace){
-            return res.status(404).json({
-                message:"workspace Not Found"
-            })
-        }        
+        if (!checkUser) {
+            return res.status(403).json({
+                message:
+                    "You are not a member of this workspace"
+            });
+        }
 
         const checkTeam = await prisma.team.findUnique({
-            where:{
-                id:teamId
+            where: {
+                id: teamId
             }
-        })
+        });
 
-        if(!checkTeam || checkTeam.is_deleted){
+        if (!checkTeam || checkTeam.is_deleted) {
             return res.status(404).json({
-                message:"Team Not Found"
-            })
+                message: "Team not found"
+            });
         }
 
-        const checkUser = await prisma.workspaceMember.findUnique({
-            where:{
-                workspaceId_userId:{
-                    workspaceId:checkProject.workspaceId,
-                    userId:req.user.userId
-                }
-            }
-        })
-
-        if(!checkUser){
-            return res.status(403).json({
-                message:"you are not the workspace member"
-            })
-        }
-
-        if(checkUser.sys_role === "employee" || checkUser.sys_role === "team_lead"){
-            return res.status(404).json({
-                message:"you are not able to do this with this sys_role"
-            })
-        }
-
-        const teamDepartment = await prisma.department.findUnique({
-            where:{
-                id:checkTeam.departmentId
-            }
-        })
-
-        if(!teamDepartment){
-            return res.status(404).json({
-                message:"Error in finding department"
-            })
-        }
-
-        if(teamDepartment.workspaceId !== checkProject.workspaceId){
+        if (
+            checkTeam.departmentId !==
+            projectDepartment.departmentId
+        ) {
             return res.status(400).json({
-                message:"Team belongs to different workspace"
-            })
+                message:
+                    "Team does not belong to this department"
+            });
         }
 
-        const existingAssignment = await prisma.projectTeam.findUnique({
-            where:{
-                projectId_teamId:{
-                    projectId,
+        const existingAssignment =
+            await prisma.projectTeam.findFirst({
+                where: {
+                    projectDepartmentId,
                     teamId
                 }
-            }
-        })
+            });
 
-        if(existingAssignment){
+        if (existingAssignment) {
             return res.status(409).json({
-                message:"Team already assigned to project"
-            })
+                message:
+                    "Team already assigned to project department"
+            });
         }
 
-        const createProjectTeam = await prisma.projectTeam.create({
-            data:{
-                projectId,
-                teamId
-            }
-        })
+        const createProjectTeam =
+            await prisma.projectTeam.create({
+                data: {
+                    projectDepartmentId,
+                    teamId,
+                    assignedById: userId
+                }
+            });
 
         return res.status(201).json({
-            message:"Team assigned successfully",
-            data:createProjectTeam
-        })
+            message: "Team assigned successfully",
+            data: createProjectTeam
+        });
 
-    }
-    catch(err){
+    } catch (err) {
         console.log(err);
+
         return res.status(500).json({
-            message:"Internal server error during assigning team"
-        })
+            message:
+                "Internal server error during assigning team"
+        });
     }
-}
+};
 
-export const getTeams = async (req,res) => {
-    try{
-        const { projectId } = req.params
-
-        if(!projectId){
-            return res.status(400).json({
-                message:"credentials needed"
-            })
-        }
+export const getTeams = async (req, res) => {
+    try {
+        const { projectDepartmentId } = req.params;
 
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const checkProject = await prisma.project.findUnique({
-            where:{
-                id:projectId
-            }
-        })
-
-        if(!checkProject){
-            return res.status(404).json({
-                message:"Project not found"
-            })   
-        }
-
-        const workspaceId = checkProject.workspaceId
-
-        const checkUser = await prisma.workspaceMember.findUnique({
-            where:{
-                workspaceId_userId:{
-                    workspaceId,
-                    userId:req.user.userId
-                }
-            }
-        })
-
-        if(!checkUser){
-            return res.status(403).json({
-                message:"You are not the Member of this Workspace"
-            })
-        }
-
-        const findTeams = await prisma.projectTeam.findMany({
-            where:{
-                projectId
-            }
-        })
-
-        const teamIds = findTeams.map(team => team.teamId);
-
-        if(teamIds.length === 0){
-            return res.status(200).json({
-                message:"No teams assigned to this project",
-                data:[]
-            })
-        }
-
-        const findData = await prisma.team.findMany({
-            where:{
-                id:{
-                    in: teamIds
+        const projectDepartment =
+            await prisma.projectDepartment.findUnique({
+                where: {
+                    id: projectDepartmentId
                 },
-                is_deleted:false
+                include: {
+                    project: true
+                }
+            });
+
+        if (!projectDepartment) {
+            return res.status(404).json({
+                message: "Project Department not found"
+            });
+        }
+
+        const checkUser =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId:
+                            projectDepartment.project.workspaceId,
+                        userId: req.user.userId
+                    }
+                }
+            });
+
+        if (!checkUser) {
+            return res.status(403).json({
+                message:
+                    "You are not a member of this workspace"
+            });
+        }
+
+        const totalTeams =
+            await prisma.projectTeam.count({
+                where: {
+                    projectDepartmentId
+                }
+            });
+
+        const teams =
+            await prisma.projectTeam.findMany({
+                where: {
+                    projectDepartmentId
+                },
+                include: {
+                    team: {
+                        include: {
+                            department: {
+                                select: {
+                                    id: true,
+                                    name: true
+                                }
+                            },
+                            leader: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    avatar: true
+                                }
+                            }
+                        }
+                    }
+                },
+                skip,
+                take: limit
+            });
+
+        return res.status(200).json({
+            message: "Teams fetched successfully",
+            pagination: {
+                total: totalTeams,
+                page,
+                limit,
+                totalPages:
+                    Math.ceil(totalTeams / limit)
             },
-            skip,
-            take:limit,
-            select:{
-                id:true,
-                name:true,
-                department:{
-                    select:{
-                        id:true,
-                        name:true
-                    }
-                },
-                leader:{
-                    select:{
-                        id:true,
-                        name:true,
-                        email:true,
-                        avatar:true
-                    }
-                }
-            }
-        })
+            count: teams.length,
+            data: teams
+        });
 
-        return res.status(200).json({
-            message:"Teams fetched successfully",
-            count: findData.length,
-            data: findData
-        })
-    }
-    catch(err){
+    } catch (err) {
         console.log(err);
+
         return res.status(500).json({
-            message:"Internal server error while getting all teams of a project"
-        })
+            message:
+                "Internal server error while getting teams"
+        });
     }
-} 
+};
 
-export const RemoveTeams = async (req,res) => {
-    try{
-        const { projectId , teamId} = req.params
+export const removeTeam = async (req, res) => {
+    try {
+        const {
+            projectDepartmentId,
+            teamId
+        } = req.params;
 
-        if(!projectId || !teamId){
+        if (!projectDepartmentId || !teamId) {
             return res.status(400).json({
-                message:"credentials needed"
-            })
+                message: "Credentials needed"
+            });
         }
 
-        const checkProject = await prisma.project.findUnique({
-            where:{
-                id:projectId
-            }
-        })
-
-        if(!checkProject || checkProject.is_deleted){
-            return res.status(404).json({
-                message:"Project not found"
-            })
-        }
-
-        const workspaceId = checkProject.workspaceId
-
-        const checkUser = await prisma.workspaceMember.findUnique({
-            where:{
-                workspaceId_userId:{
-                    workspaceId,
-                    userId:req.user.userId
-                }
-            }
-        })
-
-        if(!checkUser){
-            return res.status(403).json({
-                message:"You are not the Member of this Workspace"
-            })
-        }
-
-        if(checkUser.sys_role !== "owner" && checkUser.sys_role !== "manager"){
-            return res.status(403).json({
-                message:"Only Owner and Manger can perform this action"
-            })
-        }
-
-        const checkTeam = await prisma.team.findUnique({
-            where:{
-                id:teamId
-            }
-        })
-
-        if(!checkTeam || checkTeam.is_deleted){
-            return res.status(404).json({
-                message:"Team not found"
-            })
-        }
-
-        const findTeam = await prisma.projectTeam.findUnique({
-            where:{
-                projectId_teamId:{
-                    projectId,
+        const assignment =
+            await prisma.projectTeam.findFirst({
+                where: {
+                    projectDepartmentId,
                     teamId
+                },
+                include: {
+                    projectDepartment: {
+                        include: {
+                            project: true
+                        }
+                    }
                 }
-            }
-        })
+            });
 
-        if(!findTeam){
+        if (!assignment) {
             return res.status(404).json({
-                message:"This Team does not belongs to this Project"
-            })
+                message:
+                    "Team is not assigned to this project department"
+            });
         }
 
-        const removeFromProject = await prisma.projectTeam.delete({
-            where:{
-                projectId_teamId:{
-                    projectId,
-                    teamId
+        const checkUser =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId:
+                            assignment.projectDepartment.project.workspaceId,
+                        userId: req.user.userId
+                    }
                 }
-            }
-        })
+            });
+
+        if (!checkUser) {
+            return res.status(403).json({
+                message:
+                    "You are not a member of this workspace"
+            });
+        }
+
+        if (
+            checkUser.sys_role !== "owner" &&
+            checkUser.sys_role !== "manager"
+        ) {
+            return res.status(403).json({
+                message:
+                    "Only owner and manager can perform this action"
+            });
+        }
+
+        const deleted =
+            await prisma.projectTeam.delete({
+                where: {
+                    projectDepartmentId_teamId: {
+                        projectDepartmentId,
+                        teamId
+                    }
+                }
+            });
 
         return res.status(200).json({
-            message:"Team removed from project successfully",
-            deleted_team:removeFromProject
-        })
+            message:
+                "Team removed successfully",
+            data: deleted
+        });
 
-    }
-    catch(err){
+    } catch (err) {
         console.log(err);
+
         return res.status(500).json({
-            message:"Internal server error while deleting a team of a project"
-        })
+            message:
+                "Internal server error while removing team"
+        });
     }
-} 
+};
 

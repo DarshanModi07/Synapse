@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { authMiddleware } from "../middlewares/authMiddleware.js"
-import { assignTeam, getTeams } from '../Controller/projectTeamController.js';
+import { assignTeam, getTeams , removeTeam } from '../Controller/projectTeamController.js';
 
 const router = Router();
 
-router.post("/project/:projectId/team",authMiddleware,assignTeam)
-router.get("/project/:projectId/teams",authMiddleware,getTeams)
+router.post("/:projectDepartmentId/team",authMiddleware,assignTeam)
+router.get("/:projectDepartmentId/teams",authMiddleware,getTeams)
+router.delete("/:projectDepartmentId/team/:teamId",authMiddleware,removeTeam)
 
 
 
