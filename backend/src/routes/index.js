@@ -8,7 +8,8 @@ import teamRouter from "./teamRoute.js"
 import projectRouter from "./projectRoute.js"
 import projectTeamRouter from "./projectTeamRoute.js"
 import projectDepartmentRouter from "./projectDepartmentRoute.js"
-import projectTask from "./taskRoute.js"
+import projectTaskRouter from "./taskRoute.js"
+import projectSubTaskRouter from "./subtaskRoute.js"
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.use('/api/team',teamRouter)
 router.use('/api/project',projectRouter)
 router.use('/api/project-team/',projectTeamRouter)
 router.use('/api/project-department/',projectDepartmentRouter)
-router.use('/api/project-team-task/',projectTask)
+router.use('/api/project-team-task/',projectTaskRouter)
+router.use('/api/project-team-subtask/',projectSubTaskRouter)
 
 export default router;
