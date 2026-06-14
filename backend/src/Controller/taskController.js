@@ -198,7 +198,8 @@ export const getAllTask = async (req,res) => {
 
                 const getAllTask = await prisma.task.findMany({
                     where:{
-                        projectTeamId
+                        projectTeamId,
+                        is_deleted:false
                     },
                     include:{
                         createdBy:{
@@ -284,6 +285,64 @@ export const updateTask = async (req,res) => {
             }
         })
 
+        if(!checkTaskId){
+            return res.status(404).json({
+                message:"Task not found"
+            })
+        }
+
+        const checkProjectTeam = await prisma.projectTeam.findUnique({
+            where:{
+                id: checkTaskId.projectTeamId
+            },
+            include:{
+                projectDepartment:{
+                    include:{
+                        department:{
+                            select:{
+                                workspaceId:true
+                            }
+                        }
+                    }
+                }
+            }
+        }) 
+
+        if(!checkProjectTeam){
+            return res.status(404).json({
+                message:"Project Team Not Found"
+            })
+        }
+
+        const userId = req.user.userId
+        const workspaceId = checkProjectTeam.projectDepartment.department.workspaceId
+
+        if(!workspaceId){
+            return res.status(404).json({
+                message:"workspaceId not found"
+            })
+        }
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not the member of workspace"
+            })
+        }
+
+        if(checkUser.sys_role === "team_lead" || checkUser.sys_role === "employee"){
+            return res.status(403).json({
+                message:"You are not allowed to do this action"
+        })
+
         const updateData = await prisma.task.update({
             where:{
                 id:taskId
@@ -301,8 +360,123 @@ export const updateTask = async (req,res) => {
         })
         
     }
+    }
     catch(err){
         console.log(err);
-        
+        return res.status(500).json({
+            message:"Internal Server Error during updating task"
+        })
     }
 }
+
+export const deleteTask = async(req,res) => {
+    try{
+        const { taskId } = req.params
+
+        const userId = req.user.userId
+
+        if(!taskId){
+            return res.status(404).json({
+                message:"credential needed"
+            })
+        }
+
+        const checkTaskId = await prisma.task.findUnique({
+            where:{
+                id:taskId
+            }
+        })
+
+        if(!checkTaskId){
+            return res.status(404).json({
+                message:"Task not found"
+            })
+        }
+
+        const checkProjectTeam = await prisma.projectTeam.findUnique({
+            where:{
+                id: checkTaskId.projectTeamId
+            },
+            include:{
+                projectDepartment:{
+                    include:{
+                        department:{
+                            select:{
+                                workspaceId:true
+                            }
+                        }
+                    }
+                }
+            }
+        }) 
+
+        if(!checkProjectTeam){
+            return res.status(404).json({
+                message:"Project Team Not Found"
+            })
+        }
+
+        const workspaceId = checkProjectTeam.projectDepartment.department.workspaceId
+
+        if(!workspaceId){
+            return res.status(404).json({
+                message:"workspaceId not found"
+            })
+        }
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not the member of workspace"
+            })
+        }
+
+        if(checkUser.sys_role === "team_lead" || checkUser.sys_role === "employee"){
+            return res.status(403).json({
+                message:"You are not allowed to do this action"
+        })        
+        }
+
+        const getSubTask = await prisma.subTask.findMany({
+            where:{
+                taskId,
+                is_deleted:false
+            }
+        })
+
+        if(getSubTask.length !== 0){
+            return res.status(400).json({
+                message:"You can not delete Task when it's sub task exist"
+            })
+        }
+
+        const deleteTask = await prisma.task.update({
+            where:{
+                id:taskId
+            },
+            data:{
+                is_deleted:true
+            }
+        })
+
+        return res.status(200).json({
+            message:"Task Deleted"
+        })
+
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server Error while Deleting task"
+        })
+    }
+}
+
