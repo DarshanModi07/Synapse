@@ -692,4 +692,142 @@ export const deleteSubTask = async (req,res) => {
     }
 }
 
+export const subtaskProgress = async (req,res) => {
+    try{    
+        const { subtaskId } = req.params
 
+        const userId = req.user.userId;
+
+        if(!subtaskId){
+            return res.status(400).json({
+                message:"Credential needed"
+            });
+        }
+
+        const checkSubTaskId = await prisma.subTask.findUnique({
+            where:{
+                id: subtaskId
+            },
+            include:{
+                task:{
+                    select:{
+                        id:true,
+                        title:true,
+                        description:true,
+                        priority:true,
+                        status:true,
+                        projectTeamId:true,
+                        createdBy:{
+                            select:{
+                                id:true,
+                                name:true,
+                                email:true
+                            }
+                        }
+                    }
+                },
+                assignedBy:{
+                    select:{
+                        id:true,
+                        name:true,
+                        email:true,
+                        avatar:true
+                    }
+                }
+            }
+        });
+
+        if(!checkSubTaskId){
+            return res.status(404).json({
+                message:"Subtask not found"
+            });
+        }
+
+        const checkProjectTeam = await prisma.projectTeam.findUnique({
+            where:{
+                id: checkSubTaskId.task.projectTeamId
+            },
+            include:{
+                projectDepartment:{
+                    include:{
+                        department:{
+                            select:{
+                                workspaceId:true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if(!checkProjectTeam){
+            return res.status(404).json({
+                message:"Project Team Not Found"
+            });
+        }
+
+        const workspaceId = checkProjectTeam.projectDepartment.department.workspaceId;
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId
+                }
+            }
+        });
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not the member of workspace"
+            });
+        }
+
+        let total = await prisma.workItem.count({
+            where:{
+                subTaskId: subtaskId
+            }
+        })
+
+        const done = await prisma.workItem.count({
+            where:{
+                subTaskId: subtaskId,
+                status:"done",
+                is_deleted:false
+            }
+        });
+
+        const in_progress = await prisma.workItem.count({
+            where:{
+                subTaskId: subtaskId,
+                status:"in_progress",
+                is_deleted:false
+            }
+        });
+
+        const in_review = await prisma.workItem.count({
+            where:{
+                subTaskId: subtaskId,
+                status:"in_review",
+                is_deleted:false
+            }
+        });
+
+        const progress = {}
+        progress.done = (done/total)*100
+        progress.in_progress = (in_progress/total)*100
+        progress.in_review = (in_review/total)*100
+
+        return res.status(200).json({
+            message:"progress of subtask",
+            data:progress
+        })
+
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server Error During SubtaskProgress"
+        })
+    }
+}
