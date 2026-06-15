@@ -5,7 +5,7 @@ export const createSubTask = async (req,res) => {
     try{
         const { taskId } = req.params
 
-        let { title,description,priority,dueDate } = req.body
+        let { title,description,priority,dueDate,assignedToId } = req.body
         const userId = req.user.userId;
 
         
@@ -19,7 +19,7 @@ export const createSubTask = async (req,res) => {
         priority = priority.toLowerCase()
         if(!allowedPriorities.includes(priority)){
             return res.status(400).json({
-                message:"Onlt low,medium,high and urgent priority is allowed"
+                message:"Only low,medium,high and urgent priority is allowed"
             })
         }
 
@@ -102,13 +102,33 @@ export const createSubTask = async (req,res) => {
         })        
         }
 
+        const checkTarget = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                workspaceId,
+                userId:assignedToId
+            }
+            }
+        })
+
+        if(!checkTarget){
+            return res.status(404).json({
+                message:"Can not find target user"
+            })
+        }
+
+        if(checkTarget.sys_role !== "employee"){
+            return res.status(403).json({
+                message:"Can not assign subtask to other than employee"
+            })
+        }
+
         const subTask = await prisma.subTask.create({
             data:{
                 title,
                 description: description || null,
                 priority,
                 dueDate: endDate,
-
                 task:{
                     connect:{
                         id: taskId
@@ -118,6 +138,12 @@ export const createSubTask = async (req,res) => {
                 assignedBy:{
                     connect:{
                         id: userId
+                    }
+                },
+
+                assignedTo:{
+                    connect:{
+                        id:assignedToId
                     }
                 }
             }

@@ -96,8 +96,7 @@ model User {
   projectDepartmentsAssigned ProjectDepartment[] @relation("ProjectDepartmentAssigner")
   tasksCreated               Task[]              @relation("TaskCreator")
   subtasksCreated            SubTask[]           @relation("SubTaskCreator")
-  workItemsAssigned          WorkItem[]          @relation("AssignedWorkItems")
-  workItemsCreated           WorkItem[]          @relation("CreatedWorkItems")
+  assignedSubTasks SubTask[] @relation("AssignedSubTasks")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -439,6 +438,7 @@ model Task {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
 
   subtasks SubTask[]    @relation("SubTaskOfTask")
 
@@ -456,6 +456,9 @@ model SubTask {
 
   taskId String
   task Task @relation("SubTaskOfTask",fields:[taskId],references:[id])
+
+  assignedToId String?
+  assignedTo User? @relation("AssignedSubTasks",fields:[assignedToId],references:[id])
 
   assignedById String
   assignedBy User @relation("SubTaskCreator",fields:[assignedById],references:[id])
@@ -477,6 +480,7 @@ model SubTask {
   workItems WorkItem[]
 
   @@index([taskId])
+  @@index([assignedToId])
   @@index([assignedById])
   @@index([status])
 }
@@ -489,12 +493,6 @@ model WorkItem {
 
   subTaskId String
   subTask SubTask @relation(fields:[subTaskId],references:[id])
-
-  assignedToId String
-  assignedTo User @relation("AssignedWorkItems",fields:[assignedToId],references:[id])
-
-  assignedById String
-  assignedBy User @relation("CreatedWorkItems",fields:[assignedById],references:[id])
 
   status TaskStatus @default(todo)
 
@@ -513,7 +511,5 @@ model WorkItem {
   updatedAt DateTime @updatedAt
 
   @@index([subTaskId])
-  @@index([assignedToId])
-  @@index([assignedById])
   @@index([status])
 }
