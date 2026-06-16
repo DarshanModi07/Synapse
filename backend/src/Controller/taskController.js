@@ -618,7 +618,10 @@ export const taskProgress = async (req,res) => {
         return res.status(200).json({
             message:"Team/task progress fetched",
             data:progress,
-            taskData
+            taskData,
+            done:workItemDone,
+            in_progress:workItemInProgress,
+            in_review:workItemInReview
         })
 
         

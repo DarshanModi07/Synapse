@@ -837,7 +837,11 @@ const checkSubTaskId = await prisma.subTask.findUnique({
         return res.status(200).json({
             message:"progress of subtask",
             data:progress,
-            subtask
+            subtask,
+            total,
+            done,
+            in_progress,
+            in_review
         })
 
     }

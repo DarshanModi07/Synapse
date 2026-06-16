@@ -316,3 +316,123 @@ export const removeDepartment = async (req,res) => {
         })
     }
 }
+
+export const progressDepartment = async (req,res) => {
+    try{
+        const { projectDepartmentId } = req.params
+
+        const userId = req.user.userId
+
+        if(!projectDepartmentId){
+            return res.status(400).json({
+                message:"project department not found"
+            })
+        }
+
+        const checkProjectDept = await prisma.projectDepartment.findUnique({
+            where:{
+                id:projectDepartmentId
+            }
+        })
+
+        if(!checkProjectDept){
+            return res.status.json({
+                message:"project department not found"
+            })
+        }
+
+        const data = await prisma.projectDepartment.findUnique({
+            where:{
+                id: projectDepartmentId
+            },
+            select:{
+                department:{
+                    select:{
+                        name:true,
+                        workspaceId:true
+                    }
+                },
+                projectTeams:{
+                    select:{
+                        tasks:{
+                            select:{
+                                subtasks:{
+                                    select:{
+                                        workItems:{
+                                            select:{
+                                                id:true,
+                                                status:true,
+                                                is_deleted:true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        const workspaceId = data?.department?.workspaceId
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not the member of this workspace"
+            })
+        }
+
+        const workItems = data.projectTeams.flatMap(team =>
+            team.tasks.flatMap(task =>
+                task.subtasks.flatMap(subtask =>
+                    subtask.workItems
+                )
+            )
+        );
+
+        const done = workItems.filter(
+            item => item.status === "done" && !item.is_deleted
+        ).length;
+
+        const inProgress = workItems.filter(
+            item => item.status === "in_progress" && !item.is_deleted
+        ).length;
+
+        const inReview = workItems.filter(
+            item => item.status === "in_review" && !item.is_deleted
+        ).length;
+
+        const total = workItems.filter(item => !item.is_deleted).length;
+
+        const progress = {}
+        progress.done = (done/total)*100
+        progress.inProgress = (inProgress/total)*100
+        progress.inReview = (inReview/total)*100
+    
+        return res.status(200).json({
+            message:"Department Progress Fetched",
+            data:progress,
+            name:data?.department?.name,
+            total,
+            done,
+            inProgress,
+            inReview
+        })
+
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server Error while progress department"
+        })
+    }
+}
