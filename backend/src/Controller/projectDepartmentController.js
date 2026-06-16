@@ -316,4 +316,3 @@ export const removeDepartment = async (req,res) => {
         })
     }
 }
-

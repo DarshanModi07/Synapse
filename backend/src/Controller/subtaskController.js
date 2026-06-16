@@ -704,40 +704,50 @@ export const subtaskProgress = async (req,res) => {
             });
         }
 
-        const checkSubTaskId = await prisma.subTask.findUnique({
-            where:{
-                id: subtaskId
-            },
-            include:{
-                task:{
-                    select:{
-                        id:true,
-                        title:true,
-                        description:true,
-                        priority:true,
-                        status:true,
-                        projectTeamId:true,
-                        createdBy:{
-                            select:{
-                                id:true,
-                                name:true,
-                                email:true
-                            }
-                        }
-                    }
-                },
-                assignedBy:{
-                    select:{
-                        id:true,
-                        name:true,
-                        email:true,
-                        avatar:true
+const checkSubTaskId = await prisma.subTask.findUnique({
+    where: {
+        id: subtaskId
+    },
+    select: {
+        id: true,
+        title: true,
+        description: true,
+        priority: true,
+        status: true,
+        is_deleted: true,
+        dueDate: true,
+        createdAt: true,
+
+        task: {
+            select: {
+                id: true,
+                title: true,
+                description: true,
+                priority: true,
+                status: true,
+                projectTeamId: true,
+                createdBy: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
                     }
                 }
             }
-        });
+        },
 
-        if(!checkSubTaskId){
+        assignedBy: {
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true
+            }
+        }
+    }
+});
+
+        if(!checkSubTaskId || checkSubTaskId.is_deleted){
             return res.status(404).json({
                 message:"Subtask not found"
             });
@@ -818,9 +828,16 @@ export const subtaskProgress = async (req,res) => {
         progress.in_progress = (in_progress/total)*100
         progress.in_review = (in_review/total)*100
 
+        const subtask = {}
+        subtask.title = checkSubTaskId.title
+        subtask.description = checkSubTaskId.description
+        subtask.priority = checkSubTaskId.priority
+        subtask.status = checkSubTaskId.status
+
         return res.status(200).json({
             message:"progress of subtask",
-            data:progress
+            data:progress,
+            subtask
         })
 
     }

@@ -285,7 +285,7 @@ export const updateTask = async (req,res) => {
             }
         })
 
-        if(!checkTaskId){
+        if(!checkTaskId || checkTaskId.is_deleted){
             return res.status(404).json({
                 message:"Task not found"
             })
@@ -387,7 +387,7 @@ export const deleteTask = async(req,res) => {
             }
         })
 
-        if(!checkTaskId){
+        if(!checkTaskId || checkTaskId.is_deleted){
             return res.status(404).json({
                 message:"Task not found"
             })
@@ -480,3 +480,153 @@ export const deleteTask = async(req,res) => {
     }
 }
 
+export const taskProgress = async (req,res) => {
+    try{
+
+        const { taskId } = req.params
+
+        const userId = req.user.userId
+
+        if(!taskId){
+            return res.status(404).json({
+                message:"credential needed"
+            })
+        }
+
+        const checkTaskId = await prisma.task.findUnique({
+            where:{
+                id:taskId
+            }
+        })
+
+        if(!checkTaskId || checkTaskId.is_deleted){
+            return res.status(404).json({
+                message:"Task not found"
+            })
+        }
+
+        const checkProjectTeam = await prisma.projectTeam.findUnique({
+            where:{
+                id: checkTaskId.projectTeamId
+            },
+            include:{
+                projectDepartment:{
+                    include:{
+                        department:{
+                            select:{
+                                workspaceId:true
+                            }
+                        }
+                    }
+                }
+            }
+        }) 
+
+        if(!checkProjectTeam){
+            return res.status(404).json({
+                message:"Project Team Not Found"
+            })
+        }
+
+        const workspaceId = checkProjectTeam.projectDepartment.department.workspaceId
+
+        if(!workspaceId){
+            return res.status(404).json({
+                message:"workspaceId not found"
+            })
+        }
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not the member of workspace"
+            })
+        }        
+
+        const task = await prisma.task.findUnique({
+            where:{
+                id: taskId
+            },
+            select:{
+                subtasks:{
+                    select:{
+                        id:true
+                    }
+                }
+            }
+        });
+
+        const subtaskIds = task.subtasks.map(st => st.id); 
+
+        let workItemTotal = await prisma.workItem.count({
+    where:{
+        subTaskId:{
+            in: subtaskIds
+        },
+        is_deleted:false
+    }
+})
+        let workItemDone = await prisma.workItem.count({
+    where:{
+        subTaskId:{
+            in: subtaskIds
+        },
+        status:"done",
+        is_deleted:false
+    }
+})
+        let workItemInReview = await prisma.workItem.count({
+    where:{
+        subTaskId:{
+            in: subtaskIds
+        },
+        status:"in_review",
+        is_deleted:false
+    }
+})
+        let workItemInProgress = await prisma.workItem.count({
+    where:{
+        subTaskId:{
+            in: subtaskIds
+        },
+        status:"in_progress",
+        is_deleted:false
+    }
+})
+
+        const progress = {}      
+        progress.done = (workItemDone/workItemTotal)*100
+        progress.in_progress = (workItemInProgress/workItemTotal)*100
+        progress.in_review = (workItemInReview/workItemTotal)*100
+
+        const taskData = {}
+        taskData.title = checkTaskId.title
+        taskData.description = checkTaskId.description
+        taskData.priority = checkTaskId.priority
+        taskData.status = checkTaskId.status
+
+
+
+        return res.status(200).json({
+            message:"Team/task progress fetched",
+            data:progress,
+            taskData
+        })
+
+        
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal server error during task progress"
+        })
+    }
+}
