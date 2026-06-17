@@ -38,13 +38,17 @@ enum InviteStatus {
 }
 
 enum notificationType {
-  mention
-  file_shared
-  role_change
-  invited_to_workspace
-  invited_to_team
-  ai_done
-  message_reaction
+  task_assigned
+
+  subtask_assigned
+  subtask_completed
+
+  workitem_assigned
+  workitem_in_review
+  workitem_approved
+  workitem_rejected
+
+  project_completed
 }
 
 enum ProjectStatus {

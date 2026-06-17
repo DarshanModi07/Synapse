@@ -1,4 +1,5 @@
 import prisma from "../DB/db.config.js"
+import { createNotification } from "../service/notification.service.js"
 
 export const createTask = async (req,res) => {
     try{
@@ -17,7 +18,10 @@ export const createTask = async (req,res) => {
             where:{
                 id: projectTeamId
             },
-            include:{
+            select:{
+                team:{
+                    leaderId:true
+                },
                 projectDepartment:{
                     include:{
                         department:{
@@ -93,6 +97,8 @@ export const createTask = async (req,res) => {
             });
         }
 
+
+
        const addTask = await prisma.task.create({
             data:{
                 title,
@@ -111,6 +117,15 @@ export const createTask = async (req,res) => {
                         id: userId
                     }
                 }
+            }
+        })
+
+        await createNotification({
+            userId:checkProjectTeam.team.leaderId,
+            type:"task_assigned",
+            payload:{
+                taskId,
+                title
             }
         })
 
@@ -574,7 +589,7 @@ export const taskProgress = async (req,res) => {
         is_deleted:false
     }
 })
-        let workItemDone = await prisma.workItem.count({
+        let done = await prisma.workItem.count({
     where:{
         subTaskId:{
             in: subtaskIds
@@ -583,7 +598,7 @@ export const taskProgress = async (req,res) => {
         is_deleted:false
     }
 })
-        let workItemInReview = await prisma.workItem.count({
+        let in_review = await prisma.workItem.count({
     where:{
         subTaskId:{
             in: subtaskIds
@@ -592,7 +607,7 @@ export const taskProgress = async (req,res) => {
         is_deleted:false
     }
 })
-        let workItemInProgress = await prisma.workItem.count({
+        let in_progress = await prisma.workItem.count({
     where:{
         subTaskId:{
             in: subtaskIds
@@ -601,11 +616,31 @@ export const taskProgress = async (req,res) => {
         is_deleted:false
     }
 })
+        let todo = await prisma.workItem.count({
+    where:{
+        subTaskId:{
+            in: subtaskIds
+        },
+        status:"todo",
+        is_deleted:false
+    }
+})
+        let cancelled = await prisma.workItem.count({
+    where:{
+        subTaskId:{
+            in: subtaskIds
+        },
+        status:"cancelled",
+        is_deleted:false
+    }
+})
 
         const progress = {}      
-        progress.done = (workItemDone/workItemTotal)*100
-        progress.in_progress = (workItemInProgress/workItemTotal)*100
-        progress.in_review = (workItemInReview/workItemTotal)*100
+        progress.done = Number(((done / total) * 100).toFixed(2));
+        progress.inProgress = Number(((in_progress / total) * 100).toFixed(2));
+        progress.inReview = Number(((in_review / total) * 100).toFixed(2));
+        progress.todo = Number(((todo / total) * 100).toFixed(2));
+        progress.cancelled = Number(((cancelled / total) * 100).toFixed(2));
 
         const taskData = {}
         taskData.title = checkTaskId.title
@@ -613,15 +648,15 @@ export const taskProgress = async (req,res) => {
         taskData.priority = checkTaskId.priority
         taskData.status = checkTaskId.status
 
-
-
         return res.status(200).json({
             message:"Team/task progress fetched",
             data:progress,
             taskData,
-            done:workItemDone,
-            in_progress:workItemInProgress,
-            in_review:workItemInReview
+            done,
+            in_progress,
+            in_review,
+            todo,
+            cancelled
         })
 
         

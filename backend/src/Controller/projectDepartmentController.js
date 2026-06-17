@@ -436,3 +436,225 @@ export const progressDepartment = async (req,res) => {
         })
     }
 }
+
+export const managerDashboard = async (req,res) => {
+    try{
+
+        const { projectDepartmentId } = req.params;
+        const userId = req.user.userId;
+
+        if(!projectDepartmentId){
+            return res.status(400).json({
+                message:"Credentials needed"
+            });
+        }
+
+        const data = await prisma.projectDepartment.findUnique({
+            where:{
+                id:projectDepartmentId
+            },
+            select:{
+                department:{
+                    select:{
+                        id:true,
+                        name:true,
+                        workspaceId:true
+                    }
+                },
+                projectTeams:{
+                    select:{
+                        id:true,
+                        team:{
+                            select:{
+                                id:true,
+                                name:true
+                            }
+                        },
+                        tasks:{
+                            select:{
+                                id:true,
+                                title:true,
+                                createdAt:true,
+                                subtasks:{
+                                    select:{
+                                        id:true,
+                                        workItems:{
+                                            select:{
+                                                status:true,
+                                                is_deleted:true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if(!data){
+            return res.status(404).json({
+                message:"Project Department not found"
+            });
+        }
+
+        const checkUser =
+            await prisma.workspaceMember.findUnique({
+                where:{
+                    workspaceId_userId:{
+                        workspaceId:
+                            data.department.workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not member of workspace"
+            });
+        }
+
+        if(
+            checkUser.sys_role !== "owner" &&
+            checkUser.sys_role !== "manager"
+        ){
+            return res.status(403).json({
+                message:"You are not allowed"
+            });
+        }
+
+        const teams =
+            data.projectTeams;
+
+        const tasks =
+            teams.flatMap(team =>
+                team.tasks
+            );
+
+        const subTasks =
+            tasks.flatMap(task =>
+                task.subtasks
+            );
+
+        const workItems =
+            subTasks.flatMap(subtask =>
+                subtask.workItems
+            );
+
+        const totalWorkItems =
+            workItems.filter(
+                item => !item.is_deleted
+            ).length;
+
+        const done =
+            workItems.filter(
+                item =>
+                    item.status === "done" &&
+                    !item.is_deleted
+            ).length;
+
+        const inProgress =
+            workItems.filter(
+                item =>
+                    item.status === "in_progress" &&
+                    !item.is_deleted
+            ).length;
+
+        const inReview =
+            workItems.filter(
+                item =>
+                    item.status === "in_review" &&
+                    !item.is_deleted
+            ).length;
+
+        const overall =
+            totalWorkItems === 0
+                ? 0
+                : Number(
+                    (
+                        done * 100 /
+                        totalWorkItems
+                    ).toFixed(2)
+                );
+
+        const teamProgress =
+            teams.map(team => {
+
+                const teamWorkItems =
+                    team.tasks.flatMap(task =>
+                        task.subtasks.flatMap(
+                            subtask =>
+                                subtask.workItems
+                        )
+                    );
+
+                const total =
+                    teamWorkItems.filter(
+                        item => !item.is_deleted
+                    ).length;
+
+                const completed =
+                    teamWorkItems.filter(
+                        item =>
+                            item.status === "done" &&
+                            !item.is_deleted
+                    ).length;
+
+                return {
+                    id:team.team.id,
+                    name:team.team.name,
+                    progress:
+                        total === 0
+                            ? 0
+                            : Number(
+                                (
+                                    completed *
+                                    100 /
+                                    total
+                                ).toFixed(2)
+                            )
+                };
+            });
+
+        return res.status(200).json({
+            message:"Department Dashboard Fetched",
+
+            department:data.department,
+
+            overview:{
+                teams:teams.length,
+                tasks:tasks.length,
+                subTasks:subTasks.length,
+                workItems:totalWorkItems
+            },
+
+            progress:{
+                overall,
+                done,
+                inProgress,
+                inReview
+            },
+
+            teams:teamProgress,
+
+            recentTasks:
+                tasks
+                    .sort(
+                        (a,b) =>
+                            new Date(b.createdAt) -
+                            new Date(a.createdAt)
+                    )
+                    .slice(0,5)
+        });
+
+    }
+    catch(err){
+        console.log(err);
+
+        return res.status(500).json({
+            message:"Internal Server Error while fetching manager dashboard"
+        });
+    }
+}

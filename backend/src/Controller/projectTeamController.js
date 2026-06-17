@@ -299,3 +299,197 @@ export const removeTeam = async (req, res) => {
     }
 };
 
+export const teamDashboard = async (req,res) => {
+    try{
+        const { projectTeamId } = req.params;
+        const userId = req.user.userId;
+
+        if(!projectTeamId){
+            return res.status(400).json({
+                message:"Credential needed"
+            });
+        }
+
+        const projectTeam = await prisma.projectTeam.findUnique({
+            where:{
+                id:projectTeamId
+            },
+            include:{
+                projectDepartment:{
+                    include:{
+                        department:{
+                            select:{
+                                workspaceId:true
+                            }
+                        }
+                    }
+                },
+                team:{
+                    select:{
+                        id:true,
+                        name:true
+                    }
+                }
+            }
+        });
+
+        if(!projectTeam){
+            return res.status(404).json({
+                message:"Project Team Not Found"
+            });
+        }
+
+        const workspaceId =
+            projectTeam.projectDepartment.department.workspaceId;
+
+        const checkUser =
+            await prisma.workspaceMember.findUnique({
+                where:{
+                    workspaceId_userId:{
+                        workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not member of workspace"
+            });
+        }
+
+        if(checkUser.sys_role === "employee"){
+            return res.status(403).json({
+                message:"You are not able to see this data"
+            })
+        }
+
+        const tasks = await prisma.task.findMany({
+            where:{
+                projectTeamId,
+                is_deleted:false
+            },
+            select:{
+                id:true,
+                title:true,
+                status:true,
+                priority:true,
+                createdAt:true
+            }
+        });
+
+        const taskIds = tasks.map(
+            task => task.id
+        );
+
+        const subTasks =
+            await prisma.subTask.findMany({
+                where:{
+                    taskId:{
+                        in:taskIds
+                    },
+                    is_deleted:false
+                },
+                select:{
+                    id:true,
+                    title:true,
+                    status:true,
+                    assignedTo:{
+                        select:{
+                            id:true,
+                            name:true
+                        }
+                    }
+                }
+            });
+
+        const subTaskIds =
+            subTasks.map(
+                subtask => subtask.id
+            );
+
+        const totalWorkItems =
+            await prisma.workItem.count({
+                where:{
+                    subTaskId:{
+                        in:subTaskIds
+                    },
+                    is_deleted:false
+                }
+            });
+
+        const completedWorkItems =
+            await prisma.workItem.count({
+                where:{
+                    subTaskId:{
+                        in:subTaskIds
+                    },
+                    status:"done",
+                    is_deleted:false
+                }
+            });
+
+        const progress =
+            totalWorkItems === 0
+                ? 0
+                : Number(
+                    (
+                        completedWorkItems *
+                        100 /
+                        totalWorkItems
+                    ).toFixed(2)
+                );
+
+        return res.status(200).json({
+            message:"Team dashboard fetched",
+
+            team:{
+                id:projectTeam.team.id,
+                name:projectTeam.team.name
+            },
+
+            tasks:{
+                total:tasks.length,
+                completed:
+                    tasks.filter(
+                        t => t.status === "done"
+                    ).length
+            },
+
+            subtasks:{
+                total:subTasks.length,
+                completed:
+                    subTasks.filter(
+                        st => st.status === "done"
+                    ).length
+            },
+
+            workItems:{
+                total:totalWorkItems,
+                completed:completedWorkItems
+            },
+
+            progress,
+
+            recentTasks:
+                tasks
+                .sort(
+                    (a,b) =>
+                    new Date(b.createdAt) -
+                    new Date(a.createdAt)
+                )
+                .slice(0,5),
+
+            recentSubTasks:
+                subTasks.slice(0,10)
+        });
+
+    }
+    catch(err){
+        console.log(err);
+
+        return res.status(500).json({
+            message:"Internal Server Error while fetching dashboard"
+        });
+    }
+};

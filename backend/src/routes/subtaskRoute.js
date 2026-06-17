@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { authMiddleware } from "../middlewares/authMiddleware.js"
-import { createSubTask, deleteSubTask, getAllSubTask, getOneSubTask, subtaskProgress, updateSubTask } from "../Controller/subtaskController.js"
+import { createSubTask, deleteSubTask, getAllSubTask, getOneSubTask, myDashboard, subtaskProgress, updateSubTask } from "../Controller/subtaskController.js"
 
 const router = Router()
 
@@ -10,5 +10,6 @@ router.get('/:subtaskId/getSubtask',authMiddleware,getOneSubTask)
 router.patch('/:subtaskId/update',authMiddleware,updateSubTask)
 router.delete('/:subtaskId/delete',authMiddleware,deleteSubTask)
 router.get('/:subtaskId/progress',authMiddleware,subtaskProgress)
+router.get('/dashboard/me',authMiddleware,myDashboard)
 
 export default router

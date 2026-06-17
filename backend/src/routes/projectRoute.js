@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from "../middlewares/authMiddleware.js"
-import { createProject, deleteProject, getAllProjects, getProject, updateProject } from "../Controller/projectController.js"
+import { createProject, deleteProject, getAllProjects, getProject, projectProgress, updateProject } from "../Controller/projectController.js"
 
 const router = Router();
 
@@ -9,5 +9,6 @@ router.get("/:projectId",authMiddleware, getProject)
 router.get("/:workspaceId/getAllProjects",authMiddleware,getAllProjects)
 router.patch("/:projectId/update",authMiddleware,updateProject)
 router.delete("/:projectId/delete",authMiddleware,deleteProject)
+router.get("/:projectId/progress",authMiddleware,projectProgress)
 
 export default router;

@@ -149,6 +149,15 @@ export const createSubTask = async (req,res) => {
             }
         })
 
+        await createNotification({
+            userId: assignedToId,
+            type: "subtask_assigned",
+            payload:{
+                subTaskId:subTask.id,
+                title
+            }
+        });
+
         return res.status(201).json({
             message:"sub task created",
             data:subTask
@@ -822,11 +831,27 @@ const checkSubTaskId = await prisma.subTask.findUnique({
                 is_deleted:false
             }
         });
+        const todo = await prisma.workItem.count({
+            where:{
+                subTaskId: subtaskId,
+                status:"todo",
+                is_deleted:false
+            }
+        });
+        const cancelled = await prisma.workItem.count({
+            where:{
+                subTaskId: subtaskId,
+                status:"cancelled",
+                is_deleted:false
+            }
+        });
 
         const progress = {}
-        progress.done = (done/total)*100
-        progress.in_progress = (in_progress/total)*100
-        progress.in_review = (in_review/total)*100
+        progress.done = Number(((done / total) * 100).toFixed(2));
+        progress.inProgress = Number(((inProgress / total) * 100).toFixed(2));
+        progress.inReview = Number(((inReview / total) * 100).toFixed(2));
+        progress.todo = Number(((todo / total) * 100).toFixed(2));
+        progress.cancelled = Number(((cancelled / total) * 100).toFixed(2));
 
         const subtask = {}
         subtask.title = checkSubTaskId.title
@@ -841,7 +866,9 @@ const checkSubTaskId = await prisma.subTask.findUnique({
             total,
             done,
             in_progress,
-            in_review
+            in_review,
+            todo,
+            cancelled
         })
 
     }
@@ -852,3 +879,162 @@ const checkSubTaskId = await prisma.subTask.findUnique({
         })
     }
 }
+
+export const myDashboard = async (req,res) => {
+    try{
+        const userId = req.user.userId;
+
+        const subTasks = await prisma.subTask.findMany({
+            where:{
+                assignedToId:userId,
+                is_deleted:false
+            },
+            select:{
+                id:true,
+                title:true,
+                priority:true,
+                status:true,
+                dueDate:true,
+                updatedAt:true
+            },
+            orderBy:{
+                updatedAt:"desc"
+            }
+        });
+
+        const subTaskIds = subTasks.map(
+            subtask => subtask.id
+        );
+
+        const totalSubTasks = subTasks.length;
+
+        const completedSubTasks = subTasks.filter(
+            subtask => subtask.status === "done"
+        ).length;
+
+        const inProgressSubTasks = subTasks.filter(
+            subtask => subtask.status === "in_progress"
+        ).length;
+
+        const inReviewSubTasks = subTasks.filter(
+            subtask => subtask.status === "in_review"
+        ).length;
+
+        const todoSubTasks = subTasks.filter(
+            subtask => subtask.status === "todo"
+        ).length;
+
+        const totalWorkItems = await prisma.workItem.count({
+            where:{
+                subTaskId:{
+                    in:subTaskIds
+                },
+                is_deleted:false
+            }
+        });
+
+        const doneWorkItems = await prisma.workItem.count({
+            where:{
+                subTaskId:{
+                    in:subTaskIds
+                },
+                status:"done",
+                is_deleted:false
+            }
+        });
+
+        const inProgressWorkItems = await prisma.workItem.count({
+            where:{
+                subTaskId:{
+                    in:subTaskIds
+                },
+                status:"in_progress",
+                is_deleted:false
+            }
+        });
+
+        const inReviewWorkItems = await prisma.workItem.count({
+            where:{
+                subTaskId:{
+                    in:subTaskIds
+                },
+                status:"in_review",
+                is_deleted:false
+            }
+        });
+
+        const todoWorkItems = await prisma.workItem.count({
+            where:{
+                subTaskId:{
+                    in:subTaskIds
+                },
+                status:"todo",
+                is_deleted:false
+            }
+        });
+
+        const progress =
+            totalWorkItems === 0
+                ? 0
+                : Number(
+                    (
+                        doneWorkItems * 100 /
+                        totalWorkItems
+                    ).toFixed(2)
+                );
+
+        const recentWorkItems = await prisma.workItem.findMany({
+            where:{
+                subTaskId:{
+                    in:subTaskIds
+                },
+                is_deleted:false
+            },
+            select:{
+                id:true,
+                title:true,
+                status:true,
+                priority:true,
+                updatedAt:true
+            },
+            orderBy:{
+                updatedAt:"desc"
+            },
+            take:10
+        });
+
+        return res.status(200).json({
+            message:"Dashboard fetched successfully",
+
+            progress,
+
+            subtasks:{
+                total:totalSubTasks,
+                completed:completedSubTasks,
+                in_progress:inProgressSubTasks,
+                in_review:inReviewSubTasks,
+                todo:todoSubTasks
+            },
+
+            workItems:{
+                total:totalWorkItems,
+                completed:doneWorkItems,
+                in_progress:inProgressWorkItems,
+                in_review:inReviewWorkItems,
+                todo:todoWorkItems
+            },
+
+            recentSubTasks:subTasks.slice(0,5),
+
+            recentWorkItems
+        });
+
+    }
+    catch(err){
+        console.log(err);
+
+        return res.status(500).json({
+            message:"Internal Server Error while fetching dashboard"
+        });
+    }
+};

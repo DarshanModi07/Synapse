@@ -481,4 +481,162 @@ export const deleteProject = async (req,res) => {
     }
 }
 
+export const projectProgress = async (req,res) => {
+    try{
+        const { projectId } = req.params
 
+        if(!projectId){
+            return res.status(400).json({
+                message:"Credentials needed"
+            })
+        }
+
+        const singleProject = await prisma.project.findUnique({
+            where:{
+                id:projectId
+            }
+        })
+
+        if(!singleProject || singleProject.is_deleted){
+            return res.status(404).json({
+                message:"Project Not Found"
+            })
+        }
+
+        const checkWorkspace = await prisma.workspace.findUnique({
+            where: {
+                id: singleProject.workspaceId
+            }
+        });
+
+        if (!checkWorkspace) {
+            return res.status(404).json({
+                message: "Workspace not found"
+            });
+        }
+
+        const checkUser = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId:singleProject.workspaceId,
+                    userId:req.user.userId
+                }
+            }
+        })
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are Not the Member of the Workspace"
+            })
+        }
+
+        const data = await prisma.project.findUnique({
+            where:{
+                id:projectId
+            },
+            select:{
+                name:true,
+                is_deleted:true,
+                status:true,
+                dueDate:true,
+                projectDepartments:{
+                    select:{
+                        projectTeams:{
+                            select:{
+                                tasks:{
+                                    select:{
+                                        subtasks:{
+                                            select:{
+                                                workItems:{
+                                                    select:{
+                                                        id:true,
+                                                        title:true,
+                                                        is_deleted:true,
+                                                        priority:true,
+                                                        status:true
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        const workItems = data.projectDepartments.flatMap(projectDepartment =>
+            projectDepartment.projectTeams.flatMap(team =>
+                team.tasks.flatMap(task =>
+                    task.subtasks.flatMap(subtask =>
+                        subtask.workItems
+                    )
+                )
+            )
+        );
+
+        const activeWorkItems = workItems.filter(item => !item.is_deleted);
+
+        const total = activeWorkItems.length;
+
+        if(total === 0){
+            return res.status(200).json({
+                message:"Project Progress Fetched",
+                data:{
+                    done:0,
+                    inProgress:0,
+                    inReview:0
+                },
+                name:data.name,
+                dueDate:data.dueDate
+            });
+        }
+
+        const done = activeWorkItems.filter(
+            item => item.status === "done"
+        ).length;
+
+        const inProgress = activeWorkItems.filter(
+            item => item.status === "in_progress"
+        ).length;
+
+        const inReview = activeWorkItems.filter(
+            item => item.status === "in_review"
+        ).length;
+
+        const todo = activeWorkItems.filter(
+            item => item.status === "todo"
+        ).length;
+
+        const cancelled = activeWorkItems.filter(
+            item => item.status === "cancelled"
+        ).length;
+
+        const progress = {}
+        progress.done = Number(((done / total) * 100).toFixed(2));
+        progress.inProgress = Number(((inProgress / total) * 100).toFixed(2));
+        progress.inReview = Number(((inReview / total) * 100).toFixed(2));
+        progress.todo = Number(((todo / total) * 100).toFixed(2));
+        progress.cancelled = Number(((cancelled / total) * 100).toFixed(2));
+
+        return res.status(200).json({
+            message:"Project Progress Fetched",
+            data:progress,
+            name:data.name,
+            todo,
+            inProgress,
+            inReview,
+            todo,
+            cancelled,
+            dueDate:data.dueDate
+        })
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({
+            message:"Internal Server error during fetching project progress"
+        })
+    }
+}

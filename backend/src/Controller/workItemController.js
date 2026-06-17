@@ -1,6 +1,4 @@
-import { stat } from "node:fs"
 import prisma from "../DB/db.config.js"
-import { act } from "react"
 
 export const createWorkItem = async (req,res) => {
     try{
@@ -409,8 +407,7 @@ export const updateWorkItemEmployee = async (req,res) => {
 
         const employeeAllowedStatus = [
             "in_progress",
-            "in_review",
-            "done"
+            "in_review"
         ];
 
         if(!status || !employeeAllowedStatus.includes(status)){
@@ -528,6 +525,16 @@ const existingWorkItem = await prisma.workItem.findUnique({
             }
         })
 
+        if(status === "done"){
+                await createNotification({
+                userId: existingWorkItem.subTask.assignedById,
+                type: "workitem_in_review",
+                payload:{
+                    workItemId
+                }   
+            });
+        }
+
         return res.status(200).json({
             message:"Work item updated successfully",
             data:update
@@ -546,14 +553,14 @@ export const updateWorkItemTeamLead = async (req,res) => {
     try{
         const { workItemId } = req.params
 
-        let { title,description,priority,estimatedHours,is_deleted } = req.body
+        let { title,description,priority,estimatedHours,is_deleted,status } = req.body
         title = title?.trim()
         description = description?.trim()
         priority = priority?.trim()?.toLowerCase()
         estimatedHours = Number(estimatedHours)
         is_deleted = is_deleted || false
 
-        if(!title || !priority || !estimatedHours || !workItemId){
+        if(!title || !priority || !estimatedHours || !workItemId || !status){
             return res.status(400).json({
                 message:"Credential Needed"
             })
@@ -585,43 +592,60 @@ export const updateWorkItemTeamLead = async (req,res) => {
             })
         }
 
+        const teamLeadAllowedStatus = [
+            "todo",
+            "in_progress",
+            "in_review",
+            "cancelled",
+            "done"
+        ];
+        
+        status = status.toLowerCase()
+        if(!teamLeadAllowedStatus.includes(status)){
+            return res.status(400).json({
+                message:"Invalid status"
+            })
+        }
+
         if(isNaN(estimatedHours) || estimatedHours <= 0){
             return res.status(400).json({
                 message:"Enter proper actual hours"
             });
         }
 
-          if(!workItemId){
+        if(!workItemId){
             return res.status(400).json({
                 message:"Credential needed"
             });
         }
 
-const existingWorkItem = await prisma.workItem.findUnique({
-    where:{
-        id:workItemId
-    },
-    select:{
-        id:true,
-        status:true,
-        actualHours:true,
-        is_deleted:true,
-
-        subTask:{
+        const existingWorkItem = await prisma.workItem.findUnique({
+            where:{
+                id:workItemId
+            },
             select:{
                 id:true,
-                assignedToId:true,
-                assignedById:true,
+                status:true,
+                actualHours:true,
+                is_deleted:true,
 
-                task:{
+                subTask:{
                     select:{
-                        projectTeam:{
+                        id:true,
+                        assignedToId:true,
+                        assignedById:true,
+
+                        task:{
                             select:{
-                                projectDepartment:{
+                                projectTeam:{
                                     select:{
-                                        department:{
+                                        projectDepartment:{
                                             select:{
-                                                workspaceId:true
+                                                department:{
+                                                    select:{
+                                                        workspaceId:true
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -631,9 +655,7 @@ const existingWorkItem = await prisma.workItem.findUnique({
                     }
                 }
             }
-        }
-    }
-});
+        });
 
         if(!existingWorkItem || existingWorkItem.is_deleted){
             return res.status(404).json({
@@ -689,6 +711,25 @@ const existingWorkItem = await prisma.workItem.findUnique({
                 estimatedHours
             }
         })
+
+        if(status === "done"){
+            await createNotification({
+                userId: existingWorkItem.subTask.assignedToId,
+                type: "workitem_approved",
+                payload:{
+                    workItemId
+                }
+            });
+        }
+        else if(status == "in_progress"){
+            await createNotification({
+                userId: existingWorkItem.subTask.assignedToId,
+                type: "workitem_approved",
+                payload:{
+                    workItemId
+                }
+            });
+        }
 
         return res.status(200).json({
             message:"Work item updated successfully",
@@ -812,3 +853,4 @@ export const deleteWorkItem = async (req,res) => {
         })
     }
 }
+

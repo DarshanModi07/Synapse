@@ -900,3 +900,205 @@ export const changeRole = async (req,res) => {
         })
     }
 };
+
+export const ownerDashboard = async (req,res) => {
+    try{
+
+        const { workspaceId } = req.params;
+        const userId = req.user.userId;
+
+        if(!workspaceId){
+            return res.status(400).json({
+                message:"Workspace Id required"
+            });
+        }
+
+        const checkUser =
+            await prisma.workspaceMember.findUnique({
+                where:{
+                    workspaceId_userId:{
+                        workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if(!checkUser){
+            return res.status(403).json({
+                message:"You are not member of workspace"
+            });
+        }
+
+        if(checkUser.sys_role !== "owner"){
+            return res.status(403).json({
+                message:"Only owner can access dashboard"
+            });
+        }
+
+        const totalDepartments =
+            await prisma.department.count({
+                where:{
+                    workspaceId,
+                    is_deleted:false
+                }
+            });
+
+        const totalTeams =
+            await prisma.team.count({
+                where:{
+                    department:{
+                        workspaceId
+                    },
+                    is_deleted:false
+                }
+            });
+
+        const totalProjects =
+            await prisma.project.count({
+                where:{
+                    workspaceId,
+                    is_deleted:false
+                }
+            });
+
+        const tasks =
+            await prisma.task.findMany({
+                where:{
+                    is_deleted:false,
+                    projectTeam:{
+                        projectDepartment:{
+                            department:{
+                                workspaceId
+                            }
+                        }
+                    }
+                },
+                select:{
+                    id:true
+                }
+            });
+
+        const taskIds = tasks.map(
+            task => task.id
+        );
+
+        const subTasks =
+            await prisma.subTask.findMany({
+                where:{
+                    taskId:{
+                        in:taskIds
+                    },
+                    is_deleted:false
+                },
+                select:{
+                    id:true
+                }
+            });
+
+        const subTaskIds =
+            subTasks.map(
+                subtask => subtask.id
+            );
+
+        const totalWorkItems =
+            await prisma.workItem.count({
+                where:{
+                    subTaskId:{
+                        in:subTaskIds
+                    },
+                    is_deleted:false
+                }
+            });
+
+        const done =
+            await prisma.workItem.count({
+                where:{
+                    subTaskId:{
+                        in:subTaskIds
+                    },
+                    status:"done",
+                    is_deleted:false
+                }
+            });
+
+        const inProgress =
+            await prisma.workItem.count({
+                where:{
+                    subTaskId:{
+                        in:subTaskIds
+                    },
+                    status:"in_progress",
+                    is_deleted:false
+                }
+            });
+
+        const inReview =
+            await prisma.workItem.count({
+                where:{
+                    subTaskId:{
+                        in:subTaskIds
+                    },
+                    status:"in_review",
+                    is_deleted:false
+                }
+            });
+
+        const progress =
+            totalWorkItems === 0
+                ? 0
+                : Number(
+                    (
+                        done * 100 /
+                        totalWorkItems
+                    ).toFixed(2)
+                );
+
+        const recentProjects =
+            await prisma.project.findMany({
+                where:{
+                    workspaceId,
+                    is_deleted:false
+                },
+                orderBy:{
+                    createdAt:"desc"
+                },
+                take:5,
+                select:{
+                    id:true,
+                    name:true,
+                    status:true,
+                    dueDate:true
+                }
+            });
+
+        return res.status(200).json({
+            message:"Owner dashboard fetched",
+
+            overview:{
+                departments:totalDepartments,
+                teams:totalTeams,
+                projects:totalProjects,
+                tasks:tasks.length,
+                subtasks:subTasks.length,
+                workItems:totalWorkItems
+            },
+
+            progress:{
+                done,
+                inProgress,
+                inReview,
+                overallProgress:progress
+            },
+
+            recentProjects
+        });
+
+    }
+    catch(err){
+        console.log(err);
+
+        return res.status(500).json({
+            message:"Internal Server Error while fetching dashboard"
+        });
+    }
+}

@@ -5,16 +5,24 @@ export const getAllNotifications = async (req,res) => {
     try{
         
         const userId = req.user.userId
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 20;
+        const skip = (page - 1) * limit;
 
         const getNotification = await prisma.notification.findMany({
             where:{
                 userId,
                 is_read:false
+            },
+            skip,
+            take:limit,
+            orderBy:{
+                createdAt:"desc"
             }
         })
 
         if(getNotification.length == 0){
-            return res.status(400).json({
+            return res.status(200).json({
                 message:"There is No Notification for You",
                 data:getNotification
             })
@@ -113,6 +121,32 @@ export const markAllNotificationRead = async (req,res) => {
 
         return res.status(500).json({
             message:"Internal Server Error while marking all notifications read"
+        });
+    }
+}
+
+export const getUnreadCount = async (req,res) => {
+    try{
+
+        const userId = req.user.userId;
+
+        const count = await prisma.notification.count({
+            where:{
+                userId,
+                is_read:false
+            }
+        });
+
+        return res.status(200).json({
+            count
+        });
+
+    }
+    catch(err){
+        console.log(err);
+
+        return res.status(500).json({
+            message:"Internal Server Error"
         });
     }
 }
