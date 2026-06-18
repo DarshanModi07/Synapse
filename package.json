@@ -1,5 +1,5 @@
 {
-  "name": "synapseos",
+  "name": "synapse",
   "version": "1.0.0",
   "description": "",
   "main": "backend/src/server.js",
@@ -22,7 +22,8 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.21.0",
-    "slugify": "^1.6.9"
+    "slugify": "^1.6.9",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
