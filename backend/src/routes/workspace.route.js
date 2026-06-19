@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { createWorkSpace,getUserWorkSpaces,getWorkspace,inviteUser , acceptInvite,rejectInvite,getWorkspaceMembers,removeMember,changeRole, ownerDashboard} from '../Controller/workSpaceController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { createWorkSpace,getUserWorkSpaces,getWorkspace,inviteUser , acceptInvite,rejectInvite,getWorkspaceMembers,removeMember,changeRole, ownerDashboard} from '../controllers/workSpace.controller.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 

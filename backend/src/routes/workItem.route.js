@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { authMiddleware } from "../middlewares/authMiddleware.js"
-import { createWorkItem, deleteWorkItem, getAllWorkItems, getAWorkItem, updateWorkItemEmployee, updateWorkItemTeamLead } from "../Controller/workItemController.js"
+import { authMiddleware } from "../middlewares/auth.middleware.js"
+import { createWorkItem, deleteWorkItem, getAllWorkItems, getAWorkItem, updateWorkItemEmployee, updateWorkItemTeamLead } from "../controllers/workItem.controller.js"
 
 const router = Router()
 

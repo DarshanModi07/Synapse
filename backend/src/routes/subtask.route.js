@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { authMiddleware } from "../middlewares/authMiddleware.js"
-import { createSubTask, deleteSubTask, getAllSubTask, getOneSubTask, myDashboard, subtaskProgress, updateSubTask } from "../Controller/subtaskController.js"
+import { authMiddleware } from "../middlewares/auth.middleware.js"
+import { createSubTask, deleteSubTask, getAllSubTask, getOneSubTask, myDashboard, subtaskProgress, updateSubTask } from "../controllers/subtask.controller.js"
 
 const router = Router()
 

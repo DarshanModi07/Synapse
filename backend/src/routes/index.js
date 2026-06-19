@@ -1,16 +1,16 @@
 import { Router } from 'express';
-import authRouter from './authRoute.js';
-import userRouter from "./userRoute.js"
-import workspaceRouter from "./workspaceRoute.js"
-import notificationRouter from './notificationRoute.js';
-import departmentRouter from "./departmentRoute.js"
-import teamRouter from "./teamRoute.js"
-import projectRouter from "./projectRoute.js"
-import projectTeamRouter from "./projectTeamRoute.js"
-import projectDepartmentRouter from "./projectDepartmentRoute.js"
-import projectTaskRouter from "./taskRoute.js"
-import projectSubTaskRouter from "./subtaskRoute.js"
-import projectWorkItemRouter from "./workItemRoute.js"
+import authRouter from './auth.route.js';
+import userRouter from "./user.route.js"
+import workspaceRouter from "./workspace.route.js"
+import notificationRouter from './notification.route.js';
+import departmentRouter from "./department.route.js"
+import teamRouter from "./team.route.js"
+import projectRouter from "./project.route.js"
+import projectTeamRouter from "./projectTeam.route.js"
+import projectDepartmentRouter from "./projectDepartment.route.js"
+import projectTaskRouter from "./task.route.js"
+import projectSubTaskRouter from "./subtask.route.js"
+import projectWorkItemRouter from "./workItem.route.js"
 
 const router = Router();
 

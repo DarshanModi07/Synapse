@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { createDepartment , deleteDepartment, getAllDepartment, updateDepartment} from '../Controller/departmentController.js';
-import { authMiddleware } from "../middlewares/authMiddleware.js"
+import { createDepartment , deleteDepartment, getAllDepartment, updateDepartment} from '../controllers/department.controller.js';
+import { authMiddleware } from "../middlewares/auth.middleware.js"
 
 const router = Router();
 
