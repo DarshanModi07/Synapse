@@ -14,25 +14,27 @@ export const createTask = async (req,res) => {
             })
         }
 
-        const checkProjectTeam = await prisma.projectTeam.findUnique({
-            where:{
-                id: projectTeamId
-            },
+const checkProjectTeam = await prisma.projectTeam.findUnique({
+    where:{
+        id: projectTeamId
+    },
+    select:{
+        team:{
             select:{
-                team:{
-                    leaderId:true
-                },
-                projectDepartment:{
-                    include:{
-                        department:{
-                            select:{
-                                workspaceId:true
-                            }
-                        }
+                leaderId:true
+            }
+        },
+        projectDepartment:{
+            include:{
+                department:{
+                    select:{
+                        workspaceId:true
                     }
                 }
             }
-        }) 
+        }
+    }
+}) 
 
         if(!checkProjectTeam){
             return res.status(404).json({
@@ -124,8 +126,8 @@ export const createTask = async (req,res) => {
             userId:checkProjectTeam.team.leaderId,
             type:"task_assigned",
             payload:{
-                taskId,
-                title
+                taskId:addTask.id,
+                title:addTask.title
             }
         })
 

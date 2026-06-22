@@ -1,7 +1,7 @@
 import prisma from "../DB/db.config.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { generateAccessToken, generateRefreshToken , createAuthSession } from "../utils/tokenHelperFunc.js  "
+import { generateAccessToken, generateRefreshToken , createAuthSession } from "../utils/tokenHelperFunc.js "
 
 export const registerUser = async (req, res) => {
     try {
@@ -35,15 +35,10 @@ export const registerUser = async (req, res) => {
                 }
             })
 
-        console.log("User created");
-        console.log(createdUser);
-
         const accessToken = await createAuthSession(
             createdUser,
             res
         );
-
-console.log("Session created");
 
         return res.status(201).json({
             message: "User Registered Successfully",

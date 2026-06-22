@@ -1,27 +1,29 @@
-import cloudinary
-from "../config/cloudinary.js";
+import cloudinary from "../config/cloudinary.js";
 
-export const uploadToCloudinary =
-(fileBuffer)=>{
-
+export const uploadToCloudinary = (
+    fileBuffer,
+    folder
+)=>{
     return new Promise(
         (resolve,reject)=>{
 
             cloudinary.uploader
                 .upload_stream(
                     {
-                        folder:"avatars"
+                        folder
                     },
                     (err,result)=>{
 
                         if(err){
-                            reject(err);
+                            return reject(err);
                         }
 
                         resolve(result);
+
                     }
                 )
                 .end(fileBuffer);
+
         }
     );
-}
+};

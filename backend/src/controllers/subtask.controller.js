@@ -1,5 +1,6 @@
 import { use } from "react";
 import prisma from "../DB/db.config.js"
+import { createNotification } from "../service/notification.service.js";
 
 export const createSubTask = async (req,res) => {
     try{
@@ -117,7 +118,7 @@ export const createSubTask = async (req,res) => {
             })
         }
 
-        if(checkTarget.sys_role !== "employee"){
+        if(checkTarget.sys_role !== "employee" && checkTarget.sys_role !== "team_lead"){
             return res.status(403).json({
                 message:"Can not assign subtask to other than employee"
             })

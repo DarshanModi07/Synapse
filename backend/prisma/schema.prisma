@@ -113,7 +113,7 @@ model Workspace {
   name String
   slug String  @unique
   logo String?
-
+  description String
   owner   User   @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   ownerId String
 
@@ -134,7 +134,7 @@ model Workspace {
 model WorkspaceMember {
   id        String   @id @default(cuid())
   sys_role  SysRole  @default(employee)
-  work_role String?
+  work_role String
   joinedAt  DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -154,7 +154,7 @@ model WorkspaceInvite {
   workspaceId   String
   email         String
   sys_role      SysRole
-  work_role     String?
+  work_role     String
   token         String       @unique
   invitedByUser User         @relation("InvitedBy", fields: [invitedBy], references: [id])
   invitedBy     String

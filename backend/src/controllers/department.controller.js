@@ -146,127 +146,136 @@ export const getAllDepartment = async (req, res) => {
     }
 };
 
-export const updateDepartment = async (req,res) => {
-    try{
-        const { departmentId } = req.params
-        let { name,managerId,is_deleted } = req.body
-        const userId = req.user.userId
+export const updateDepartment = async (req, res) => {
+    try {
+        const { departmentId } = req.params;
+        let { name, managerId, is_deleted } = req.body;
+        const userId = req.user.userId;
 
-        if(!departmentId){
+        if (!departmentId) {
             return res.status(400).json({
-                message:"Credentials needed"
-            })
+                message: "Department Id is required"
+            });
         }
 
-        const checkDepartment = await prisma.department.findUnique({
-            where:{
-                id:departmentId
+        const department = await prisma.department.findUnique({
+            where: {
+                id: departmentId
             }
-        }) 
+        });
 
-        if(!checkDepartment){
+        if (!department) {
             return res.status(404).json({
-                message:"No Department Found"
-            })
+                message: "Department not found"
+            });
         }
 
-        if(managerId){
-            const checkManager = await prisma.workspaceMember.findFirst({
-                where:{
-                    workspaceId: checkDepartment.workspaceId,
-                    userId: managerId
+        const workspaceMember = await prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId: department.workspaceId,
+                    userId
                 }
-            })
-    
-            if(!checkManager){
-                return res.status(400).json({
-                    message:"User not Found"
-                })
             }
+        });
 
-            if(checkManager.sys_role == "employee"){
-                return res.status(403).json({
-                    message:"Employee can not become manager"
-                })
-            }
-
-            const updateManager = await prisma.workspaceMember.update({
-                where:{
-                    workspaceId_userId:{
-                        workspaceId,
-                        userId
-                    }
-                },
-                    data:{
-                        sys_role:"manager"
-                    }
-            })
-        }
-
-        const findUser = await prisma.workspaceMember.findFirst({
-            where:{
-                workspaceId:checkDepartment.workspaceId,
-                userId
-            }
-        })
-
-        if(!findUser){
+        if (!workspaceMember) {
             return res.status(403).json({
-                message:"You are not the Member of this Workspace"
-            })
+                message: "You are not a member of this workspace"
+            });
         }
 
-        if(findUser.sys_role != "owner" && findUser.sys_role != "manager"){
+        if (workspaceMember.sys_role !== "owner") {
             return res.status(403).json({
-                message:"You can not modify the Department Data only Owner and Manager can"
-            })
-        }
-
-        if(checkDepartment.name == name && checkDepartment.managerId == managerId && checkDepartment.is_deleted == is_deleted){
-            return res.status(400).json({
-                message:"No Changes Have made"
-            })
+                message: "Only workspace owner can update department"
+            });
         }
 
         const updateData = {};
 
-        if(name){
-            updateData.name = name.trim();
+        if (name) {
+            const trimmedName = name.trim();
+
+            if (trimmedName.length < 2) {
+                return res.status(400).json({
+                    message: "Department name is too short"
+                });
+            }
+
+            updateData.name = trimmedName;
         }
 
-        if(managerId){
+        if (managerId) {
+
+            const managerMember =
+                await prisma.workspaceMember.findUnique({
+                    where: {
+                        workspaceId_userId: {
+                            workspaceId: department.workspaceId,
+                            userId: managerId
+                        }
+                    }
+                });
+
+            if (!managerMember) {
+                return res.status(404).json({
+                    message: "Manager not found in workspace"
+                });
+            }
+
+            if (managerMember.sys_role === "employee") {
+                return res.status(403).json({
+                    message: "Employee cannot be assigned as manager"
+                });
+            }
+
+            await prisma.workspaceMember.update({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: department.workspaceId,
+                        userId: managerId
+                    }
+                },
+                data: {
+                    sys_role: "manager"
+                }
+            });
+
             updateData.managerId = managerId;
         }
 
-        if(typeof is_deleted === "boolean"){
+        if (typeof is_deleted === "boolean") {
             updateData.is_deleted = is_deleted;
-
-            if(is_deleted){
-                updateData.deletedAt = new Date();
-            }
+            updateData.deletedAt = is_deleted ? new Date() : null;
         }
 
-        const updateDept = await prisma.department.update({
-            where:{
-                id:departmentId,
-            },
-            data:updateData,
-            manager:updateManager
-        })
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                message: "No changes provided"
+            });
+        }
+
+        const updatedDepartment =
+            await prisma.department.update({
+                where: {
+                    id: departmentId
+                },
+                data: updateData
+            });
 
         return res.status(200).json({
-            message:"Department data modified",
-            data:updateDept
-        })
+            message: "Department updated successfully",
+            data: updatedDepartment
+        });
 
+    } catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal Server Error during updating department"
+        });
     }
-    catch(err){
-        console.log(err);
-        res.status(500).json({
-            message:"Internal Server Error during updating department"
-        })
-    }
-}
+};
 
 export const deleteDepartment = async (req,res) => {
     try{
