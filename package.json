@@ -26,7 +26,8 @@
     "openai": "^6.44.0",
     "pg": "^8.21.0",
     "slugify": "^1.6.9",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",

@@ -297,7 +297,17 @@ export const inviteUser = async (req,res) => {
 
 
 
-        const inviterMembership = findWorkspace.workspaceMembers[0]
+        const inviterMembership = await prisma.workspaceMember.findUnique({
+            where:{
+                workspaceId_userId:{
+                    workspaceId,
+                    userId:invitedBy
+                }
+            },
+            select:{
+                sys_role:true
+            }
+        })
 
         const allowedRoles = ["owner","manager"]
 

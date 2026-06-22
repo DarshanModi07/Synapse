@@ -498,7 +498,7 @@ export const addTeamMember = async (req,res) => {
             });
         }
 
-        if (currentUser.sys_role !== "owner" && currentUser.sys_role !== "manager") {
+        if (currentUser.sys_role === "employee") {
             return res.status(403).json({
                 message: "Only Owner and Manager can add teamMembers"
             });

@@ -1,7 +1,7 @@
 import dotenv from "dotenv"
+import { createServer } from "http"
 import app from "./app.js"
-
-const PORT = process.env.PORT || 8080
+import { initSocket } from "./src/socket/socket.js"
 
 dotenv.config({
     path: "./backend/.env"
@@ -9,6 +9,11 @@ dotenv.config({
 
 console.log(process.cwd());
 
-app.listen(PORT,()=>{
-    console.log("connected to PORT : ",PORT)
+const PORT = process.env.PORT || 8080
+const httpServer = createServer(app)
+
+initSocket(httpServer)
+
+httpServer.listen(PORT, () => {
+    console.log("connected to PORT : ", PORT)
 })
