@@ -1,4 +1,14 @@
 import prisma from "../DB/db.config.js";
+import { decrypt } from "../config/encryption.js";
+
+const decryptMessage = (message) => ({
+    ...message,
+    content: decrypt(message.content),
+    replies: message.replies?.map(r => ({
+        ...r,
+        content: decrypt(r.content)
+    })) ?? []
+});
 
 export const getMessages = async (req, res) => {
     try {
@@ -68,9 +78,12 @@ export const getMessages = async (req, res) => {
             ? messages[messages.length - 1].createdAt.toISOString()
             : null;
 
+        // decrypt all messages and their replies before returning
+        const decrypted = messages.map(decryptMessage).reverse();
+
         return res.status(200).json({
             message: "Messages fetched",
-            data: messages.reverse(),
+            data: decrypted,
             nextCursor
         });
 
@@ -127,9 +140,15 @@ export const getThreadReplies = async (req, res) => {
             orderBy: { createdAt: "asc" }
         });
 
+        // decrypt each reply before returning
+        const decrypted = replies.map(r => ({
+            ...r,
+            content: decrypt(r.content)
+        }));
+
         return res.status(200).json({
             message: "Replies fetched",
-            data: replies
+            data: decrypted
         });
 
     } catch (err) {

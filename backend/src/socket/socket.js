@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import prisma from "../DB/db.config.js";
+import { encrypt, decrypt } from "../config/encryption.js";
 
 let io;
 
@@ -52,7 +53,6 @@ export const initSocket = (httpServer) => {
         socket.join(socket.user.userId);
 
         // join a channel room
-        // frontend emits this after opening a channel
         socket.on("join_channel", async ({ channelId }) => {
             try {
                 const channel = await prisma.channel.findUnique({
@@ -126,13 +126,11 @@ export const initSocket = (httpServer) => {
                     return;
                 }
 
-                // announcement channels — only team lead can send
                 if (channel.type === "announcement" && !isLeader) {
                     socket.emit("error", { message: "Only team lead can send in announcement channels" });
                     return;
                 }
 
-                // if reply, verify parent belongs to same channel
                 if (parentId) {
                     const parent = await prisma.message.findUnique({
                         where: { id: parentId }
@@ -144,9 +142,12 @@ export const initSocket = (httpServer) => {
                     }
                 }
 
+                // encrypt before saving to DB
+                const encryptedContent = encrypt(content.trim());
+
                 const message = await prisma.message.create({
                     data: {
-                        content: content.trim(),
+                        content: encryptedContent,
                         channelId,
                         senderId: socket.user.userId,
                         parentId: parentId ?? null
@@ -161,9 +162,19 @@ export const initSocket = (httpServer) => {
                     }
                 });
 
-                io.to(channelId).emit("new_message", message);
+                // decrypt before emitting to clients
+                const payload = {
+                    ...message,
+                    content: decrypt(message.content),
+                    parent: message.parent
+                        ? { ...message.parent, content: decrypt(message.parent.content) }
+                        : null
+                };
+
+                io.to(channelId).emit("new_message", payload);
 
             } catch (err) {
+                console.log(err);
                 socket.emit("error", { message: "Failed to send message" });
             }
         });
@@ -190,10 +201,13 @@ export const initSocket = (httpServer) => {
                     return;
                 }
 
+                // encrypt updated content before saving
+                const encryptedContent = encrypt(content.trim());
+
                 const updated = await prisma.message.update({
                     where: { id: messageId },
                     data: {
-                        content: content.trim(),
+                        content: encryptedContent,
                         is_edited: true,
                         editedAt: new Date()
                     },
@@ -204,9 +218,16 @@ export const initSocket = (httpServer) => {
                     }
                 });
 
-                io.to(message.channelId).emit("message_edited", updated);
+                // decrypt before emitting
+                const payload = {
+                    ...updated,
+                    content: decrypt(updated.content)
+                };
+
+                io.to(message.channelId).emit("message_edited", payload);
 
             } catch (err) {
+                console.log(err);
                 socket.emit("error", { message: "Failed to edit message" });
             }
         });
@@ -231,7 +252,6 @@ export const initSocket = (httpServer) => {
                 const isOwner = message.senderId === socket.user.userId;
                 const isLeader = message.channel.team.leaderId === socket.user.userId;
 
-                // sender can delete own message, team lead can delete any message
                 if (!isOwner && !isLeader) {
                     socket.emit("error", { message: "Not allowed" });
                     return;
@@ -245,14 +265,18 @@ export const initSocket = (httpServer) => {
                     }
                 });
 
-                io.to(message.channelId).emit("message_deleted", { messageId, channelId: message.channelId });
+                io.to(message.channelId).emit("message_deleted", {
+                    messageId,
+                    channelId: message.channelId
+                });
 
             } catch (err) {
+                console.log(err);
                 socket.emit("error", { message: "Failed to delete message" });
             }
         });
 
-        // add or remove a reaction (toggle)
+        // toggle reaction
         socket.on("toggle_reaction", async ({ messageId, emoji }) => {
             try {
                 if (!emoji) {
@@ -308,11 +332,12 @@ export const initSocket = (httpServer) => {
                 }
 
             } catch (err) {
+                console.log(err);
                 socket.emit("error", { message: "Failed to toggle reaction" });
             }
         });
 
-        // typing indicator
+        // typing indicators — no content, no encryption needed
         socket.on("typing_start", ({ channelId }) => {
             socket.to(channelId).emit("user_typing", {
                 userId: socket.user.userId,

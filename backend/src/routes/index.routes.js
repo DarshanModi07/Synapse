@@ -13,6 +13,7 @@ import projectSubTaskRouter from "./subtask.routes.js"
 import projectWorkItemRouter from "./workItem.routes.js"
 import aiRouter from "./ai.routes.js"
 import chatRouter from "./chat.routes.js"
+import analyticsRouter from "./analytics.routes.js";
 
 const router = Router();
 
@@ -29,6 +30,8 @@ router.use('/api/project-team-task/',projectTaskRouter)
 router.use('/api/project-team-subtask/',projectSubTaskRouter)
 router.use('/api/work-item/',projectWorkItemRouter)
 router.use('/api/chat/',chatRouter)
-router.use('/ai',aiRouter)
+router.use("/ai/analytics", analyticsRouter);
+router.use('/ai/suggestion',aiRouter)
+
 
 export default router;
