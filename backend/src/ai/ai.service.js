@@ -7,12 +7,13 @@ const client = new OpenAI({
     apiKey: process.env.OPEN_ROUTER_API_KEY
 });
 
-const PRIMARY_MODEL = "deepseek/deepseek-r1";
-const FALLBACK_MODEL = "openai/gpt-4o-mini";
+const PRIMARY_MODEL = "openai/gpt-4o-mini";
+const FALLBACK_MODEL = "deepseek/deepseek-r1";
+
 
 const TIMEOUT_MS = 30000;
 const MAX_RETRIES = 2;
-const CACHE_TTL = 60 * 5;
+const CACHE_TTL = 24*60*60 ;
 
 const hashPrompt = (prompt) =>
     crypto
