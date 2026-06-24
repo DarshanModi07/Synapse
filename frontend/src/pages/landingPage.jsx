@@ -14,7 +14,7 @@ const LandingPage = () => {
 >
 <DotField
   dotRadius={1.5}
-  dotSpacing={16}
+  dotSpacing={19}
   gradientFrom="rgba(255,255,255,1)"
   gradientTo="rgba(255,255,255,1)"
   className="absolute inset-0 h-screen"
