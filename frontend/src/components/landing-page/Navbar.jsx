@@ -18,8 +18,7 @@ export const Navbar = () => {
         }}
       >
         <div className="flex h-16 items-center justify-between px-4 sm:px-6">
-
-          {/* Logo */}
+          
           <div className="flex items-center">
             <div
               className="relative flex items-center justify-center overflow-hidden rounded-full px-5 py-2"
@@ -32,7 +31,6 @@ export const Navbar = () => {
                 `,
               }}
             >
-              {/* Faded Brush Effect */}
               <div
                 className="absolute inset-0"
                 style={{
