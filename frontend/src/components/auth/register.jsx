@@ -1,217 +1,271 @@
-import { theme } from "@/lib/theme";
-import { Check } from "lucide-react";
 import { useState } from "react";
+import api from "@/api/axios";
+import { useNavigate, Link } from "react-router-dom";
 
 export const Register = () => {
-const features = [
-"Workspace Management",
-"AI Planning",
-"Project Analytics",
-"Team Collaboration",
-];
+  const navigate = useNavigate();
 
-return (
-<div
-className="min-h-screen"
-style={{
-backgroundColor: theme.background,
-color: theme.text,
-}}
-> <div className="mx-auto flex min-h-screen max-w-7xl items-center px-6">
-    {/* Left Side */}
-    <div className="hidden flex-1 lg:block">
-      <div className="max-w-xl">
-        <div
-          className="mb-6 inline-flex rounded-full px-4 py-2 text-sm"
-          style={{
-            backgroundColor: `${theme.primary}15`,
-            color: theme.primary,
-          }}
-        >
-          Welcome to Synapse
-        </div>
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
 
-        <h1 className="mb-6 text-6xl font-bold">
-          Synapse
-        </h1>
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-        <p
-          className="mb-10 text-xl leading-relaxed"
-          style={{
-            color: theme.secondary,
-          }}
-        >
-          Build intelligent workspaces.
-          <br />
-          Organize teams.
-          <br />
-          Track projects.
-          <br />
-          Unlock AI-powered execution.
-        </p>
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
-        <div className="space-y-4">
-          {features.map((feature) => (
-            <div
-              key={feature}
-              className="flex items-center gap-3"
-            >
-              <div
-                className="flex h-6 w-6 items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: `${theme.primary}20`,
-                }}
-              >
-                <Check
-                  size={14}
-                  color={theme.primary}
-                />
-              </div>
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      return "Name is required";
+    }
 
-              <span
-                style={{
-                  color: theme.secondary,
-                }}
-              >
-                {feature}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    if (!formData.email.trim()) {
+      return "Email is required";
+    }
 
-    {/* Right Side */}
-    <div className="flex flex-1 justify-center">
-      <div className="relative w-full max-w-md">
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(formData.email)) {
+      return "Invalid email address";
+    }
+
+    if (!formData.password) {
+      return "Password is required";
+    }
+
+    if (formData.password.length < 8) {
+      return "Password must be at least 8 characters";
+    }
+
+    return null;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const validationError = validateForm();
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await api.post(
+        "/auth/register",
+        formData
+      );
+
+      localStorage.setItem(
+        "accessToken",
+        response.data.accessToken
+      );
+
+      navigate("/dashboard");
+    } catch (error) {
+      setError(
+        error.response?.data?.message ||
+          "Registration Failed"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#08070F] text-white">
+      <div className="mx-auto flex min-h-screen max-w-7xl items-center px-6">
         
-        {/* Glow */}
-        <div
-          className="absolute inset-0 blur-3xl"
-          style={{
-            background: `${theme.primary}20`,
-          }}
-        />
+        {/* LEFT SECTION */}
+        <div className="hidden flex-1 lg:flex">
+          <div className="max-w-lg">
+            <p className="mb-3 text-sm font-medium text-violet-400">
+              Welcome to
+            </p>
 
-        {/* Card */}
-        <div
-          className="relative rounded-3xl border p-8"
-          style={{
-            background: "rgba(19,17,28,0.65)",
-            borderColor: `${theme.primary}25`,
-            backdropFilter: "blur(24px)",
-          }}
-        >
-          <h2 className="mb-2 text-3xl font-bold">
-            Create Account
-          </h2>
+            <h1 className="mb-6 text-6xl font-bold">
+              Synapse
+            </h1>
 
-          <p
-            className="mb-8"
-            style={{
-              color: theme.secondary,
-            }}
-          >
-            Start building with Synapse.
-          </p>
+            <p className="mb-12 text-lg leading-relaxed text-zinc-400">
+              Manage departments, teams, projects and
+              workflows from a single workspace designed
+              to keep organizations aligned.
+            </p>
 
-          <form className="space-y-5">
-            <div>
-              <label
-                className="mb-2 block text-sm"
-                style={{
-                  color: theme.secondary,
-                }}
-              >
-                Full Name
-              </label>
+            <div className="space-y-5">
+              {[
+                "Workspace Management",
+                "Department & Team Structure",
+                "Project Tracking",
+                "AI Insights",
+                "Role Based Access Control",
+                "Team Collaboration",
+              ].map((feature) => (
+                <div
+                  key={feature}
+                  className="flex items-center gap-3"
+                >
+                  <div className="h-2 w-2 rounded-full bg-violet-500" />
 
-              <input
-                type="text"
-                placeholder="John Doe"
-                className="w-full rounded-xl border px-4 py-3 outline-none"
-                style={{
-                  backgroundColor: theme.surface,
-                  borderColor: theme.border,
-                }}
-              />
+                  <span className="text-zinc-300">
+                    {feature}
+                  </span>
+                </div>
+              ))}
             </div>
-
-            <div>
-              <label
-                className="mb-2 block text-sm"
-                style={{
-                  color: theme.secondary,
-                }}
-              >
-                Email
-              </label>
-
-              <input
-                type="email"
-                placeholder="john@example.com"
-                className="w-full rounded-xl border px-4 py-3 outline-none"
-                style={{
-                  backgroundColor: theme.surface,
-                  borderColor: theme.border,
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                className="mb-2 block text-sm"
-                style={{
-                  color: theme.secondary,
-                }}
-              >
-                Password
-              </label>
-
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full rounded-xl border px-4 py-3 outline-none"
-                style={{
-                  backgroundColor: theme.surface,
-                  borderColor: theme.border,
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full rounded-xl py-3 font-medium transition-transform hover:scale-[1.02]"
-              style={{
-                backgroundColor: theme.primary,
-                color: theme.text,
-              }}
-            >
-              Create Account
-            </button>
-          </form>
-
-          <p
-            className="mt-6 text-center text-sm"
-            style={{
-              color: theme.secondary,
-            }}
-          >
-            Already have an account?{" "}
-            <a
-              href="/login"
-              style={{
-                color: theme.primary,
-              }}
-            >
-              Login
-            </a>
-          </p>
+          </div>
         </div>
+
+        {/* RIGHT SECTION */}
+        <div className="flex flex-1 justify-center">
+          <div className="w-full max-w-md">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8">
+              
+              <h2 className="mb-2 text-3xl font-bold">
+                Create Account
+              </h2>
+
+              <p className="mb-8 text-zinc-400">
+                Start building with Synapse.
+              </p>
+
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+              >
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">
+                    Full Name
+                  </label>
+
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Dev Mehta"
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-zinc-700
+                      bg-zinc-950
+                      px-4
+                      py-3
+                      text-white
+                      outline-none
+                      transition
+                      focus:border-violet-500
+                    "
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">
+                    Email
+                  </label>
+
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="dev@example.com"
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-zinc-700
+                      bg-zinc-950
+                      px-4
+                      py-3
+                      text-white
+                      outline-none
+                      transition
+                      focus:border-violet-500
+                    "
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm text-zinc-400">
+                    Password
+                  </label>
+
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-zinc-700
+                      bg-zinc-950
+                      px-4
+                      py-3
+                      text-white
+                      outline-none
+                      transition
+                      focus:border-violet-500
+                    "
+                  />
+                </div>
+
+                {error && (
+                  <p className="text-sm text-red-500">
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="
+                    w-full
+                    rounded-xl
+                    bg-violet-600
+                    py-3
+                    font-medium
+                    text-white
+                    transition
+                    hover:bg-violet-500
+                    disabled:opacity-60
+                  "
+                >
+                  {loading
+                    ? "Creating Account..."
+                    : "Create Account"}
+                </button>
+              </form>
+
+              <p className="mt-6 text-center text-sm text-zinc-400">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="text-violet-400 hover:text-violet-300"
+                >
+                  Login
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-  </div>
-</div>
-
-);
+  );
 };
