@@ -213,10 +213,19 @@ const DotField = memo(({
       if (w > 0 && h > 0) buildDots(w, h);
     };
 
+    const resizeObserver = new ResizeObserver(() => {
+      doResize();
+    });
+
+    resizeObserver.observe(document.body);
+
     return () => {
       cancelAnimationFrame(rafRef.current);
       clearInterval(speedInterval);
       clearTimeout(resizeTimer);
+
+      resizeObserver.disconnect();
+
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouseMove);
     };
@@ -263,6 +272,8 @@ const DotField = memo(({
     </div>
   );
 });
+
+
 
 DotField.displayName = 'DotField';
 
