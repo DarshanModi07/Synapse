@@ -10,4 +10,4 @@ export const theme = {
   text: "#F9FAFB",
   secondary: "#D1D5DB",
   muted: "#6B7280",
-};
+}; 
