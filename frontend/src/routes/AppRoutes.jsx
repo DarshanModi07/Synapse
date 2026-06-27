@@ -1,16 +1,25 @@
-import { Routes, Route } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext.jsx";
+// AppRoutes.jsx
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
-import LandingPage from "@/pages/landingPage.jsx";
-import  WorkspacePage  from "@/pages/WorkspacePage.jsx";
-import  RegisterPage  from "@/pages/RegisterPage.jsx";
-import  LoginPage  from "@/pages/LoginPage.jsx";
+import LandingPage from "@/pages/landingPage";
+import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
+import WorkspacePage from "@/pages/WorkspacePage";
+import ProfilePage from "@/pages/ProfilePage";
+
+const ProtectedRoute = ({ children }) => {
+  const { profile } = useAuth();
+  return profile ? children : <Navigate to="/" replace />;
+};
+
+const PublicRoute = ({ children }) => {
+  const { profile } = useAuth();
+  return !profile ? children : <Navigate to="/workspace" replace />;
+};
 
 const AppRoutes = () => {
-  const { profile, loading } = useAuth();
-
-  console.log("loading : ",loading)
-  console.log("profile : ",profile)
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -20,38 +29,16 @@ const AppRoutes = () => {
     );
   }
 
-  if (profile) {
-    return (
-      <Routes>
-        <Route
-          path="*"
-          element={<WorkspacePage />}
-        />
-      </Routes>
-    );
-  }
-
   return (
     <Routes>
-      <Route
-        path="/"
-        element={<LandingPage />}
-      />
+      <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
-      <Route
-        path="/register"
-        element={<RegisterPage />}
-      />
+      <Route path="/workspace" element={<ProtectedRoute><WorkspacePage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
-      <Route
-        path="/login"
-        element={<LoginPage />}
-      />
-
-      <Route
-        path="*"
-        element={<LandingPage />}
-      />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

@@ -7,6 +7,18 @@ html {
   scroll-behavior: smooth;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  background: #08070F;
+}
+
+body {
+  margin: 0;
+}
+
 @theme {
   --font-nevera: "Nevera", sans-serif;
 }

@@ -1,10 +1,12 @@
 import { theme } from "@/lib/theme";
-import { Bell, Search, ChevronDown } from "lucide-react";
+import { NotificationBell } from "@/components/notification/NotificationBell";
 import { useAuth } from "@/context/AuthContext";
-import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
+import { useNavigate } from "react-router-dom";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 
 export const WorkspaceNavbar = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <nav className="sticky top-4 z-50 px-6">
@@ -19,59 +21,57 @@ export const WorkspaceNavbar = () => {
       >
         {/* Logo */}
 
-        <h1
-          className="text-3xl"
-          style={{
-            fontFamily: "ciguatera",
-            color: theme.text,
-          }}
+        <button
+          onClick={() => navigate("/")}
+          className="select-none transition-opacity hover:opacity-90"
         >
-          Synapse
-        </h1>
-
-        {/* Search */}
-
-        <div
-          className="hidden w-[420px] items-center gap-3 rounded-2xl border px-4 py-2 md:flex"
-          style={{
-            borderColor: theme.border,
-            backgroundColor: theme.surface,
-          }}
-        >
-          <Search
-            size={18}
-            color={theme.secondary}
-          />
-
-          <input
-            type="text"
-            placeholder="Search workspace..."
-            className="w-full bg-transparent outline-none"
+          <h1
+            className="text-3xl"
             style={{
+              fontFamily: "ciguatera",
               color: theme.text,
             }}
-          />
-        </div>
+          >
+            Synapse
+          </h1>
+        </button>
+
+
 
         {/* Right Side */}
 
-        <div className="flex items-center gap-5">
-
-          {/* Notification */}
+        <div className="flex items-center gap-4">
+          <NotificationBell />
 
           <button
-            className="rounded-xl p-2 transition hover:bg-white/5"
+            onClick={() => navigate("/profile")}
+            className="flex items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-white/5"
           >
-            <Bell
-              size={20}
-              color={theme.secondary}
+            <ProfileAvatar
+              user={profile}
+              size="h-10 w-10"
             />
+
+            <div className="hidden text-left lg:block">
+              <p
+                className="text-sm font-medium"
+                style={{
+                  color: theme.text,
+                }}
+              >
+                {profile?.name}
+              </p>
+
+              <p
+                className="text-xs"
+                style={{
+                  color: theme.secondary,
+                }}
+              >
+                {profile?.email}
+              </p>
+            </div>
           </button>
-
-          {/* Profile */}
-
-          <ProfileDropdown/>
-
         </div>
       </div>
     </nav>

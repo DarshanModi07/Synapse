@@ -1,17 +1,39 @@
-import { api } from "@/api/axios";
+import api from "@/api/axios";
+
 
 export const registerUser = async (data) => {
   const response = await api.post(
-    "api/auth/register",
+    "/auth/register",
     data
   );
 
   return response.data;
 };
 
+
 export const loginUser = async (data) => {
   const response = await api.post(
-    "api/auth/login",
+    "/auth/login",
+    data
+  );
+
+  return response.data;
+};
+
+
+export const logout = async () => {
+  const response = await api.post(
+    "/auth/logout"
+  );
+
+  return response.data;
+};
+
+export const editProfile = async (
+  data
+) => {
+  const response = await api.patch(
+    "/users/profile",
     data
   );
 
