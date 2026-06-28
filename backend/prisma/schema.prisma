@@ -9,6 +9,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum SysRole {
@@ -395,7 +396,7 @@ model ProjectDepartment {
   @@index([projectId])
   @@index([departmentId])
 }
- model ProjectTeam {
+model ProjectTeam {
   id String @id @default(cuid())
 
   projectDepartmentId String
