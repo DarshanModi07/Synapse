@@ -1,6 +1,6 @@
 import { theme } from "@/lib/theme";
 
-import { WorkspaceNavbar } from "@/components/workspace/WorkspaceNavbar";
+import { WorkspaceNavbar } from "@/components/AllWorkspaces/WorkspaceNavbar";
 
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { AvatarUploader } from "@/components/profile/AvatarUploader";

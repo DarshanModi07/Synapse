@@ -5,8 +5,9 @@ import { useAuth } from "@/context/AuthContext";
 import LandingPage from "@/pages/landingPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
-import WorkspacePage from "@/pages/WorkspacePage";
+import AllWorkspacesPage from "@/pages/AllWorkspacesPage";
 import ProfilePage from "@/pages/ProfilePage";
+import WorkspacePage from "@/pages/WorkspacePage";
 
 const ProtectedRoute = ({ children }) => {
   const { profile } = useAuth();
@@ -34,8 +35,8 @@ const AppRoutes = () => {
       <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-
-      <Route path="/workspace" element={<ProtectedRoute><WorkspacePage /></ProtectedRoute>} />
+      <Route path="/workspace/:slug" element={<ProtectedRoute><WorkspacePage/></ProtectedRoute>} />
+      <Route path="/workspace" element={<ProtectedRoute><AllWorkspacesPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

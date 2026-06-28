@@ -1,43 +1,63 @@
-import { theme } from "@/lib/theme";
-
-import { WorkspaceNavbar } from "@/components/workspace/WorkspaceNavbar";
-import { WelcomeSection } from "@/components/workspace/WelcomeSection";
-import { WorkspaceGrid } from "@/components/workspace/WorkspaceGrid";
-import { CreateWorkspaceButton } from "@/components/workspace/CreateWorkspaceButton";
-
-import { useWorkspaces } from "@/hooks/useWorkspaces";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getWorkspace } from "@/services/workspace.service";
+import EmployeeDashboard from "@/pages/EmployeeDashboard";
+import ManagerDashboard from "@/pages/ManagerDashboard";
+import OwnerDashboard from "@/pages/OwnerDashboard";
+import TeamLeadDashboard from "@/pages/TeamLeadDashboard";
 
 const WorkspacePage = () => {
-  const {
-    workspaces,
-    loading,
-    error,
-    refetch,
-  } = useWorkspaces();
 
-  return (
-    <div
-      className="min-h-screen pb-12"
-      style={{
-        backgroundColor: theme.background,
-        color: theme.text,
-      }}
-    >
-      <WorkspaceNavbar />
+    const { slug } = useParams();
 
-      <WelcomeSection />
+    const [workspace, setWorkspace] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-      <WorkspaceGrid
-        workspaces={workspaces}
-        loading={loading}
-        error={error}
-      />
+    useEffect(() => {
 
-      <CreateWorkspaceButton
-        refetch={refetch}
-      />
-    </div>
-  );
+        const fetchWorkspace = async () => {
+
+            try {
+
+                const response = await getWorkspace(slug);
+
+                setWorkspace(response.data);
+
+            }
+            catch (err) {
+
+                console.log(err);
+
+            }
+            finally {
+
+                setLoading(false);
+
+            }
+
+        };
+
+        fetchWorkspace();
+
+    }, [slug]);
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    const role = workspace?.memberRole?.sysRole;
+
+    return (
+        <>
+            {role === "owner" && <OwnerDashboard />}
+
+            {role === "manager" && <ManagerDashboard />}
+
+            {role === "team_lead" && <TeamLeadDashboard />}
+
+            {role === "employee" && <EmployeeDashboard />}
+        </>
+    );
 };
 
 export default WorkspacePage;
