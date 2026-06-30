@@ -2,74 +2,94 @@ import prisma from '../DB/db.config.js';
 
 export const createDepartment = async (req, res) => {
     try {
+
         const { name, workspaceId } = req.body;
         const userId = req.user.userId;
 
         const departmentName = name?.trim();
 
-        if (!departmentName || !workspaceId) {
+        if (!workspaceId || !departmentName) {
             return res.status(400).json({
-                message: "Credentials missing"
+                message: "Workspace and department name are required"
             });
         }
 
-        const member = await prisma.workspaceMember.findUnique({
-            where: {
-                workspaceId_userId: {
-                    workspaceId,
-                    userId
+        if (departmentName.length < 2 || departmentName.length > 50) {
+            return res.status(400).json({
+                message: "Department name must be between 2 and 50 characters"
+            });
+        }
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId,
+                        userId
+                    }
                 }
-            }
-        });
+            });
 
-        if (!member) {
+        if (!workspaceMember) {
             return res.status(403).json({
-                message: "You do not belong to this workspace"
+                message: "You are not a member of this workspace"
             });
         }
 
-        if (member.sys_role !== "owner") {
+        if (workspaceMember.sys_role !== "owner") {
             return res.status(403).json({
                 message: "Only workspace owners can create departments"
             });
         }
 
-        const existingDepartment = await prisma.department.findFirst({
-            where: {
-                workspaceId,
-                name: departmentName,
-                is_deleted:false
-            }
-        });
+        const existingDepartment =
+            await prisma.department.findFirst({
+                where: {
+                    workspaceId,
+                    is_deleted: false,
+                    name: {
+                        equals: departmentName,
+                        mode: "insensitive"
+                    }
+                }
+            });
 
         if (existingDepartment) {
             return res.status(409).json({
-                message: "Department name already exists"
+                message: "Department already exists"
             });
         }
 
-        const department = await prisma.department.create({
-            data: {
-                name: departmentName,
-                workspace: {
-                    connect: {
-                        id: workspaceId
+        const department =
+            await prisma.$transaction(async (tx) => {
+
+                return await tx.department.create({
+                    data: {
+                        name: departmentName,
+                        workspace: {
+                            connect: {
+                                id: workspaceId
+                            }
+                        }
                     }
-                }
-            }
-        });
+                });
+
+            });
 
         return res.status(201).json({
             message: "Department created successfully",
             data: department
         });
 
-    } catch (err) {
+    }
+    catch (err) {
+
         console.error(err);
 
         return res.status(500).json({
-            message: "Internal server error while creating department"
+            message: "Internal Server Error while creating department"
         });
+
     }
 };
 
@@ -355,3 +375,139 @@ export const deleteDepartment = async (req,res) => {
     }
 }
 
+export const getDepartmentById = async (req, res) => {
+    try {
+
+        const { departmentId } = req.params;
+        const userId = req.user.userId;
+
+        if (!departmentId) {
+            return res.status(400).json({
+                message: "Department ID is required"
+            });
+        }
+
+        const department = await prisma.department.findUnique({
+            where: {
+                id: departmentId
+            },
+            include: {
+                manager: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        profilePic: true
+                    }
+                },
+                workspace: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                }
+            }
+        });
+
+        if (!department || department.is_deleted) {
+            return res.status(404).json({
+                message: "Department not found"
+            });
+        }
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: department.workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if (!workspaceMember) {
+            return res.status(403).json({
+                message: "You are not a member of this workspace"
+            });
+        }
+
+        if (
+            ![
+                "owner",
+                "manager",
+                "team_lead"
+            ].includes(workspaceMember.sys_role)
+        ) {
+            return res.status(403).json({
+                message: "You do not have permission to access this department"
+            });
+        }
+
+        const [
+            teamCount,
+            projectCount,
+            memberCount
+        ] = await Promise.all([
+
+            prisma.team.count({
+                where: {
+                    departmentId,
+                    is_deleted: false
+                }
+            }),
+
+            prisma.projectDepartment.count({
+                where: {
+                    departmentId
+                }
+            }),
+
+            prisma.teamMember.count({
+                where: {
+                    team: {
+                        departmentId,
+                        is_deleted: false
+                    }
+                }
+            })
+
+        ]);
+
+        return res.status(200).json({
+            message: "Department fetched successfully",
+
+            data: {
+
+                id: department.id,
+
+                name: department.name,
+
+                createdAt: department.createdAt,
+
+                updatedAt: department.updatedAt,
+
+                workspace: department.workspace,
+
+                manager: department.manager,
+
+                statistics: {
+                    teams: teamCount,
+                    projects: projectCount,
+                    members: memberCount
+                }
+
+            }
+        });
+
+    }
+    catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal Server Error while fetching department"
+        });
+
+    }
+};

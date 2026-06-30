@@ -22,10 +22,15 @@ export const createWorkspace = async (workspaceData) => {
   return response.data;
 };
 
-
 export const getWorkspace = async (slug) => {
+  const response = await api.get(`/workspace/${slug}`);
+
+  return response.data;
+};
+
+export const getOwnerDashboard = async (workspaceId) => {
   const response = await api.get(
-    `/workspace/${slug}`
+    `/workspace/${workspaceId}/dashboard`
   );
 
   return response.data;

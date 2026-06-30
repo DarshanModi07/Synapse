@@ -1,63 +1,79 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
+
 import { getWorkspace } from "@/services/workspace.service";
-import EmployeeDashboard from "@/pages/EmployeeDashboard";
-import ManagerDashboard from "@/pages/ManagerDashboard";
-import OwnerDashboard from "@/pages/OwnerDashboard";
-import TeamLeadDashboard from "@/pages/TeamLeadDashboard";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 const WorkspacePage = () => {
+  const { slug } = useParams();
 
-    const { slug } = useParams();
+  const {
+    workspace,
+    setWorkspace,
+  } = useWorkspace();
 
-    const [workspace, setWorkspace] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+  useEffect(() => {
+    const fetchWorkspace = async () => {
+      try {
+        // Prevent unnecessary API call
+        if (workspace?.slug === slug) {
+          setLoading(false);
+          return;
+        }
 
-        const fetchWorkspace = async () => {
+        const response = await getWorkspace(slug);
 
-            try {
+        setWorkspace(response.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-                const response = await getWorkspace(slug);
+    fetchWorkspace();
+  }, [slug]);
 
-                setWorkspace(response.data);
-
-            }
-            catch (err) {
-
-                console.log(err);
-
-            }
-            finally {
-
-                setLoading(false);
-
-            }
-
-        };
-
-        fetchWorkspace();
-
-    }, [slug]);
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    const role = workspace?.memberRole?.sysRole;
-
+  if (loading) {
     return (
-        <>
-            {role === "owner" && <OwnerDashboard />}
-
-            {role === "manager" && <ManagerDashboard />}
-
-            {role === "team_lead" && <TeamLeadDashboard />}
-
-            {role === "employee" && <EmployeeDashboard />}
-        </>
+      <div className="flex min-h-screen items-center justify-center">
+        Loading...
+      </div>
     );
+  }
+
+  if (!workspace) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-red-500">
+        Workspace not found
+      </div>
+    );
+  }
+
+  const role = workspace.memberRole?.sysRole;
+
+  switch (role) {
+    case "owner":
+      return <Outlet />;
+
+    case "manager":
+      return <Outlet />;
+
+    case "team_lead":
+      return <Outlet />;
+
+    case "employee":
+      return <Outlet />;
+
+    default:
+      return (
+        <div className="flex min-h-screen items-center justify-center text-red-500">
+          Unauthorized
+        </div>
+      );
+  }
 };
 
 export default WorkspacePage;

@@ -193,6 +193,8 @@ export const getWorkspace = async (req, res) => {
             });
         }
 
+        
+
         const workspace = await prisma.workspace.findUnique({
             where: {
                 slug

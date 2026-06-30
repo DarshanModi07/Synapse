@@ -9,24 +9,25 @@ export const WorkspaceNavbar = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="sticky top-4 z-50 px-6">
+    <nav className="sticky top-5 z-50 px-8">
       <div
-        className="mx-auto flex h-16 max-w-7xl items-center justify-between rounded-3xl px-6"
+        className="mx-auto flex h-[76px] max-w-[1800px] items-center justify-between rounded-3xl px-8"
         style={{
-          background: "rgba(13,13,18,0.30)",
-          border: "1px solid rgba(167,139,250,0.15)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
+          background: "rgba(13,13,18,.58)",
+          border: "1px solid rgba(167,139,250,.10)",
+          backdropFilter: "blur(28px)",
+          WebkitBackdropFilter: "blur(28px)",
+          boxShadow:
+            "0 18px 40px rgba(0,0,0,.35),0 0 40px rgba(124,58,237,.08)",
         }}
       >
-        {/* Logo */}
-
+        {/* Left Side */}
         <button
           onClick={() => navigate("/")}
-          className="select-none transition-opacity hover:opacity-90"
+          className="transition-all duration-300 hover:opacity-90 hover:scale-[1.02]"
         >
           <h1
-            className="text-3xl"
+            className="text-[40px]"
             style={{
               fontFamily: "ciguatera",
               color: theme.text,
@@ -36,25 +37,22 @@ export const WorkspaceNavbar = () => {
           </h1>
         </button>
 
-
-
         {/* Right Side */}
-
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <NotificationBell />
 
           <button
             onClick={() => navigate("/profile")}
-            className="flex items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-white/5"
+            className="flex items-center gap-4 rounded-2xl px-2 py-2 transition-all duration-200 hover:bg-white/5"
           >
             <ProfileAvatar
               user={profile}
-              size="h-10 w-10"
+              size="h-11 w-11"
             />
 
             <div className="hidden text-left lg:block">
               <p
-                className="text-sm font-medium"
+                className="text-[15px] font-semibold"
                 style={{
                   color: theme.text,
                 }}
@@ -63,7 +61,7 @@ export const WorkspaceNavbar = () => {
               </p>
 
               <p
-                className="text-xs"
+                className="text-[13px]"
                 style={{
                   color: theme.secondary,
                 }}
