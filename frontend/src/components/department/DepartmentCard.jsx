@@ -18,7 +18,8 @@ const DepartmentCard = ({
 }) => {
   return (
     <div
-      className="group rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1"
+      onClick={() => onOpen(department)}
+      className="group cursor-pointer rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1"
       style={{
         background: "rgba(13,13,18,.55)",
         border: "1px solid rgba(167,139,250,.10)",
@@ -52,12 +53,16 @@ const DepartmentCard = ({
         </div>
 
         <button
-          onClick={() => onOpen(department)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(department);
+          }}
           className="rounded-xl p-2 transition hover:bg-white/5"
         >
           <ArrowRight
             size={20}
             color={theme.primaryLight}
+            className="transition-transform duration-300 group-hover:translate-x-1"
           />
         </button>
       </div>
@@ -208,7 +213,10 @@ const DepartmentCard = ({
 
       <div className="mt-8 flex gap-3">
         <button
-          onClick={() => onEdit(department)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(department);
+          }}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 transition hover:scale-[1.02]"
           style={{
             background: "rgba(255,255,255,.05)",
@@ -217,12 +225,14 @@ const DepartmentCard = ({
           }}
         >
           <Pencil size={17} />
-
           Edit
         </button>
 
         <button
-          onClick={() => onDelete(department)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(department);
+          }}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 transition hover:scale-[1.02]"
           style={{
             background: "rgba(255,0,0,.08)",
@@ -231,7 +241,6 @@ const DepartmentCard = ({
           }}
         >
           <Trash2 size={17} />
-
           Delete
         </button>
       </div>

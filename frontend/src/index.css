@@ -7,6 +7,61 @@ html {
   scroll-behavior: smooth;
 }
 
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+option {
+    background: #13111c;
+    color: white;
+}
+
+.ai-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #7C3AED transparent;
+}
+
+/* Chrome / Edge / Brave */
+.ai-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ai-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ai-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        180deg,
+        #7C3AED,
+        #A78BFA
+    );
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.ai-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        180deg,
+        #8B5CF6,
+        #C4B5FD
+    );
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-\[shimmer_1\.5s_infinite\] {
+  transform: translateX(-100%);
+  animation: shimmer 1.5s infinite;
+}
+
 html,
 body,
 #root {

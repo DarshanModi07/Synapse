@@ -9,6 +9,7 @@ import {
 
 export const useDepartments = (workspaceId) => {
   const [departments, setDepartments] = useState([]);
+  const [pagination, setPagination] = useState(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -18,13 +19,14 @@ export const useDepartments = (workspaceId) => {
 
   const [deleting, setDeleting] = useState(false);
 
-  const [pagination, setPagination] = useState(null);
-
   const [error, setError] = useState(null);
 
   const fetchDepartments = useCallback(
     async (page = 1) => {
-      if (!workspaceId) return;
+      if (!workspaceId) {
+        setDepartments([]);
+        return;
+      }
 
       try {
         setLoading(true);
@@ -34,13 +36,15 @@ export const useDepartments = (workspaceId) => {
           page
         );
 
-        setDepartments(response.data);
+        setDepartments(response.data || []);
 
-        setPagination(response.pagination);
+        setPagination(response.pagination || null);
 
         setError(null);
       } catch (err) {
         console.error(err);
+
+        setDepartments([]);
 
         setError(err);
       } finally {
@@ -64,6 +68,9 @@ export const useDepartments = (workspaceId) => {
       });
 
       await fetchDepartments();
+    } catch (err) {
+      console.error(err);
+      throw err;
     } finally {
       setCreating(false);
     }
@@ -82,6 +89,9 @@ export const useDepartments = (workspaceId) => {
       );
 
       await fetchDepartments();
+    } catch (err) {
+      console.error(err);
+      throw err;
     } finally {
       setUpdating(false);
     }
@@ -98,6 +108,9 @@ export const useDepartments = (workspaceId) => {
       );
 
       await fetchDepartments();
+    } catch (err) {
+      console.error(err);
+      throw err;
     } finally {
       setDeleting(false);
     }

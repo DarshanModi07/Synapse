@@ -12,7 +12,7 @@ export const getDepartments = async (
   limit = 20
 ) => {
   const response = await api.get(
-    `/department/${workspaceId}?page=${page}&limit=${limit}`
+    `/department/${workspaceId}/departments?page=${page}&limit=${limit}`
   );
 
   return response.data;
@@ -20,13 +20,11 @@ export const getDepartments = async (
 
 /*
 |--------------------------------------------------------------------------
-| Get Department
+| Get Department Details
 |--------------------------------------------------------------------------
 */
 
-export const getDepartment = async (
-  departmentId
-) => {
+export const getDepartment = async (departmentId) => {
   const response = await api.get(
     `/department/details/${departmentId}`
   );
@@ -40,11 +38,9 @@ export const getDepartment = async (
 |--------------------------------------------------------------------------
 */
 
-export const createDepartment = async (
-  data
-) => {
+export const createDepartment = async (data) => {
   const response = await api.post(
-    "/department/create",
+    "/department/createDepartment",
     data
   );
 
@@ -62,7 +58,7 @@ export const updateDepartment = async (
   data
 ) => {
   const response = await api.patch(
-    `/department/${departmentId}`,
+    `/department/${departmentId}/update`,
     data
   );
 
@@ -79,7 +75,7 @@ export const deleteDepartment = async (
   departmentId
 ) => {
   const response = await api.delete(
-    `/department/${departmentId}`
+    `/department/${departmentId}/delete`
   );
 
   return response.data;
@@ -87,7 +83,7 @@ export const deleteDepartment = async (
 
 /*
 |--------------------------------------------------------------------------
-| AI Suggestions
+| AI Department Suggestions
 |--------------------------------------------------------------------------
 */
 
@@ -95,10 +91,26 @@ export const suggestDepartments = async (
   workspaceId
 ) => {
   const response = await api.post(
-    "/department/ai-suggestions",
+    "/ai/suggest-departments",
     {
       workspaceId,
     }
+  );
+
+  return response.data;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Available Managers
+|--------------------------------------------------------------------------
+*/
+
+export const getAvailableManagers = async (
+  departmentId
+) => {
+  const response = await api.get(
+    `/department/${departmentId}/available-managers`
   );
 
   return response.data;

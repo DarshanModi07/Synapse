@@ -1,13 +1,19 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 
 const WorkspaceContext = createContext(null);
 
 export const WorkspaceProvider = ({ children }) => {
   const [workspace, setWorkspace] = useState(null);
 
-  const clearWorkspace = () => {
+  const clearWorkspace = useCallback(() => {
     setWorkspace(null);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -15,7 +21,7 @@ export const WorkspaceProvider = ({ children }) => {
       setWorkspace,
       clearWorkspace,
     }),
-    [workspace]
+    [workspace, clearWorkspace]
   );
 
   return (

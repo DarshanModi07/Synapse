@@ -18,6 +18,8 @@ import MembersPage from "@/pages/owner/MembersPage";
 import AnalyticsPage from "@/pages/owner/AnalyticsPage";
 import AIInsightsPage from "@/pages/owner/AIInsightsPage";
 import SettingsPage from "@/pages/owner/SettingsPage";
+import DepartmentDashboardPage from "@/pages/owner/DepartmentDashboardPage";
+import TeamDashboardPage from "@/pages/owner/TeamDashboardPage";
 
 const ProtectedRoute = ({ children }) => {
   const { profile } = useAuth();
@@ -117,8 +119,18 @@ const AppRoutes = () => {
           />
 
           <Route
+            path="departments/:departmentId"
+            element={<DepartmentDashboardPage />}
+          />
+
+          <Route
             path="teams"
             element={<TeamsPage />}
+          />
+
+          <Route
+              path="teams/:teamId"
+              element={<TeamDashboardPage />}
           />
 
           <Route

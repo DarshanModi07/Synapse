@@ -144,12 +144,21 @@ export const suggestTeams = async(req,res)=>{
             .replace(/```/g, "")
             .trim();
 
-        const parsed = JSON.parse(cleaned);
+const parsed = JSON.parse(cleaned);
 
-        return res.status(200).json({
-            message:"Suggestions generated",
-            data:parsed
-        });
+if (
+    !parsed ||
+    !Array.isArray(parsed.departments)
+) {
+    return res.status(500).json({
+        message: "Invalid AI response format"
+    });
+}
+
+return res.status(200).json({
+    message: "Suggestions generated",
+    data: parsed
+});
 
     }
     catch(err){

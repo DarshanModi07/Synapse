@@ -130,7 +130,7 @@ const AISuggestionModal = ({
 
         {/* Content */}
 
-        <div className="flex-1 overflow-y-auto p-7 space-y-4">
+        <div className="flex-1 overflow-y-auto p-7 space-y-4 ai-scrollbar">
           {departments.map((item, index) => (
             <div
               key={index}

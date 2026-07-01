@@ -6,6 +6,9 @@ import DepartmentToolbar from "@/components/department/DepartmentToolbar";
 import DepartmentGrid from "@/components/department/DepartmentGrid";
 import CreateDepartmentModal from "@/components/department/CreateDepartmentModal";
 import AISuggestionModal from "@/components/department/AISuggestionModal";
+import { suggestDepartments } from "@/services/department.service";
+import { useWorkspace } from "@/context/WorkspaceContext";
+import { useDepartments } from "@/hooks/useDepartments";
 
 import { theme } from "@/lib/theme";
 
@@ -14,10 +17,14 @@ const DepartmentsPage = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
 
-  // Replace with your hook later
-  const [departments, setDepartments] = useState([]);
+const { workspace } = useWorkspace();
 
-  const [loading, setLoading] = useState(false);
+const {
+  departments,
+  loading,
+  creating,
+  addDepartment,
+} = useDepartments(workspace?.id);
 
   const [search, setSearch] = useState("");
 
@@ -44,80 +51,39 @@ const DepartmentsPage = () => {
 
     }, [departments, search]);
 
-  const handleCreateDepartment = async (name) => {
+const handleCreateDepartment = async (name) => {
+  try {
+    await addDepartment(name);
 
-    try {
+    setCreateOpen(false);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-      console.log(name);
+const handleAISuggestion = async () => {
+  try {
+    setAiLoading(true);
 
-      /*
-      await createDepartment({
-          workspaceId,
-          name,
-      });
+    const response = await suggestDepartments(
+      workspace.id
+    );
 
-      refetch();
-      */
+setSuggestions(
+  (response.data?.departments || []).map((department) => ({
+    name: department.name,
+    description: department.reason,
+  }))
+);
 
-      setCreateOpen(false);
+    setAiOpen(true);
 
-    }
-    catch (err) {
-
-      console.error(err);
-
-    }
-
-  };
-
-  const handleAISuggestion = async () => {
-
-    try {
-
-      setAiLoading(true);
-
-      /*
-      const response =
-      await suggestDepartments(workspaceId);
-
-      setSuggestions(response.data);
-      */
-
-      // Dummy
-
-      setSuggestions([
-        {
-          name: "Engineering",
-          description:
-            "Responsible for software development."
-        },
-        {
-          name: "Marketing",
-          description:
-            "Handles branding and campaigns."
-        },
-        {
-          name: "Finance",
-          description:
-            "Budgeting and financial planning."
-        },
-      ]);
-
-      setAiOpen(true);
-
-    }
-    catch (err) {
-
-      console.error(err);
-
-    }
-    finally {
-
-      setAiLoading(false);
-
-    }
-
-  };
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setAiLoading(false);
+  } 
+};
 
   const handleCreateAISuggestions =
     async (items) => {
@@ -191,9 +157,9 @@ const DepartmentsPage = () => {
         }
       />
 
-      <CreateDepartmentModal
-        open={createOpen}
-        loading={loading}
+<CreateDepartmentModal
+    open={createOpen}
+    loading={creating}
         onClose={() =>
           setCreateOpen(false)
         }
