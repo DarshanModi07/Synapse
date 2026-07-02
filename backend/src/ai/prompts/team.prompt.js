@@ -1,51 +1,51 @@
 export const buildTeamPrompt = ({
-    projectName,
-    projectDescription,
-    departmentName
+    workspaceName,
+    departmentName,
+    existingTeams = []
 }) => {
 
     return `
-        You are an expert project planning consultant.
+You are an expert organizational consultant.
 
-        Project Name:
-        ${projectName}
+Workspace:
+${workspaceName}
 
-        Project Description:
-        ${projectDescription}
+Department:
+${departmentName}
 
-        Department:
-        ${departmentName}
+Existing Teams:
+${existingTeams.length
+        ? existingTeams.map(team => `- ${team}`).join("\n")
+        : "None"}
 
-        Your task:
+Your task:
 
-        1. Analyze the project.
-        2. Analyze the department's responsibility.
-        3. Suggest the teams required inside this department.
-        4. Suggestions must be specific to the project domain.
-        5. Do not assume the project is related to software engineering.
-        6. Include only necessary teams.
-        7. Avoid duplicate or overlapping teams.
-        8. Return between 2 and 8 teams depending on project complexity.
+1. Analyze the department.
+2. Suggest teams that should exist inside this department.
+3. Consider industry best practices.
+4. Avoid suggesting any team that already exists.
+5. Do not generate duplicate or overlapping teams.
+6. Generate between 3 and 8 teams depending on the department.
+7. Team names should be concise and professional.
+8. Each team should have a one-line description.
 
-        Return ONLY valid JSON.
+Return ONLY valid JSON.
 
-        Response Format:
+Response Format:
 
+{
+    "teams": [
         {
-        "teams":[
-            {
-            "name":"Team Name",
-            "reason":"Why this team is needed"
-            }
-        ]
+            "name": "Frontend",
+            "description": "Develops and maintains client-side applications."
         }
+    ]
+}
 
-        Do not return markdown.
+Do not return markdown.
 
-        Do not wrap the response inside \`\`\`json.
+Do not wrap the response in \`\`\`json.
 
-        Do not provide explanations outside JSON.
-
-        Do not return any text outside the JSON object.
-        `;
+Do not include any explanation outside the JSON.
+`;
 };

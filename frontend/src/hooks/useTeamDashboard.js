@@ -1,61 +1,77 @@
 import {
-    useEffect,
-    useState,
+  useCallback,
+  useEffect,
+  useState,
 } from "react";
 
 import {
-    getTeamDashboard,
+  getTeamDashboard,
 } from "@/services/teamDashboard.service";
 
 export const useTeamDashboard = (
-    teamId
+  teamId
 ) => {
 
-    const [dashboard, setDashboard] =
-        useState(null);
+  const [dashboard, setDashboard] =
+    useState(null);
 
-    const [loading, setLoading] =
-        useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-    useEffect(() => {
+  const [error, setError] =
+    useState(null);
 
-        const fetchDashboard =
-            async () => {
+  const fetchDashboard =
+    useCallback(async () => {
 
-                try {
+      if (!teamId) return;
 
-                    const response =
-                        await getTeamDashboard(
-                            teamId
-                        );
+      try {
 
-                    setDashboard(
-                        response.data
-                    );
+        setLoading(true);
 
-                }
-                catch (err) {
+        const response =
+          await getTeamDashboard(
+            teamId
+          );
 
-                    console.error(err);
+        setDashboard(response.data);
 
-                }
-                finally {
+        setError(null);
 
-                    setLoading(false);
+      }
+      catch (err) {
 
-                }
+        console.error(err);
 
-            };
+        setError(err);
 
-        if (teamId) {
-            fetchDashboard();
-        }
+      }
+      finally {
+
+        setLoading(false);
+
+      }
 
     }, [teamId]);
 
-    return {
-        dashboard,
-        loading
-    };
+  useEffect(() => {
+
+    fetchDashboard();
+
+  }, [fetchDashboard]);
+
+  return {
+
+    dashboard,
+
+    loading,
+
+    error,
+
+    refresh:
+      fetchDashboard,
+
+  };
 
 };

@@ -79,95 +79,115 @@ export const suggestDepartments = async(req,res)=>{
     }
 }
 
-export const suggestTeams = async(req,res)=>{
-    try{
-        const { projectDepartmentId } = req.body;
+export const suggestTeams = async (req, res) => {
+    try {
 
-        if(!projectDepartmentId){
+        const { departmentId } = req.body;
+        const userId = req.user.userId;
+
+        if (!departmentId) {
             return res.status(400).json({
-                message:"Credentials needed"
+                message: "Department ID is required"
             });
         }
 
-        const checkProjectDeptId = await prisma.projectDepartment.findUnique({
-            where:{
-                id:projectDepartmentId
+        const department = await prisma.department.findUnique({
+            where: {
+                id: departmentId
             },
-            include:{
-                project:true,
-                department:true
-            }
-        })
-
-        if(!checkProjectDeptId){
-            return res.status(404).json({
-                message:"projectDepartment not found"
-            });
-        }
-
-        const userId = req.user.userId
-        const workspaceId = checkProjectDeptId?.department?.workspaceId
-
-        const checkWorkspaceMember = await prisma.workspaceMember.findUnique({
-            where:{
-                workspaceId_userId:{
-                    workspaceId,
-                    userId
+            include: {
+                workspace: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
                 }
             }
-        })
-
-        if(!checkWorkspaceMember){
-            return res.status(404).json({
-                message:"You are not the member of the workspace"
-            });
-        }
-
-        if(checkWorkspaceMember.sys_role !== "manager" && checkWorkspaceMember.sys_role !== "owner"){
-            return res.status(403).json({
-                message:"You are not allowed to do this"
-            });
-        }
-
-        const prompt = buildTeamPrompt({
-                projectName:checkProjectDeptId.project.name,
-                projectDescription:checkProjectDeptId.project.description,
-                departmentName:checkProjectDeptId.department.name
         });
 
-        const response = await generateSuggestion(
-                prompt
-            );
+        if (!department) {
+            return res.status(404).json({
+                message: "Department not found"
+            });
+        }
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: department.workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if (!workspaceMember) {
+            return res.status(403).json({
+                message: "You are not a member of this workspace"
+            });
+        }
+
+        if (workspaceMember.sys_role !== "owner") {
+            return res.status(403).json({
+                message: "Only workspace owner can generate team suggestions"
+            });
+        }
+
+        const existingTeams = await prisma.team.findMany({
+            where: {
+                departmentId,
+                is_deleted: false
+            },
+            select: {
+                name: true
+            }
+        });
+
+        const prompt = buildTeamPrompt({
+
+            workspaceName: department.workspace.name,
+
+            departmentName: department.name,
+
+            existingTeams:
+                existingTeams.map(team => team.name)
+
+        });
+
+        const response = await generateSuggestion(prompt);
 
         const cleaned = response
             .replace(/```json/g, "")
             .replace(/```/g, "")
             .trim();
 
-const parsed = JSON.parse(cleaned);
+        const parsed = JSON.parse(cleaned);
 
-if (
-    !parsed ||
-    !Array.isArray(parsed.departments)
-) {
-    return res.status(500).json({
-        message: "Invalid AI response format"
-    });
-}
+        if (
+            !parsed ||
+            !Array.isArray(parsed.teams)
+        ) {
+            return res.status(500).json({
+                message: "Invalid AI response format"
+            });
+        }
 
-return res.status(200).json({
-    message: "Suggestions generated",
-    data: parsed
-});
+        return res.status(200).json({
+            message: "Suggestions generated",
+            data: parsed
+        });
 
     }
-    catch(err){
-        console.log(err);
+    catch (err) {
+
+        console.error(err);
+
         return res.status(500).json({
             message: "AI Suggestion Failed"
         });
+
     }
-}
+};
 
 export const suggestTasks = async (req, res) => {
     try {

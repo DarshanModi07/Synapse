@@ -374,7 +374,6 @@ model Project {
   @@index([status])
 }
 
-
 model ProjectDepartment {
   id String @id @default(cuid())
 
@@ -416,7 +415,6 @@ model ProjectDepartment {
   @@index([teamId])
 }
 
-
 model Task {
   id String @id @default(cuid())
 
@@ -449,8 +447,6 @@ model Task {
   @@index([createdById])
   @@index([status])
 }
-
-
 model SubTask {
   id String @id @default(cuid())
 
@@ -487,7 +483,6 @@ model SubTask {
   @@index([assignedById])
   @@index([status])
 }
-
 model WorkItem {
   id String @id @default(cuid())
 

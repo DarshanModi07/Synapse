@@ -640,3 +640,758 @@ export const projectProgress = async (req,res) => {
         })
     }
 }
+
+export const projectDashboard = async (req, res) => {
+
+    try {
+
+        const { projectId } = req.params;
+
+        const userId = req.user.userId;
+
+        if (!projectId) {
+
+            return res.status(400).json({
+                message: "Project ID is required"
+            });
+
+        }
+
+        /*
+        ----------------------------------------------------
+        Find Project
+        ----------------------------------------------------
+        */
+
+        const project = await prisma.project.findUnique({
+
+            where: {
+                id: projectId
+            },
+
+            include: {
+
+                workspace: {
+
+                    select: {
+
+                        id: true,
+                        name: true,
+                        slug: true
+
+                    }
+
+                },
+
+                createdBy: {
+
+                    select: {
+
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true
+
+                    }
+
+                }
+
+            }
+
+        });
+
+        if (!project || project.is_deleted) {
+
+            return res.status(404).json({
+
+                message: "Project not found"
+
+            });
+
+        }
+
+        /*
+        ----------------------------------------------------
+        Workspace Permission
+        ----------------------------------------------------
+        */
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+
+                where: {
+
+                    workspaceId_userId: {
+
+                        workspaceId: project.workspaceId,
+
+                        userId
+
+                    }
+
+                }
+
+            });
+
+        if (!workspaceMember) {
+
+            return res.status(403).json({
+
+                message:
+                    "You are not a member of this workspace"
+
+            });
+
+        }
+
+        if (
+
+            workspaceMember.sys_role !== "owner" &&
+            workspaceMember.sys_role !== "manager"
+
+        ) {
+
+            return res.status(403).json({
+
+                message:
+                    "You are not allowed to access this dashboard"
+
+            });
+
+        }
+
+        /*
+        ----------------------------------------------------
+        Fetch Project Departments
+        ----------------------------------------------------
+        */
+
+        const projectDepartments =
+            await prisma.projectDepartment.findMany({
+
+                where: {
+
+                    projectId
+
+                },
+
+                include: {
+
+                    department: {
+
+                        include: {
+
+                            manager: {
+
+                                select: {
+
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    avatar: true
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+                    /*
+        ----------------------------------------------------
+        Fetch Project Teams
+        ----------------------------------------------------
+        */
+
+        const projectTeams =
+            await prisma.projectTeam.findMany({
+
+                where: {
+
+                    projectDepartment: {
+
+                        projectId
+
+                    }
+
+                },
+
+                include: {
+
+                    team: {
+
+                        include: {
+
+                            leader: {
+
+                                select: {
+
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    avatar: true
+
+                                }
+
+                            },
+
+                            department: {
+
+                                select: {
+
+                                    id: true,
+                                    name: true
+
+                                }
+
+                            },
+
+                            _count: {
+
+                                select: {
+
+                                    teamMembers: true
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+        /*
+        ----------------------------------------------------
+        Fetch Tasks
+        ----------------------------------------------------
+        */
+
+        const tasks =
+            await prisma.task.findMany({
+
+                where: {
+
+                    projectTeam: {
+
+                        projectDepartment: {
+
+                            projectId
+
+                        }
+
+                    },
+
+                    is_deleted: false
+
+                },
+
+                include: {
+
+                    projectTeam: {
+
+                        include: {
+
+                            team: {
+
+                                select: {
+
+                                    id: true,
+                                    name: true
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                },
+
+                orderBy: {
+
+                    createdAt: "desc"
+
+                }
+
+            });
+
+        /*
+        ----------------------------------------------------
+        Fetch SubTasks
+        ----------------------------------------------------
+        */
+
+        const subtasks =
+            await prisma.subTask.findMany({
+
+                where: {
+
+                    task: {
+
+                        projectTeam: {
+
+                            projectDepartment: {
+
+                                projectId
+
+                            }
+
+                        }
+
+                    },
+
+                    is_deleted: false
+
+                },
+
+                include: {
+
+                    assignedTo: {
+
+                        select: {
+
+                            id: true,
+                            name: true
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+        /*
+        ----------------------------------------------------
+        Fetch Work Items
+        ----------------------------------------------------
+        */
+
+        const workItems =
+            await prisma.workItem.findMany({
+
+                where: {
+
+                    subTask: {
+
+                        task: {
+
+                            projectTeam: {
+
+                                projectDepartment: {
+
+                                    projectId
+
+                                }
+
+                            }
+
+                        }
+
+                    },
+
+                    is_deleted: false
+
+                }
+
+            });
+
+                    /*
+        ----------------------------------------------------
+        Overall Statistics
+        ----------------------------------------------------
+        */
+
+        const completedTasks =
+            tasks.filter(
+                task => task.status === "done"
+            ).length;
+
+        const pendingTasks =
+            tasks.filter(
+                task => task.status === "todo"
+            ).length;
+
+        const inProgressTasks =
+            tasks.filter(
+                task => task.status === "in_progress"
+            ).length;
+
+        const completedSubTasks =
+            subtasks.filter(
+                subtask => subtask.status === "done"
+            ).length;
+
+        const completedWorkItems =
+            workItems.filter(
+                workItem => workItem.status === "done"
+            ).length;
+
+        const overallProgress =
+            workItems.length === 0
+                ? 0
+                : Math.round(
+                    (completedWorkItems * 100) /
+                    workItems.length
+                );
+
+        /*
+        ----------------------------------------------------
+        Department Summary
+        ----------------------------------------------------
+        */
+
+        const departments =
+            projectDepartments.map(projectDepartment => {
+
+                const departmentTeams =
+                    projectTeams.filter(
+                        team =>
+                            team.projectDepartment.departmentId ===
+                            projectDepartment.departmentId
+                    );
+
+                const departmentTeamIds =
+                    departmentTeams.map(
+                        team => team.id
+                    );
+
+                const departmentTasks =
+                    tasks.filter(
+                        task =>
+                            departmentTeamIds.includes(
+                                task.projectTeamId
+                            )
+                    );
+
+                const departmentSubTasks =
+                    subtasks.filter(
+                        subtask =>
+                            departmentTasks.some(
+                                task =>
+                                    task.id === subtask.taskId
+                            )
+                    );
+
+                const departmentWorkItems =
+                    workItems.filter(
+                        workItem =>
+                            departmentSubTasks.some(
+                                subtask =>
+                                    subtask.id ===
+                                    workItem.subTaskId
+                            )
+                    );
+
+                const completedDepartmentWorkItems =
+                    departmentWorkItems.filter(
+                        workItem =>
+                            workItem.status === "done"
+                    ).length;
+
+                const progress =
+                    departmentWorkItems.length === 0
+                        ? 0
+                        : Math.round(
+                            completedDepartmentWorkItems *
+                            100 /
+                            departmentWorkItems.length
+                        );
+
+                return {
+
+                    id:
+                        projectDepartment.department.id,
+
+                    name:
+                        projectDepartment.department.name,
+
+                    manager:
+                        projectDepartment.department.manager,
+
+                    teams:
+                        departmentTeams.length,
+
+                    tasks:
+                        departmentTasks.length,
+
+                    progress
+
+                };
+
+            });
+
+        /*
+        ----------------------------------------------------
+        Team Summary
+        ----------------------------------------------------
+        */
+
+        const teams =
+            projectTeams.map(projectTeam => {
+
+                const teamTasks =
+                    tasks.filter(
+                        task =>
+                            task.projectTeamId ===
+                            projectTeam.id
+                    );
+
+                const teamSubTasks =
+                    subtasks.filter(
+                        subtask =>
+                            teamTasks.some(
+                                task =>
+                                    task.id === subtask.taskId
+                            )
+                    );
+
+                const teamWorkItems =
+                    workItems.filter(
+                        workItem =>
+                            teamSubTasks.some(
+                                subtask =>
+                                    subtask.id ===
+                                    workItem.subTaskId
+                            )
+                    );
+
+                const completed =
+                    teamWorkItems.filter(
+                        workItem =>
+                            workItem.status === "done"
+                    ).length;
+
+                const progress =
+                    teamWorkItems.length === 0
+                        ? 0
+                        : Math.round(
+                            completed *
+                            100 /
+                            teamWorkItems.length
+                        );
+
+                return {
+
+                    id:
+                        projectTeam.team.id,
+
+                    name:
+                        projectTeam.team.name,
+
+                    leader:
+                        projectTeam.team.leader,
+
+                    department:
+                        projectTeam.team.department,
+
+                    members:
+                        projectTeam.team._count.teamMembers,
+
+                    tasks:
+                        teamTasks.length,
+
+                    progress
+
+                };
+
+            });
+
+                    /*
+        ----------------------------------------------------
+        Recent Tasks
+        ----------------------------------------------------
+        */
+
+        const recentTasks = tasks
+
+            .slice()
+
+            .sort(
+                (a, b) =>
+                    new Date(b.createdAt) -
+                    new Date(a.createdAt)
+            )
+
+            .slice(0, 10)
+
+            .map(task => ({
+
+                id: task.id,
+
+                title: task.title,
+
+                status: task.status,
+
+                priority: task.priority,
+
+                progress: task.progress,
+
+                dueDate: task.dueDate,
+
+                team: {
+
+                    id: task.projectTeam.team.id,
+
+                    name: task.projectTeam.team.name
+
+                }
+
+            }));
+
+
+        /*
+        ----------------------------------------------------
+        Recent Activity
+        ----------------------------------------------------
+        */
+
+        const activity = [
+
+            ...projectDepartments.map(item => ({
+
+                type: "department",
+
+                title: `${item.department.name} assigned to project`,
+
+                createdAt: item.assignedAt
+
+            })),
+
+            ...projectTeams.map(item => ({
+
+                type: "team",
+
+                title: `${item.team.name} assigned`,
+
+                createdAt: item.assignedAt
+
+            })),
+
+            ...tasks.map(task => ({
+
+                type: "task",
+
+                title: `Task "${task.title}" created`,
+
+                createdAt: task.createdAt
+
+            }))
+
+        ]
+
+            .sort(
+                (a, b) =>
+                    new Date(b.createdAt) -
+                    new Date(a.createdAt)
+            )
+
+            .slice(0, 20);
+
+
+        /*
+        ----------------------------------------------------
+        Final Response
+        ----------------------------------------------------
+        */
+
+        return res.status(200).json({
+
+            message:
+                "Project dashboard fetched successfully",
+
+            data: {
+
+                project: {
+
+                    id: project.id,
+
+                    name: project.name,
+
+                    description: project.description,
+
+                    status: project.status,
+
+                    startDate: project.startDate,
+
+                    dueDate: project.dueDate,
+
+                    createdAt: project.createdAt,
+
+                    updatedAt: project.updatedAt,
+
+                    workspace: project.workspace,
+
+                    createdBy: project.createdBy
+
+                },
+
+                statistics: {
+
+                    departments:
+                        projectDepartments.length,
+
+                    teams:
+                        projectTeams.length,
+
+                    tasks:
+                        tasks.length,
+
+                    completedTasks,
+
+                    pendingTasks,
+
+                    inProgressTasks,
+
+                    subTasks:
+                        subtasks.length,
+
+                    completedSubTasks,
+
+                    workItems:
+                        workItems.length,
+
+                    completedWorkItems,
+
+                    overallProgress
+
+                },
+
+                departments,
+
+                teams,
+
+                recentTasks,
+
+                activity
+
+            }
+
+        });
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+
+            message:
+                "Internal Server Error while fetching project dashboard"
+
+        });
+
+    }
+
+};

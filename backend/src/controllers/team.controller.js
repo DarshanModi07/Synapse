@@ -2,9 +2,14 @@ import prisma from "../DB/db.config.js"
 
 export const createTeam = async (req,res) => {
     try{
-        let { departmentId , name } = req.body
+        let {
+            departmentId,
+            name,
+            leaderId
+        } = req.body;
+
+        name = name.trim();
         const userId = req.user.userId
-        name=name.trim()
 
         if(!departmentId || !name){
             return res.status(400).json({
@@ -61,12 +66,33 @@ export const createTeam = async (req,res) => {
             })
         }
 
-        const makeTeam = await prisma.team.create({
-            data:{
-                name,
-                departmentId
+if (leaderId) {
+
+    const leader =
+        await prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId: checkDept.workspaceId,
+                    userId: leaderId
+                }
             }
-        })
+        });
+
+    if (!leader) {
+        return res.status(404).json({
+            message: "Leader not found"
+        });
+    }
+
+}
+
+const makeTeam = await prisma.team.create({
+    data: {
+        name,
+        departmentId,
+        leaderId: leaderId || null
+    }
+});
 
         return res.status(201).json({
             message:"Team Created",
@@ -246,12 +272,15 @@ export const updateTeam = async (req, res) => {
         console.log(department.workspaceId);
         console.log(leaderId);
 
-        const leaderMembership = await prisma.workspaceMember.findFirst({
-            where: {
+const leaderMembership =
+    await prisma.workspaceMember.findUnique({
+        where: {
+            workspaceId_userId: {
                 workspaceId: department.workspaceId,
                 userId: leaderId
             }
-        }); 
+        }
+    });
 
         console.log(leaderMembership);
 
@@ -272,13 +301,13 @@ export const updateTeam = async (req, res) => {
 
                 console.log(leaderMembership);
 
-                // if (!leaderMembership) {
-                //     throw new Error("LEADER_NOT_FOUND");
-                // }
+                if (!leaderMembership) {
+                    throw new Error("LEADER_NOT_FOUND");
+                }
 
-                // if (leaderMembership.sys_role === "owner") {
-                //     throw new Error("OWNER_CANNOT_BE_TEAM_LEAD");
-                // }
+                if (leaderMembership.sys_role === "owner") {
+                    throw new Error("OWNER_CANNOT_BE_TEAM_LEAD");
+                }
 
                 await tx.workspaceMember.update({
                     where: {
@@ -809,3 +838,483 @@ export const removeTeamMember = async (req,res) => {
     }
 }
 
+export const getWorkspaceTeams = async (req, res) => {
+    try {
+
+        const { workspaceId } = req.params;
+        const userId = req.user.userId;
+
+        if (!workspaceId) {
+            return res.status(400).json({
+                message: "Workspace ID is required"
+            });
+        }
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if (!workspaceMember) {
+            return res.status(403).json({
+                message: "You are not a member of this workspace"
+            });
+        }
+
+        const teams = await prisma.team.findMany({
+
+        where: {
+            is_deleted: false,
+            department: {
+                workspaceId
+            }
+        },
+
+    include: {
+
+        department: {
+            select: {
+                id: true,
+                name: true
+            }
+        },
+
+        leader: {
+            select: {
+                id: true,
+                name: true,
+                avatar: true
+            }
+        },
+
+        _count: {
+            select: {
+                teamMembers: true,
+                teamProjects: true
+            }
+        },
+
+        teamProjects: {
+    include: {
+        projectDepartment: {
+            include: {
+                project: {
+                    select: {
+                        id: true,
+                        name: true,
+                        status: true
+                    }
+                }
+            }
+        }
+    }
+}
+
+    },
+
+    orderBy: {
+        createdAt: "asc"
+    }
+
+});
+
+        return res.status(200).json({
+
+            message: "Workspace teams fetched successfully",
+
+            data: teams.map(team => ({
+
+    id: team.id,
+
+    name: team.name,
+
+    department: team.department,
+
+    leader: team.leader,
+
+    members: team._count.teamMembers,
+
+    projects: team.teamProjects.length,
+
+    createdAt: team.createdAt
+
+}))
+
+        });
+
+    }
+
+    catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+
+            message: "Internal Server Error while fetching workspace teams"
+
+        });
+
+    }
+};
+
+export const teamDashboard = async (req, res) => {
+    try {
+
+        const { teamId } = req.params;
+        const userId = req.user.userId;
+
+        if (!teamId) {
+            return res.status(400).json({
+                message: "Team ID is required"
+            });
+        }
+
+        const team = await prisma.team.findUnique({
+            where: {
+                id: teamId
+            },
+            include: {
+
+                department: {
+                    include: {
+                        workspace: {
+                            select: {
+                                id: true,
+                                name: true,
+                                slug: true
+                            }
+                        }
+                    }
+                },
+
+                leader: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true
+                    }
+                }
+
+            }
+        });
+
+        if (!team || team.is_deleted) {
+            return res.status(404).json({
+                message: "Team not found"
+            });
+        }
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: team.department.workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if (!workspaceMember) {
+            return res.status(403).json({
+                message: "You are not a member of this workspace"
+            });
+        }
+
+        const members = await prisma.teamMember.findMany({
+            where: {
+                teamId
+            },
+            include: {
+                member: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true
+                    }
+                }
+            },
+            orderBy: {
+                joinedAt: "asc"
+            }
+        });
+
+        const projectTeams = await prisma.projectTeam.findMany({
+
+            where: {
+                teamId
+            },
+
+            include: {
+
+                projectDepartment: {
+
+                    include: {
+
+                        project: {
+
+                            select: {
+                                id: true,
+                                name: true,
+                                status: true,
+                                startDate: true,
+                                dueDate: true
+                            }
+
+                        }
+
+                    }
+
+                },
+
+                tasks: {
+
+                    where: {
+                        is_deleted: false
+                    },
+
+                    select: {
+                        id: true,
+                        title: true,
+                        status: true,
+                        priority: true,
+                        progress: true,
+                        dueDate: true
+                    }
+
+                }
+
+            }
+
+        });
+
+        const tasks = projectTeams.flatMap(
+            item => item.tasks
+        );
+
+        const projects = projectTeams.map(item => ({
+            id: item.projectDepartment.project.id,
+            name: item.projectDepartment.project.name,
+            status: item.projectDepartment.project.status,
+            startDate: item.projectDepartment.project.startDate,
+            dueDate: item.projectDepartment.project.dueDate
+        }));
+
+        const completedTasks =
+            tasks.filter(
+                task => task.status === "completed"
+            ).length;
+
+        const pendingTasks =
+            tasks.filter(
+                task => task.status === "pending"
+            ).length;
+
+        const inProgressTasks =
+            tasks.filter(
+                task => task.status === "in_progress"
+            ).length;
+
+        const completionRate =
+            tasks.length === 0
+                ? 0
+                : Math.round(
+                    (completedTasks / tasks.length) * 100
+                );
+
+        return res.status(200).json({
+
+            message: "Team dashboard fetched successfully",
+
+            data: {
+
+                team: {
+
+                    id: team.id,
+
+                    name: team.name,
+
+                    createdAt: team.createdAt,
+
+                    leader: team.leader,
+
+                    department: {
+
+                        id: team.department.id,
+
+                        name: team.department.name
+
+                    },
+
+                    workspace: team.department.workspace
+
+                },
+
+                statistics: {
+
+                    members: members.length,
+
+                    projects: projects.length,
+
+                    tasks: tasks.length,
+
+                    completedTasks,
+
+                    pendingTasks,
+
+                    inProgressTasks,
+
+                    completionRate
+
+                },
+
+                members: members.map(member => ({
+
+                    id: member.member.id,
+
+                    name: member.member.name,
+
+                    email: member.member.email,
+
+                    avatar: member.member.avatar,
+
+                    joinedAt: member.joinedAt,
+
+                    role:
+                        team.leaderId === member.member.id
+                            ? "team_lead"
+                            : "member"
+
+                })),
+
+                projects,
+
+                tasks
+
+            }
+
+        });
+
+    }
+    catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal Server Error while fetching team dashboard"
+        });
+
+    }
+};
+
+export const getAvailableLeaders = async (req, res) => {
+    try {
+
+        const { departmentId } = req.params;
+        const userId = req.user.userId;
+
+        if (!departmentId) {
+            return res.status(400).json({
+                message: "Department ID is required"
+            });
+        }
+
+        const department = await prisma.department.findUnique({
+            where: {
+                id: departmentId
+            },
+            select: {
+                workspaceId: true
+            }
+        });
+
+        if (!department) {
+            return res.status(404).json({
+                message: "Department not found"
+            });
+        }
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: department.workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if (!workspaceMember) {
+            return res.status(403).json({
+                message: "You are not a member of this workspace"
+            });
+        }
+
+        const leaders =
+            await prisma.workspaceMember.findMany({
+
+                where: {
+                    workspaceId: department.workspaceId,
+                    sys_role: {
+                        in: [
+                            "owner",
+                            "manager",
+                            "team_lead"
+                        ]
+                    }
+                },
+
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            avatar: true
+                        }
+                    }
+                },
+
+                orderBy: {
+                    joinedAt: "asc"
+                }
+
+            });
+
+        return res.status(200).json({
+
+            message: "Available leaders fetched successfully",
+
+            data: leaders.map(member => ({
+
+                id: member.user.id,
+
+                name: member.user.name,
+
+                email: member.user.email,
+
+                avatar: member.user.avatar,
+
+                currentRole: member.sys_role
+
+            }))
+
+        });
+
+    }
+    catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal Server Error while fetching leaders"
+        });
+
+    }
+};
