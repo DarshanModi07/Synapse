@@ -266,7 +266,7 @@ export const updateTask = async (req,res) => {
         const  { taskId } = req.params
         let { title , status , priority } = req.body
         status = status?.toLowerCase()
-        priority = priority.toLowerCase()
+        priority = priority?.toLowerCase()
 
         if(!taskId){
             return res.status(400).json({
@@ -274,7 +274,7 @@ export const updateTask = async (req,res) => {
             })
         }
 
-        title = title.trim()
+        title = title?.trim()
         const allStatus = [
             "todo",
             "in_progress",
@@ -290,9 +290,15 @@ export const updateTask = async (req,res) => {
                 "urgent"
             ]
 
-        if(priority && status && (!allStatus.includes(status) || !TaskPriority.includes(priority))){
+        if (status &&!allStatus.includes(status)){
             return res.status(400).json({
-                message:"Please provide valid status and priority"
+                message:"Please provide valid status"
+            })
+        }
+
+        if (priority &&!TaskPriority.includes(priority)){
+            return res.status(400).json({
+                message:"Please provide valid status"
             })
         }
 
@@ -358,7 +364,8 @@ export const updateTask = async (req,res) => {
         if(checkUser.sys_role === "team_lead" || checkUser.sys_role === "employee"){
             return res.status(403).json({
                 message:"You are not allowed to do this action"
-        })
+            })
+        }
 
         const updateData = await prisma.task.update({
             where:{
@@ -376,7 +383,6 @@ export const updateTask = async (req,res) => {
             data:updateData
         })
         
-    }
     }
     catch(err){
         console.log(err);
@@ -480,7 +486,8 @@ export const deleteTask = async(req,res) => {
                 id:taskId
             },
             data:{
-                is_deleted:true
+                is_deleted:true,
+                deletedAt:new Date()
             }
         })
 
@@ -497,176 +504,294 @@ export const deleteTask = async(req,res) => {
     }
 }
 
-export const taskProgress = async (req,res) => {
-    try{
+export const taskProgress = async (req, res) => {
+    try {
 
-        const { taskId } = req.params
+        const { taskId } = req.params;
+        const userId = req.user.userId;
 
-        const userId = req.user.userId
-
-        if(!taskId){
-            return res.status(404).json({
-                message:"credential needed"
-            })
+        if (!taskId) {
+            return res.status(400).json({
+                message: "Task ID is required"
+            });
         }
 
-        const checkTaskId = await prisma.task.findUnique({
-            where:{
-                id:taskId
+        /*
+        =====================================================
+        CHECK TASK
+        =====================================================
+        */
+
+        const checkTask = await prisma.task.findUnique({
+            where: {
+                id: taskId
             }
-        })
+        });
 
-        if(!checkTaskId || checkTaskId.is_deleted){
+        if (!checkTask || checkTask.is_deleted) {
             return res.status(404).json({
-                message:"Task not found"
-            })
+                message: "Task not found"
+            });
         }
 
-        const checkProjectTeam = await prisma.projectTeam.findUnique({
-            where:{
-                id: checkTaskId.projectTeamId
+        /*
+        =====================================================
+        CHECK PROJECT TEAM
+        =====================================================
+        */
+
+        const projectTeam = await prisma.projectTeam.findUnique({
+            where: {
+                id: checkTask.projectTeamId
             },
-            include:{
-                projectDepartment:{
-                    include:{
-                        department:{
-                            select:{
-                                workspaceId:true
+            include: {
+                projectDepartment: {
+                    include: {
+                        department: {
+                            select: {
+                                workspaceId: true
                             }
                         }
                     }
                 }
             }
-        }) 
+        });
 
-        if(!checkProjectTeam){
+        if (!projectTeam) {
             return res.status(404).json({
-                message:"Project Team Not Found"
-            })
+                message: "Project Team not found"
+            });
         }
 
-        const workspaceId = checkProjectTeam.projectDepartment.department.workspaceId
+        const workspaceId =
+            projectTeam.projectDepartment.department.workspaceId;
 
-        if(!workspaceId){
-            return res.status(404).json({
-                message:"workspaceId not found"
-            })
-        }
+        /*
+        =====================================================
+        CHECK WORKSPACE MEMBER
+        =====================================================
+        */
 
-        const checkUser = await prisma.workspaceMember.findUnique({
-            where:{
-                workspaceId_userId:{
-                    workspaceId,
-                    userId
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId,
+                        userId
+                    }
                 }
-            }
-        })
+            });
 
-        if(!checkUser){
+        if (!workspaceMember) {
             return res.status(403).json({
-                message:"You are not the member of workspace"
-            })
-        }        
+                message: "You are not a member of this workspace"
+            });
+        }
+
+        /*
+        =====================================================
+        GET SUBTASK IDS
+        =====================================================
+        */
 
         const task = await prisma.task.findUnique({
-            where:{
+            where: {
                 id: taskId
             },
-            select:{
-                subtasks:{
-                    select:{
-                        id:true
+            select: {
+                subtasks: {
+                    where: {
+                        is_deleted: false
+                    },
+                    select: {
+                        id: true
                     }
                 }
             }
         });
 
-        const subtaskIds = task.subtasks.map(st => st.id); 
+        const subtaskIds =
+            task.subtasks.map(subtask => subtask.id);
 
-        let workItemTotal = await prisma.workItem.count({
-    where:{
-        subTaskId:{
-            in: subtaskIds
-        },
-        is_deleted:false
-    }
-})
-        let done = await prisma.workItem.count({
-    where:{
-        subTaskId:{
-            in: subtaskIds
-        },
-        status:"done",
-        is_deleted:false
-    }
-})
-        let in_review = await prisma.workItem.count({
-    where:{
-        subTaskId:{
-            in: subtaskIds
-        },
-        status:"in_review",
-        is_deleted:false
-    }
-})
-        let in_progress = await prisma.workItem.count({
-    where:{
-        subTaskId:{
-            in: subtaskIds
-        },
-        status:"in_progress",
-        is_deleted:false
-    }
-})
-        let todo = await prisma.workItem.count({
-    where:{
-        subTaskId:{
-            in: subtaskIds
-        },
-        status:"todo",
-        is_deleted:false
-    }
-})
-        let cancelled = await prisma.workItem.count({
-    where:{
-        subTaskId:{
-            in: subtaskIds
-        },
-        status:"cancelled",
-        is_deleted:false
-    }
-})
+        /*
+        =====================================================
+        WORK ITEM COUNTS
+        =====================================================
+        */
 
-        const progress = {}      
-        progress.done = Number(((done / total) * 100).toFixed(2));
-        progress.inProgress = Number(((in_progress / total) * 100).toFixed(2));
-        progress.inReview = Number(((in_review / total) * 100).toFixed(2));
-        progress.todo = Number(((todo / total) * 100).toFixed(2));
-        progress.cancelled = Number(((cancelled / total) * 100).toFixed(2));
+        const totalWorkItems =
+            await prisma.workItem.count({
+                where: {
+                    subTaskId: {
+                        in: subtaskIds
+                    },
+                    is_deleted: false
+                }
+            });
 
-        const taskData = {}
-        taskData.title = checkTaskId.title
-        taskData.description = checkTaskId.description
-        taskData.priority = checkTaskId.priority
-        taskData.status = checkTaskId.status
+        const done =
+            await prisma.workItem.count({
+                where: {
+                    subTaskId: {
+                        in: subtaskIds
+                    },
+                    status: "done",
+                    is_deleted: false
+                }
+            });
+
+        const inProgress =
+            await prisma.workItem.count({
+                where: {
+                    subTaskId: {
+                        in: subtaskIds
+                    },
+                    status: "in_progress",
+                    is_deleted: false
+                }
+            });
+
+        const inReview =
+            await prisma.workItem.count({
+                where: {
+                    subTaskId: {
+                        in: subtaskIds
+                    },
+                    status: "in_review",
+                    is_deleted: false
+                }
+            });
+
+        const todo =
+            await prisma.workItem.count({
+                where: {
+                    subTaskId: {
+                        in: subtaskIds
+                    },
+                    status: "todo",
+                    is_deleted: false
+                }
+            });
+
+        const cancelled =
+            await prisma.workItem.count({
+                where: {
+                    subTaskId: {
+                        in: subtaskIds
+                    },
+                    status: "cancelled",
+                    is_deleted: false
+                }
+            });
+
+        /*
+        =====================================================
+        PROGRESS
+        =====================================================
+        */
+
+        const divisor =
+            totalWorkItems === 0
+                ? 1
+                : totalWorkItems;
+
+        const progress = {
+
+            done:
+                Number(
+                    ((done / divisor) * 100).toFixed(2)
+                ),
+
+            inProgress:
+                Number(
+                    ((inProgress / divisor) * 100).toFixed(2)
+                ),
+
+            inReview:
+                Number(
+                    ((inReview / divisor) * 100).toFixed(2)
+                ),
+
+            todo:
+                Number(
+                    ((todo / divisor) * 100).toFixed(2)
+                ),
+
+            cancelled:
+                Number(
+                    ((cancelled / divisor) * 100).toFixed(2)
+                )
+
+        };
+
+        /*
+        =====================================================
+        TASK INFO
+        =====================================================
+        */
+
+        const taskData = {
+
+            id: checkTask.id,
+
+            title: checkTask.title,
+
+            description: checkTask.description,
+
+            priority: checkTask.priority,
+
+            status: checkTask.status,
+
+            dueDate: checkTask.dueDate,
+
+            progress
+
+        };
+
+        /*
+        =====================================================
+        RESPONSE
+        =====================================================
+        */
 
         return res.status(200).json({
-            message:"Team/task progress fetched",
-            data:progress,
-            taskData,
-            done,
-            in_progress,
-            in_review,
-            todo,
-            cancelled
-        })
 
-        
+            message: "Task progress fetched successfully",
+
+            data: {
+
+                task: taskData,
+
+                statistics: {
+
+                    totalWorkItems,
+
+                    done,
+
+                    inProgress,
+
+                    inReview,
+
+                    todo,
+
+                    cancelled
+
+                },
+
+                progress
+
+            }
+
+        });
+
     }
-    catch(err){
-        console.log(err);
+    catch (err) {
+
+        console.error(err);
+
         return res.status(500).json({
-            message:"Internal server error during task progress"
-        })
+            message: "Internal Server Error while fetching task progress"
+        });
+
     }
-}
+};

@@ -21,43 +21,44 @@ export const useProjectDashboard = (
     const [error, setError] =
         useState(null);
 
-    const fetchDashboard =
-        useCallback(async () => {
+    const fetchDashboard = useCallback(async () => {
 
-            if (!projectId) {
-                return;
-            }
+    console.log("fetchDashboard called");
+    console.log("projectId:", projectId);
 
-            try {
+    if (!projectId) {
+        console.log("No projectId");
+        return;
+    }
 
-                setLoading(true);
+    try {
+        setLoading(true);
 
-                const response =
-                    await getProjectDashboard(
-                        projectId
-                    );
+        console.log("Calling API...");
 
-                setDashboard(
-                    response.data
-                );
+        const response = await getProjectDashboard(projectId);
 
-                setError(null);
+        console.log("API Response:", response);
 
-            }
-            catch (err) {
+        setDashboard(response.data);
 
-                console.error(err);
+        setError(null);
 
-                setError(err);
+    } catch (err) {
 
-            }
-            finally {
+        console.error("Dashboard Error:", err);
 
-                setLoading(false);
+        setError(err);
 
-            }
+    } finally {
 
-        }, [projectId]);
+        console.log("Loading false");
+
+        setLoading(false);
+
+    }
+
+}, [projectId]);
 
     useEffect(() => {
 

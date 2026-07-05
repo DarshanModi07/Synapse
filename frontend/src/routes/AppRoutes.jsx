@@ -20,6 +20,7 @@ import AIInsightsPage from "@/pages/owner/AIInsightsPage";
 import SettingsPage from "@/pages/owner/SettingsPage";
 import DepartmentDashboardPage from "@/pages/owner/DepartmentDashboardPage";
 import TeamDashboardPage from "@/pages/owner/TeamDashboardPage";
+import ProjectDashboardPage from "@/pages/projectDashboard/ProjectDashboardPage";
 
 const ProtectedRoute = ({ children }) => {
   const { profile } = useAuth();
@@ -136,6 +137,11 @@ const AppRoutes = () => {
           <Route
             path="projects"
             element={<ProjectsPage />}
+          />
+
+          <Route
+            path="projects/:projectId"
+            element={<ProjectDashboardPage/>}
           />
 
           <Route

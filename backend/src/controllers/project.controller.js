@@ -209,40 +209,122 @@ export const getAllProjects = async (req, res) => {
         });
 
         const allProjects = await prisma.project.findMany({
-            where: {
-                workspaceId,
-                is_deleted: false
-            },
-            include: {
-                createdBy: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        avatar: true
-                    }
-                }
-            },
-            orderBy: {
-                createdAt: "desc"
-            },
-            skip,
-            take: limit
-        });
+    where: {
+        workspaceId,
+        is_deleted: false
+    },
 
-        return res.status(200).json({
-            message:
-                allProjects.length > 0
-                    ? "Projects fetched successfully"
-                    : "No projects found",
-            pagination: {
-                total: totalProjects,
-                page,
-                limit,
-                totalPages: Math.ceil(totalProjects / limit)
-            },
-            data: allProjects
-        });
+    include: {
+
+        createdBy: {
+            select: {
+                id: true,
+                name: true,
+                avatar: true
+            }
+        },
+
+        projectDepartments: {
+
+            include: {
+
+                projectTeams: {
+
+                    include: {
+
+                        tasks: {
+
+                            where: {
+                                is_deleted: false
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    },
+
+    orderBy: {
+        createdAt: "desc"
+    },
+
+    skip,
+    take: limit
+});
+
+const projects = allProjects.map(project => {
+
+    const departments = project.projectDepartments.length;
+
+    const teams =
+        project.projectDepartments.reduce(
+            (count, department) =>
+                count + department.projectTeams.length,
+            0
+        );
+
+    const tasks =
+        project.projectDepartments.reduce(
+            (count, department) =>
+                count +
+                department.projectTeams.reduce(
+                    (teamCount, team) =>
+                        teamCount + team.tasks.length,
+                    0
+                ),
+            0
+        );
+
+
+
+    return {
+
+        id: project.id,
+
+        name: project.name,
+
+        description: project.description,
+
+        status: project.status,
+
+        startDate: project.startDate,
+
+        dueDate: project.dueDate,
+
+        createdAt: project.createdAt,
+
+        createdBy: project.createdBy,
+
+        departments,
+
+        teams,
+
+        tasks
+
+    };
+
+});
+
+return res.status(200).json({
+
+    message: "Projects fetched successfully",
+
+    pagination: {
+        total: totalProjects,
+        page,
+        limit,
+        totalPages: Math.ceil(totalProjects / limit)
+    },
+
+    data: projects
+
+});
 
     } catch (err) {
         console.error(err);
@@ -641,26 +723,23 @@ export const projectProgress = async (req,res) => {
     }
 }
 
-export const projectDashboard = async (req, res) => {
 
+export const projectDashboard = async (req, res) => {
     try {
 
         const { projectId } = req.params;
-
         const userId = req.user.userId;
 
         if (!projectId) {
-
             return res.status(400).json({
                 message: "Project ID is required"
             });
-
         }
 
         /*
-        ----------------------------------------------------
-        Find Project
-        ----------------------------------------------------
+        =====================================================
+        PROJECT
+        =====================================================
         */
 
         const project = await prisma.project.findUnique({
@@ -674,11 +753,9 @@ export const projectDashboard = async (req, res) => {
                 workspace: {
 
                     select: {
-
                         id: true,
                         name: true,
                         slug: true
-
                     }
 
                 },
@@ -686,12 +763,10 @@ export const projectDashboard = async (req, res) => {
                 createdBy: {
 
                     select: {
-
                         id: true,
                         name: true,
                         email: true,
                         avatar: true
-
                     }
 
                 }
@@ -701,19 +776,15 @@ export const projectDashboard = async (req, res) => {
         });
 
         if (!project || project.is_deleted) {
-
             return res.status(404).json({
-
                 message: "Project not found"
-
             });
-
         }
 
         /*
-        ----------------------------------------------------
-        Workspace Permission
-        ----------------------------------------------------
+        =====================================================
+        WORKSPACE MEMBER
+        =====================================================
         */
 
         const workspaceMember =
@@ -734,45 +805,31 @@ export const projectDashboard = async (req, res) => {
             });
 
         if (!workspaceMember) {
-
             return res.status(403).json({
-
-                message:
-                    "You are not a member of this workspace"
-
+                message: "You are not a member of this workspace"
             });
-
         }
 
         if (
-
             workspaceMember.sys_role !== "owner" &&
             workspaceMember.sys_role !== "manager"
-
         ) {
-
             return res.status(403).json({
-
-                message:
-                    "You are not allowed to access this dashboard"
-
+                message: "Permission denied"
             });
-
         }
 
         /*
-        ----------------------------------------------------
-        Fetch Project Departments
-        ----------------------------------------------------
+        =====================================================
+        PROJECT DEPARTMENTS
+        =====================================================
         */
 
         const projectDepartments =
             await prisma.projectDepartment.findMany({
 
                 where: {
-
                     projectId
-
                 },
 
                 include: {
@@ -798,14 +855,20 @@ export const projectDashboard = async (req, res) => {
 
                     }
 
+                },
+
+                orderBy: {
+
+                    assignedAt: "asc"
+
                 }
 
             });
 
-                    /*
-        ----------------------------------------------------
-        Fetch Project Teams
-        ----------------------------------------------------
+        /*
+        =====================================================
+        PROJECT TEAMS
+        =====================================================
         */
 
         const projectTeams =
@@ -865,14 +928,20 @@ export const projectDashboard = async (req, res) => {
 
                     }
 
+                },
+
+                orderBy: {
+
+                    assignedAt: "asc"
+
                 }
 
             });
 
         /*
-        ----------------------------------------------------
-        Fetch Tasks
-        ----------------------------------------------------
+        =====================================================
+        TASKS
+        =====================================================
         */
 
         const tasks =
@@ -926,9 +995,9 @@ export const projectDashboard = async (req, res) => {
             });
 
         /*
-        ----------------------------------------------------
-        Fetch SubTasks
-        ----------------------------------------------------
+        =====================================================
+        SUBTASKS
+        =====================================================
         */
 
         const subtasks =
@@ -952,29 +1021,14 @@ export const projectDashboard = async (req, res) => {
 
                     is_deleted: false
 
-                },
-
-                include: {
-
-                    assignedTo: {
-
-                        select: {
-
-                            id: true,
-                            name: true
-
-                        }
-
-                    }
-
                 }
 
             });
 
         /*
-        ----------------------------------------------------
-        Fetch Work Items
-        ----------------------------------------------------
+        =====================================================
+        WORK ITEMS
+        =====================================================
         */
 
         const workItems =
@@ -1006,26 +1060,22 @@ export const projectDashboard = async (req, res) => {
 
             });
 
-                    /*
-        ----------------------------------------------------
-        Overall Statistics
-        ----------------------------------------------------
+        // ===== PART 2 STARTS HERE =====
+
+                /*
+        =====================================================
+        OVERALL STATISTICS
+        =====================================================
         */
 
         const completedTasks =
-            tasks.filter(
-                task => task.status === "done"
-            ).length;
+            tasks.filter(task => task.status === "done").length;
 
         const pendingTasks =
-            tasks.filter(
-                task => task.status === "todo"
-            ).length;
+            tasks.filter(task => task.status === "todo").length;
 
         const inProgressTasks =
-            tasks.filter(
-                task => task.status === "in_progress"
-            ).length;
+            tasks.filter(task => task.status === "in_progress").length;
 
         const completedSubTasks =
             subtasks.filter(
@@ -1037,6 +1087,13 @@ export const projectDashboard = async (req, res) => {
                 workItem => workItem.status === "done"
             ).length;
 
+        const overdueTasks =
+            tasks.filter(task =>
+                task.dueDate &&
+                new Date(task.dueDate) < new Date() &&
+                task.status !== "done"
+            ).length;
+
         const overallProgress =
             workItems.length === 0
                 ? 0
@@ -1046,69 +1103,93 @@ export const projectDashboard = async (req, res) => {
                 );
 
         /*
-        ----------------------------------------------------
-        Department Summary
-        ----------------------------------------------------
+        =====================================================
+        DEPARTMENT SUMMARY
+        =====================================================
         */
 
         const departments =
             projectDepartments.map(projectDepartment => {
 
-                const departmentTeams =
+                const relatedProjectTeams =
                     projectTeams.filter(
-                        team =>
-                            team.projectDepartment.departmentId ===
-                            projectDepartment.departmentId
+                        projectTeam =>
+                            projectTeam.projectDepartmentId ===
+                            projectDepartment.id
                     );
 
-                const departmentTeamIds =
-                    departmentTeams.map(
-                        team => team.id
+                const projectTeamIds =
+                    relatedProjectTeams.map(
+                        projectTeam => projectTeam.id
                     );
 
-                const departmentTasks =
+                const relatedTasks =
                     tasks.filter(
                         task =>
-                            departmentTeamIds.includes(
+                            projectTeamIds.includes(
                                 task.projectTeamId
                             )
                     );
 
-                const departmentSubTasks =
+                const taskIds =
+                    relatedTasks.map(
+                        task => task.id
+                    );
+
+                const relatedSubTasks =
                     subtasks.filter(
                         subtask =>
-                            departmentTasks.some(
-                                task =>
-                                    task.id === subtask.taskId
+                            taskIds.includes(
+                                subtask.taskId
                             )
                     );
 
-                const departmentWorkItems =
+                const subTaskIds =
+                    relatedSubTasks.map(
+                        subtask => subtask.id
+                    );
+
+                const relatedWorkItems =
                     workItems.filter(
                         workItem =>
-                            departmentSubTasks.some(
-                                subtask =>
-                                    subtask.id ===
-                                    workItem.subTaskId
+                            subTaskIds.includes(
+                                workItem.subTaskId
                             )
                     );
 
-                const completedDepartmentWorkItems =
-                    departmentWorkItems.filter(
+                const completed =
+                    relatedWorkItems.filter(
                         workItem =>
                             workItem.status === "done"
                     ).length;
 
                 const progress =
-                    departmentWorkItems.length === 0
+                    relatedWorkItems.length === 0
                         ? 0
                         : Math.round(
-                            completedDepartmentWorkItems *
-                            100 /
-                            departmentWorkItems.length
+                            (completed * 100) /
+                            relatedWorkItems.length
                         );
 
                 return {
+
+                    /*
+                    -------------------------------
+                    IMPORTANT IDS
+                    -------------------------------
+                    */
+
+                    projectDepartmentId:
+                        projectDepartment.id,
+
+                    departmentId:
+                        projectDepartment.department.id,
+
+                    /*
+                    -------------------------------
+                    Department
+                    -------------------------------
+                    */
 
                     id:
                         projectDepartment.department.id,
@@ -1119,11 +1200,23 @@ export const projectDashboard = async (req, res) => {
                     manager:
                         projectDepartment.department.manager,
 
+                    /*
+                    -------------------------------
+                    Counts
+                    -------------------------------
+                    */
+
                     teams:
-                        departmentTeams.length,
+                        relatedProjectTeams.length,
 
                     tasks:
-                        departmentTasks.length,
+                        relatedTasks.length,
+
+                    subTasks:
+                        relatedSubTasks.length,
+
+                    workItems:
+                        relatedWorkItems.length,
 
                     progress
 
@@ -1132,56 +1225,124 @@ export const projectDashboard = async (req, res) => {
             });
 
         /*
-        ----------------------------------------------------
-        Team Summary
-        ----------------------------------------------------
+        =====================================================
+        STATISTICS OBJECT
+        =====================================================
+        */
+
+        const statistics = {
+
+            departments:
+                departments.length,
+
+            teams:
+                projectTeams.length,
+
+            tasks:
+                tasks.length,
+
+            completedTasks,
+
+            pendingTasks,
+
+            inProgressTasks,
+
+            overdueTasks,
+
+            subTasks:
+                subtasks.length,
+
+            completedSubTasks,
+
+            workItems:
+                workItems.length,
+
+            completedWorkItems,
+
+            overallProgress
+
+        };
+
+        // ===== PART 3 STARTS HERE =====
+
+                /*
+        =====================================================
+        TEAM SUMMARY
+        =====================================================
         */
 
         const teams =
             projectTeams.map(projectTeam => {
 
-                const teamTasks =
+                const relatedTasks =
                     tasks.filter(
                         task =>
                             task.projectTeamId ===
                             projectTeam.id
                     );
 
-                const teamSubTasks =
+                const taskIds =
+                    relatedTasks.map(
+                        task => task.id
+                    );
+
+                const relatedSubTasks =
                     subtasks.filter(
                         subtask =>
-                            teamTasks.some(
-                                task =>
-                                    task.id === subtask.taskId
+                            taskIds.includes(
+                                subtask.taskId
                             )
                     );
 
-                const teamWorkItems =
+                const subTaskIds =
+                    relatedSubTasks.map(
+                        subtask => subtask.id
+                    );
+
+                const relatedWorkItems =
                     workItems.filter(
                         workItem =>
-                            teamSubTasks.some(
-                                subtask =>
-                                    subtask.id ===
-                                    workItem.subTaskId
+                            subTaskIds.includes(
+                                workItem.subTaskId
                             )
                     );
 
                 const completed =
-                    teamWorkItems.filter(
+                    relatedWorkItems.filter(
                         workItem =>
                             workItem.status === "done"
                     ).length;
 
                 const progress =
-                    teamWorkItems.length === 0
+                    relatedWorkItems.length === 0
                         ? 0
                         : Math.round(
-                            completed *
-                            100 /
-                            teamWorkItems.length
+                            (completed * 100) /
+                            relatedWorkItems.length
                         );
 
                 return {
+
+                    /*
+                    ----------------------------------
+                    IMPORTANT IDS
+                    ----------------------------------
+                    */
+
+                    projectTeamId:
+                        projectTeam.id,
+
+                    projectDepartmentId:
+                        projectTeam.projectDepartmentId,
+
+                    teamId:
+                        projectTeam.team.id,
+
+                    /*
+                    ----------------------------------
+                    Team
+                    ----------------------------------
+                    */
 
                     id:
                         projectTeam.team.id,
@@ -1195,11 +1356,23 @@ export const projectDashboard = async (req, res) => {
                     department:
                         projectTeam.team.department,
 
+                    /*
+                    ----------------------------------
+                    Counts
+                    ----------------------------------
+                    */
+
                     members:
                         projectTeam.team._count.teamMembers,
 
                     tasks:
-                        teamTasks.length,
+                        relatedTasks.length,
+
+                    subTasks:
+                        relatedSubTasks.length,
+
+                    workItems:
+                        relatedWorkItems.length,
 
                     progress
 
@@ -1207,165 +1380,210 @@ export const projectDashboard = async (req, res) => {
 
             });
 
-                    /*
-        ----------------------------------------------------
-        Recent Tasks
-        ----------------------------------------------------
+        /*
+        =====================================================
+        RECENT TASKS
+        =====================================================
         */
 
-        const recentTasks = tasks
+        const recentTasks =
 
-            .slice()
+            tasks
 
-            .sort(
-                (a, b) =>
-                    new Date(b.createdAt) -
-                    new Date(a.createdAt)
-            )
+                .slice()
 
-            .slice(0, 10)
+                .sort(
 
-            .map(task => ({
+                    (a, b) =>
 
-                id: task.id,
+                        new Date(b.createdAt) -
 
-                title: task.title,
+                        new Date(a.createdAt)
 
-                status: task.status,
+                )
 
-                priority: task.priority,
+                .slice(0, 10)
 
-                progress: task.progress,
+                .map(task => ({
 
-                dueDate: task.dueDate,
+                    id:
+                        task.id,
 
-                team: {
+                    title:
+                        task.title,
 
-                    id: task.projectTeam.team.id,
+                    status:
+                        task.status,
 
-                    name: task.projectTeam.team.name
+                    priority:
+                        task.priority,
 
-                }
+                    progress:
+                        task.progress,
 
-            }));
+                    dueDate:
+                        task.dueDate,
 
+                    projectTeamId:
+                        task.projectTeam.id,
+
+                    team: {
+
+                        teamId:
+                            task.projectTeam.team.id,
+
+                        id:
+                            task.projectTeam.team.id,
+
+                        name:
+                            task.projectTeam.team.name
+
+                    }
+
+                }));
 
         /*
-        ----------------------------------------------------
-        Recent Activity
-        ----------------------------------------------------
+        =====================================================
+        PERMISSIONS
+        =====================================================
+        */
+
+        const permissions = {
+
+            canEdit:
+                workspaceMember.sys_role === "owner",
+
+            canDelete:
+                workspaceMember.sys_role === "owner",
+
+            canAssignDepartment:
+                workspaceMember.sys_role === "owner",
+
+            canRemoveDepartment:
+                workspaceMember.sys_role === "owner",
+
+            canAssignTeam:
+                workspaceMember.sys_role === "owner",
+
+            canRemoveTeam:
+                workspaceMember.sys_role === "owner",
+
+            canCreateTask:
+                workspaceMember.sys_role === "owner" ||
+                workspaceMember.sys_role === "manager"
+
+        };
+
+        /*
+        =====================================================
+        ACTIVITY
+        =====================================================
         */
 
         const activity = [
 
             ...projectDepartments.map(item => ({
 
-                type: "department",
+                type:
+                    "DEPARTMENT_ASSIGNED",
 
-                title: `${item.department.name} assigned to project`,
+                title:
+                    `${item.department.name} assigned to project`,
 
-                createdAt: item.assignedAt
+                createdAt:
+                    item.assignedAt
 
             })),
 
             ...projectTeams.map(item => ({
 
-                type: "team",
+                type:
+                    "TEAM_ASSIGNED",
 
-                title: `${item.team.name} assigned`,
+                title:
+                    `${item.team.name} assigned to project`,
 
-                createdAt: item.assignedAt
+                createdAt:
+                    item.assignedAt
 
             })),
 
             ...tasks.map(task => ({
 
-                type: "task",
+                type:
+                    "TASK_CREATED",
 
-                title: `Task "${task.title}" created`,
+                title:
+                    `Task "${task.title}" created`,
 
-                createdAt: task.createdAt
+                createdAt:
+                    task.createdAt
 
             }))
 
         ]
 
             .sort(
+
                 (a, b) =>
+
                     new Date(b.createdAt) -
+
                     new Date(a.createdAt)
+
             )
 
             .slice(0, 20);
 
+        // ===== PART 4 STARTS HERE =====
+
+                /*
+        =====================================================
+        PROJECT OBJECT
+        =====================================================
+        */
+
+        const projectInfo = {
+
+            id: project.id,
+
+            name: project.name,
+
+            description: project.description,
+
+            status: project.status,
+
+            startDate: project.startDate,
+
+            dueDate: project.dueDate,
+
+            createdAt: project.createdAt,
+
+            updatedAt: project.updatedAt,
+
+            workspace: project.workspace,
+
+            createdBy: project.createdBy
+
+        };
 
         /*
-        ----------------------------------------------------
-        Final Response
-        ----------------------------------------------------
+        =====================================================
+        FINAL RESPONSE
+        =====================================================
         */
 
         return res.status(200).json({
 
-            message:
-                "Project dashboard fetched successfully",
+            message: "Project dashboard fetched successfully",
 
             data: {
 
-                project: {
+                project: projectInfo,
 
-                    id: project.id,
+                permissions,
 
-                    name: project.name,
-
-                    description: project.description,
-
-                    status: project.status,
-
-                    startDate: project.startDate,
-
-                    dueDate: project.dueDate,
-
-                    createdAt: project.createdAt,
-
-                    updatedAt: project.updatedAt,
-
-                    workspace: project.workspace,
-
-                    createdBy: project.createdBy
-
-                },
-
-                statistics: {
-
-                    departments:
-                        projectDepartments.length,
-
-                    teams:
-                        projectTeams.length,
-
-                    tasks:
-                        tasks.length,
-
-                    completedTasks,
-
-                    pendingTasks,
-
-                    inProgressTasks,
-
-                    subTasks:
-                        subtasks.length,
-
-                    completedSubTasks,
-
-                    workItems:
-                        workItems.length,
-
-                    completedWorkItems,
-
-                    overallProgress
-
-                },
+                statistics,
 
                 departments,
 
@@ -1394,4 +1612,164 @@ export const projectDashboard = async (req, res) => {
 
     }
 
+};
+
+export const getAvailableDepartments = async (req, res) => {
+    try {
+
+        const { projectId } = req.params;
+        const userId = req.user.userId;
+
+        if (!projectId) {
+            return res.status(400).json({
+                message: "Project ID is required"
+            });
+        }
+
+        /*
+        ----------------------------------------------------
+        Check Project
+        ----------------------------------------------------
+        */
+
+        const project = await prisma.project.findUnique({
+            where: {
+                id: projectId
+            }
+        });
+
+        if (!project || project.is_deleted) {
+            return res.status(404).json({
+                message: "Project not found"
+            });
+        }
+
+        /*
+        ----------------------------------------------------
+        Check Workspace Permission
+        ----------------------------------------------------
+        */
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: project.workspaceId,
+                        userId
+                    }
+                }
+            });
+
+        if (!workspaceMember) {
+            return res.status(403).json({
+                message: "You are not a member of this workspace"
+            });
+        }
+
+        if (
+            workspaceMember.sys_role !== "owner" &&
+            workspaceMember.sys_role !== "manager"
+        ) {
+            return res.status(403).json({
+                message: "You are not allowed to perform this action"
+            });
+        }
+
+        /*
+        ----------------------------------------------------
+        Already Assigned Departments
+        ----------------------------------------------------
+        */
+
+        const assignedDepartments =
+            await prisma.projectDepartment.findMany({
+                where: {
+                    projectId
+                },
+                select: {
+                    departmentId: true
+                }
+            });
+
+        const assignedIds =
+            assignedDepartments.map(
+                item => item.departmentId
+            );
+
+        /*
+        ----------------------------------------------------
+        Available Departments
+        ----------------------------------------------------
+        */
+
+        const departments =
+            await prisma.department.findMany({
+
+                where: {
+
+                    workspaceId: project.workspaceId,
+
+                    is_deleted: false,
+
+                    id: {
+                        notIn: assignedIds
+                    }
+
+                },
+
+                include: {
+
+                    manager: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            avatar: true
+                        }
+                    },
+
+                    _count: {
+                        select: {
+                            teams: true
+                        }
+                    }
+
+                },
+
+                orderBy: {
+                    name: "asc"
+                }
+
+            });
+
+        return res.status(200).json({
+
+            message: "Available departments fetched successfully",
+
+            data: departments.map(department => ({
+
+                id: department.id,
+
+                name: department.name,
+
+                manager: department.manager,
+
+                teams: department._count.teams,
+
+                createdAt: department.createdAt
+
+            }))
+
+        });
+
+    }
+    catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal Server Error while fetching available departments"
+        });
+
+    }
 };

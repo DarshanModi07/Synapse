@@ -85,14 +85,21 @@ export const assignTeam = async (req, res) => {
             });
         }
 
-        const createProjectTeam =
-            await prisma.projectTeam.create({
-                data: {
-                    projectDepartmentId,
-                    teamId,
-                    assignedById: userId
+        const createProjectTeam = await prisma.projectTeam.create({
+            data: {
+                projectDepartmentId,
+                teamId,
+                assignedById: userId
+            },
+            include: {
+                team: {
+                    include: {
+                        leader: true,
+                        department: true
+                    }
                 }
-            });
+            }
+        });
 
         return res.status(201).json({
             message: "Team assigned successfully",
@@ -212,91 +219,177 @@ export const getTeams = async (req, res) => {
 
 export const removeTeam = async (req, res) => {
     try {
+
         const {
             projectDepartmentId,
             teamId
         } = req.params;
 
+        const userId = req.user.userId;
+
         if (!projectDepartmentId || !teamId) {
             return res.status(400).json({
-                message: "Credentials needed"
+                message: "Project Department ID and Team ID are required"
             });
         }
 
-        const assignment =
-            await prisma.projectTeam.findFirst({
-                where: {
-                    projectDepartmentId,
-                    teamId
-                },
-                include: {
-                    projectDepartment: {
-                        include: {
-                            project: true
+        /*
+        ----------------------------------------------------
+        Check Assignment
+        ----------------------------------------------------
+        */
+
+        const assignment = await prisma.projectTeam.findFirst({
+
+            where: {
+                projectDepartmentId,
+                teamId
+            },
+
+            include: {
+
+                projectDepartment: {
+
+                    include: {
+
+                        project: {
+
+                            select: {
+                                workspaceId: true
+                            }
+
                         }
+
                     }
+
                 }
-            });
+
+            }
+
+        });
 
         if (!assignment) {
+
             return res.status(404).json({
-                message:
-                    "Team is not assigned to this project department"
+                message: "Team is not assigned to this project department"
             });
+
         }
 
-        const checkUser =
+        /*
+        ----------------------------------------------------
+        Workspace Permission
+        ----------------------------------------------------
+        */
+
+        const workspaceMember =
             await prisma.workspaceMember.findUnique({
+
                 where: {
+
                     workspaceId_userId: {
+
                         workspaceId:
                             assignment.projectDepartment.project.workspaceId,
-                        userId: req.user.userId
+
+                        userId
+
                     }
+
                 }
+
             });
 
-        if (!checkUser) {
+        if (!workspaceMember) {
+
             return res.status(403).json({
-                message:
-                    "You are not a member of this workspace"
+                message: "You are not a member of this workspace"
             });
+
         }
 
         if (
-            checkUser.sys_role !== "owner" &&
-            checkUser.sys_role !== "manager"
+            workspaceMember.sys_role !== "owner" &&
+            workspaceMember.sys_role !== "manager"
         ) {
+
             return res.status(403).json({
-                message:
-                    "Only owner and manager can perform this action"
+                message: "Only Owner and Manager can remove teams"
             });
+
         }
 
-        const deleted =
-            await prisma.projectTeam.delete({
-                where: {
-                    projectDepartmentId_teamId: {
-                        projectDepartmentId,
-                        teamId
-                    }
-                }
+        /*
+        ----------------------------------------------------
+        Prevent deletion if tasks exist
+        ----------------------------------------------------
+        */
+
+        const taskCount = await prisma.task.count({
+
+            where: {
+
+                projectTeamId: assignment.id,
+
+                is_deleted: false
+
+            }
+
+        });
+
+        if (taskCount > 0) {
+
+            return res.status(400).json({
+
+                message:
+                    "Cannot remove team because it still has active tasks."
+
             });
 
-        return res.status(200).json({
-            message:
-                "Team removed successfully",
-            data: deleted
+        }
+
+        /*
+        ----------------------------------------------------
+        Remove Team
+        ----------------------------------------------------
+        */
+
+        await prisma.projectTeam.delete({
+
+            where: {
+
+                projectDepartmentId_teamId: {
+
+                    projectDepartmentId,
+
+                    teamId
+
+                }
+
+            }
+
         });
 
-    } catch (err) {
-        console.log(err);
+        return res.status(200).json({
+
+            message: "Team removed successfully"
+
+        });
+
+    }
+
+    catch (err) {
+
+        console.error(err);
 
         return res.status(500).json({
-            message:
-                "Internal server error while removing team"
+
+            message: "Internal server error while removing team"
+
         });
+
     }
+
 };
 
 export const teamDashboard = async (req,res) => {
@@ -493,3 +586,219 @@ export const teamDashboard = async (req,res) => {
         });
     }
 };
+
+export const getAvailableTeams = async (req, res) => {
+    try {
+
+        const { projectDepartmentId } = req.params;
+        const userId = req.user.userId;
+
+        if (!projectDepartmentId) {
+            return res.status(400).json({
+                message: "Project Department ID is required"
+            });
+        }
+
+        /*
+        ----------------------------------------------------
+        Check Project Department
+        ----------------------------------------------------
+        */
+
+        const projectDepartment =
+            await prisma.projectDepartment.findUnique({
+
+                where: {
+                    id: projectDepartmentId
+                },
+
+                include: {
+
+                    department: {
+                        select: {
+                            id: true,
+                            workspaceId: true
+                        }
+                    }
+
+                }
+
+            });
+
+        if (!projectDepartment) {
+
+            return res.status(404).json({
+                message: "Project Department not found"
+            });
+
+        }
+
+        /*
+        ----------------------------------------------------
+        Check Workspace Permission
+        ----------------------------------------------------
+        */
+
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
+
+                where: {
+
+                    workspaceId_userId: {
+
+                        workspaceId:
+                            projectDepartment.department.workspaceId,
+
+                        userId
+
+                    }
+
+                }
+
+            });
+
+        if (!workspaceMember) {
+
+            return res.status(403).json({
+                message: "You are not a member of this workspace"
+            });
+
+        }
+
+        if (
+            workspaceMember.sys_role !== "owner" &&
+            workspaceMember.sys_role !== "manager"
+        ) {
+
+            return res.status(403).json({
+                message: "You are not allowed to perform this action"
+            });
+
+        }
+
+        /*
+        ----------------------------------------------------
+        Already Assigned Teams
+        ----------------------------------------------------
+        */
+
+        const assignedTeams =
+            await prisma.projectTeam.findMany({
+
+                where: {
+                    projectDepartmentId
+                },
+
+                select: {
+                    teamId: true
+                }
+
+            });
+
+        const assignedIds =
+            assignedTeams.map(
+                item => item.teamId
+            );
+
+        /*
+        ----------------------------------------------------
+        Available Teams
+        ----------------------------------------------------
+        */
+
+        const teams =
+            await prisma.team.findMany({
+
+                where: {
+
+                    departmentId:
+                        projectDepartment.departmentId,
+
+                    is_deleted: false,
+
+                    id: {
+                        notIn: assignedIds
+                    }
+
+                },
+
+                include: {
+
+                    leader: {
+
+                        select: {
+
+                            id: true,
+                            name: true,
+                            email: true,
+                            avatar: true
+
+                        }
+
+                    },
+
+                    _count: {
+
+                        select: {
+
+                            teamMembers: true,
+
+                            teamProjects: true
+
+                        }
+
+                    }
+
+                },
+
+                orderBy: {
+
+                    name: "asc"
+
+                }
+
+            });
+
+        return res.status(200).json({
+
+            message:
+                "Available teams fetched successfully",
+
+            data:
+
+                teams.map(team => ({
+
+                    id: team.id,
+
+                    name: team.name,
+
+                    leader: team.leader,
+
+                    members:
+                        team._count.teamMembers,
+
+                    activeProjects:
+                        team._count.teamProjects,
+
+                    createdAt:
+                        team.createdAt
+
+                }))
+
+        });
+
+    }
+    catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+
+            message:
+                "Internal Server Error while fetching available teams"
+
+        });
+
+    }
+};
+
