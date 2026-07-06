@@ -5,7 +5,7 @@ import { useTeamDashboard } from "@/hooks/useTeamDashboard";
 import TeamDashboardHeader from "@/components/teamDashboard/TeamDashboardHeader";
 import TeamStatistics from "@/components/teamDashboard/TeamStatistics";
 import TeamMembers from "@/components/teamDashboard/TeamMembers";
-import TeamTasks from "@/components/teamDashboard/TeamTasks";
+// import TeamTasks from "@/components/teamDashboard/TeamTasks";
 import TeamProjects from "@/components/teamDashboard/TeamProjects";
 
 import { theme } from "@/lib/theme";
@@ -91,13 +91,11 @@ const TeamDashboardPage = () => {
 
       />
 
-      <TeamTasks
+      {/* <TeamTasks
 
-        tasks={dashboard.tasks}
+          projectTeamId={dashboard.team.projectTeamId}
 
-        refresh={refresh}
-
-      />
+      /> */}
 
       <TeamProjects
 

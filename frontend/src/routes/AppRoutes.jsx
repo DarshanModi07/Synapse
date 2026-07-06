@@ -21,6 +21,7 @@ import SettingsPage from "@/pages/owner/SettingsPage";
 import DepartmentDashboardPage from "@/pages/owner/DepartmentDashboardPage";
 import TeamDashboardPage from "@/pages/owner/TeamDashboardPage";
 import ProjectDashboardPage from "@/pages/projectDashboard/ProjectDashboardPage";
+import ProjectTeamDashboardPage from "@/pages/projectTeamDashboard/ProjectTeamDashboardPage";
 
 const ProtectedRoute = ({ children }) => {
   const { profile } = useAuth();
@@ -142,6 +143,11 @@ const AppRoutes = () => {
           <Route
             path="projects/:projectId"
             element={<ProjectDashboardPage/>}
+          />
+
+          <Route
+              path="project-team/:projectTeamId"
+              element={<ProjectTeamDashboardPage />}
           />
 
           <Route

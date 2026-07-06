@@ -223,10 +223,6 @@ model TeamMember {
   @@index([memberId])
 }
 
-// POST   /team/:teamId/member
-// GET    /team/:teamId/members
-// DELETE /team/:teamId/member/:memberId
-
 model Channel {
   id         String      @id @default(cuid())
   name       String
@@ -394,7 +390,8 @@ model ProjectDepartment {
   @@index([projectId])
   @@index([departmentId])
 }
- model ProjectTeam {
+
+model ProjectTeam {
   id String @id @default(cuid())
 
   projectDepartmentId String

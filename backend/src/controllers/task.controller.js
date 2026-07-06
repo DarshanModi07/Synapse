@@ -261,136 +261,316 @@ export const getAllTask = async (req,res) => {
     }
 }
 
-export const updateTask = async (req,res) => {
-    try{
-        const  { taskId } = req.params
-        let { title , status , priority } = req.body
-        status = status?.toLowerCase()
-        priority = priority?.toLowerCase()
+export const updateTask = async (req, res) => {
+    try {
 
-        if(!taskId){
+        const { taskId } = req.params;
+
+        let {
+
+            title,
+
+            description,
+
+            priority,
+
+            status,
+
+            dueDate
+
+        } = req.body;
+
+        if (!taskId) {
+
             return res.status(400).json({
-                message:"Credential Needed"
-            })
+                message: "Task ID is required"
+            });
+
         }
 
-        title = title?.trim()
-        const allStatus = [
+        title = title?.trim();
+
+        status = status?.toLowerCase();
+
+        priority = priority?.toLowerCase();
+
+        /*
+        ----------------------------------------------------
+        VALIDATIONS
+        ----------------------------------------------------
+        */
+
+        const allowedStatus = [
+
             "todo",
+
             "in_progress",
+
             "in_review",
+
             "done",
+
             "cancelled"
-        ]
 
-        const TaskPriority = [
-                "low",
-                "medium",
-                "high",
-                "urgent"
-            ]
+        ];
 
-        if (status &&!allStatus.includes(status)){
+        const allowedPriority = [
+
+            "low",
+
+            "medium",
+
+            "high",
+
+            "urgent"
+
+        ];
+
+        if (
+
+            status &&
+
+            !allowedStatus.includes(status)
+
+        ) {
+
             return res.status(400).json({
-                message:"Please provide valid status"
-            })
+
+                message: "Invalid task status"
+
+            });
+
         }
 
-        if (priority &&!TaskPriority.includes(priority)){
+        if (
+
+            priority &&
+
+            !allowedPriority.includes(priority)
+
+        ) {
+
             return res.status(400).json({
-                message:"Please provide valid status"
-            })
+
+                message: "Invalid task priority"
+
+            });
+
         }
 
-        const checkTaskId = await prisma.task.findUnique({
-            where:{
-                id:taskId
+        let parsedDueDate = undefined;
+
+        if (dueDate !== undefined) {
+
+            parsedDueDate = dueDate
+                ? new Date(dueDate)
+                : null;
+
+            if (
+
+                parsedDueDate &&
+                isNaN(parsedDueDate.getTime())
+
+            ) {
+
+                return res.status(400).json({
+
+                    message: "Invalid due date"
+
+                });
+
             }
-        })
 
-        if(!checkTaskId || checkTaskId.is_deleted){
-            return res.status(404).json({
-                message:"Task not found"
-            })
         }
 
-        const checkProjectTeam = await prisma.projectTeam.findUnique({
-            where:{
-                id: checkTaskId.projectTeamId
-            },
-            include:{
-                projectDepartment:{
-                    include:{
-                        department:{
-                            select:{
-                                workspaceId:true
+        /*
+        ----------------------------------------------------
+        CHECK TASK
+        ----------------------------------------------------
+        */
+
+        const task = await prisma.task.findUnique({
+
+            where: {
+                id: taskId
+            }
+
+        });
+
+        if (!task || task.is_deleted) {
+
+            return res.status(404).json({
+
+                message: "Task not found"
+
+            });
+
+        }
+
+        /*
+        ----------------------------------------------------
+        PROJECT TEAM
+        ----------------------------------------------------
+        */
+
+        const projectTeam =
+            await prisma.projectTeam.findUnique({
+
+                where: {
+
+                    id: task.projectTeamId
+
+                },
+
+                include: {
+
+                    projectDepartment: {
+
+                        include: {
+
+                            department: {
+
+                                select: {
+
+                                    workspaceId: true
+
+                                }
+
                             }
+
                         }
+
                     }
+
                 }
-            }
-        }) 
 
-        if(!checkProjectTeam){
+            });
+
+        if (!projectTeam) {
+
             return res.status(404).json({
-                message:"Project Team Not Found"
-            })
+
+                message: "Project Team not found"
+
+            });
+
         }
 
-        const userId = req.user.userId
-        const workspaceId = checkProjectTeam.projectDepartment.department.workspaceId
+        /*
+        ----------------------------------------------------
+        PERMISSION
+        ----------------------------------------------------
+        */
 
-        if(!workspaceId){
-            return res.status(404).json({
-                message:"workspaceId not found"
-            })
-        }
+        const workspaceMember =
+            await prisma.workspaceMember.findUnique({
 
-        const checkUser = await prisma.workspaceMember.findUnique({
-            where:{
-                workspaceId_userId:{
-                    workspaceId,
-                    userId
+                where: {
+
+                    workspaceId_userId: {
+
+                        workspaceId:
+                            projectTeam.projectDepartment.department.workspaceId,
+
+                        userId: req.user.userId
+
+                    }
+
                 }
-            }
-        })
 
-        if(!checkUser){
+            });
+
+        if (!workspaceMember) {
+
             return res.status(403).json({
-                message:"You are not the member of workspace"
-            })
+
+                message: "You are not a workspace member"
+
+            });
+
         }
 
-        if(checkUser.sys_role === "team_lead" || checkUser.sys_role === "employee"){
+        if (
+
+            workspaceMember.sys_role === "employee" ||
+
+            workspaceMember.sys_role === "team_lead"
+
+        ) {
+
             return res.status(403).json({
-                message:"You are not allowed to do this action"
-            })
+
+                message: "You are not allowed to update this task"
+
+            });
+
         }
 
-        const updateData = await prisma.task.update({
-            where:{
-                id:taskId
-            },
-            data:{
-                priority,
-                status,
-                title
-            }
-        })
+        /*
+        ----------------------------------------------------
+        UPDATE
+        ----------------------------------------------------
+        */
+
+        const updatedTask =
+            await prisma.task.update({
+
+                where: {
+
+                    id: taskId
+
+                },
+
+                data: {
+
+                    ...(title !== undefined && {
+                        title
+                    }),
+
+                    ...(description !== undefined && {
+                        description
+                    }),
+
+                    ...(priority !== undefined && {
+                        priority
+                    }),
+
+                    ...(status !== undefined && {
+                        status
+                    }),
+
+                    ...(dueDate !== undefined && {
+                        dueDate: parsedDueDate
+                    })
+
+                }
+
+            });
 
         return res.status(200).json({
-            message:"Updated task successfully",
-            data:updateData
-        })
-        
+
+            message: "Task updated successfully",
+
+            data: updatedTask
+
+        });
+
     }
-    catch(err){
-        console.log(err);
+
+    catch (err) {
+
+        console.error(err);
+
         return res.status(500).json({
-            message:"Internal Server Error during updating task"
-        })
+
+            message:
+                "Internal Server Error while updating task"
+
+        });
+
     }
-}
+
+};
 
 export const deleteTask = async(req,res) => {
     try{

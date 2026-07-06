@@ -81,20 +81,19 @@ const TeamCard = ({
 
                 <button
 
-                    onClick={() =>
+    onClick={() =>
 
-                        navigate(
+        navigate(
 
-                            `/workspace/${slug}/teams/${team.teamId}`
+            `/workspace/${slug}/project-team/${team.projectTeamId}`
 
-                        )
+        )
 
-                    }
+    }
 
-                    className="rounded-xl p-2 transition hover:bg-white/5"
+    className="rounded-xl p-2 transition hover:bg-white/5"
 
-                >
-
+>
                     <ArrowRight
 
                         size={20}

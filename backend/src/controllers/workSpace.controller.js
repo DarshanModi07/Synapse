@@ -598,153 +598,142 @@ export const rejectInvite = async (req, res) => {
 
 };
 
-export const getWorkspaceMembers = async (req,res) => {
-    try{
-        
-        const userId = req.user.userId;
-        const workspaceId = req.params.workspaceId;
+export const getWorkspaceMembers = async (req, res) => {
+    try {
 
-        let role = await prisma.workspaceMember.findFirst({
-            where:{
+        const userId = req.user.userId;
+        const { workspaceId } = req.params;
+
+        const workspaceMember = await prisma.workspaceMember.findFirst({
+            where: {
                 workspaceId,
                 userId
+            },
+            select: {
+                sys_role: true
             }
         });
 
-        if(!role){
+        if (!workspaceMember) {
             return res.status(403).json({
-                message:"You are not a member of this workspace"
+                message: "You are not a member of this workspace"
             });
         }
 
-        role = role.sys_role;
+        const role = workspaceMember.sys_role;
 
-        if(role == "owner"){
-            const FetchAll = await prisma.workspaceMember.findMany({
-                where:{
-                    workspaceId,
-                    userId:{
-                        not:userId
-                    },
-                    OR:[
-                        { sys_role:"employee" },
-                        { sys_role:"manager" },
-                        { sys_role:"team_lead" }
-                    ]
-                },
-                include:{
-                    user:{
-                        select:{
-                            id:true,
-                            name:true,
-                            email:true,
-                            avatar:true
-                        }
-                    }
-                }
-            });
-
-            if(FetchAll.length == 0){
-                return res.status(200).json({
-                    message:"There is No Members in your Workspace",
-                    data:FetchAll
-                });
+        let where = {
+            workspaceId,
+            userId: {
+                not: userId
             }
+        };
 
-            return res.status(200).json({
-                message:"All Members",
-                data:FetchAll
-            });
+        if (role === "owner") {
 
-        }
-        else if(role == "manager"){
-            const FetchAll = await prisma.workspaceMember.findMany({
-                where:{
-                    workspaceId,
-                    userId:{
-                        not:userId
-                    },
-                    OR:[
-                        { sys_role:"employee" },
-                        { sys_role:"team_lead" }
-                    ]
-                },
-                include:{
-                    user:{
-                        select:{
-                            id:true,
-                            name:true,
-                            email:true,
-                            avatar:true
-                        }
-                    }
-                }
-            });
-
-            if(FetchAll.length == 0){
-                return res.status(200).json({
-                    message:"There is No Members in your Department",
-                    data:FetchAll
-                });
-            }
-
-            return res.status(200).json({
-                message:"All Members",
-                data:FetchAll
-            });
+            where.OR = [
+                { sys_role: "manager" },
+                { sys_role: "team_lead" },
+                { sys_role: "employee" }
+            ];
 
         }
-        else if(role == "team_lead"){
-            const FetchAll = await prisma.workspaceMember.findMany({
-                where:{
-                    workspaceId,
-                    userId:{
-                        not:userId
-                    },
-                    sys_role:"employee"
-                },
-                include:{
-                    user:{
-                        select:{
-                            id:true,
-                            name:true,
-                            email:true,
-                            avatar:true
-                        }
-                    }
-                }
-            });
+        else if (role === "manager") {
 
-            if(FetchAll.length == 0){
-                return res.status(200).json({
-                    message:"There is No Members in your Team",
-                    data:FetchAll
-                });
-            }
-
-            return res.status(200).json({
-                message:"All Members",
-                data:FetchAll
-            });
+            where.OR = [
+                { sys_role: "team_lead" },
+                { sys_role: "employee" }
+            ];
 
         }
-        else if(role == "employee"){
+        else if (role === "team_lead") {
+
+            where.sys_role = "employee";
+
+        }
+        else if (role === "employee") {
+
             return res.status(403).json({
-                message:"You are not allowed to this action as an employee"
+                message: "Employees are not allowed to view workspace members"
             });
+
         }
-        else{
+        else {
+
             return res.status(400).json({
-                message:"Invalid Role"
+                message: "Invalid role"
             });
+
         }
+
+        const members = await prisma.workspaceMember.findMany({
+
+            where,
+
+            include: {
+
+                user: {
+
+                    select: {
+
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true
+
+                    }
+
+                }
+
+            },
+
+            orderBy: {
+                joinedAt: "asc"
+            }
+
+        });
+
+        const formattedMembers = members.map(member => ({
+
+            id: member.id,
+
+            workspaceId: member.workspaceId,
+
+            userId: member.userId,
+
+            name: member.user.name,
+
+            email: member.user.email,
+
+            avatar: member.user.avatar,
+
+            sys_role: member.sys_role,
+
+            work_role: member.work_role,
+
+            joinedAt: member.joinedAt,
+
+            updatedAt: member.updatedAt
+
+        }));
+
+        return res.status(200).json({
+
+            message: "All Members",
+
+            data: formattedMembers
+
+        });
 
     }
-    catch(err){
+    catch (err) {
+
         console.log(err);
+
         return res.status(500).json({
-            message:"Internal Server Error while Getting all Workspace Members"
+            message: "Internal Server Error while getting workspace members"
         });
+
     }
 };
 
@@ -845,7 +834,7 @@ export const changeRole = async (req,res) => {
 
         const allowedRoles = [
             "manager",
-            "team_leader",
+            "team_lead",
             "employee"
         ];
 
@@ -882,7 +871,7 @@ export const changeRole = async (req,res) => {
             })
         }
 
-        if(currentUser.sys_role == "team_leader" || currentUser.sys_role == "employee"){
+        if(currentUser.sys_role == "team_lead" || currentUser.sys_role == "employee"){
             return res.status(400).json({
                 message:"you does not have authority to change the role"
             })
