@@ -1,14 +1,27 @@
 import {
     useEffect,
+    useMemo,
     useState
 } from "react";
 
 import { useParams } from "react-router-dom";
 
+import {
+    Activity,
+    BarChart3,
+    Brain,
+    CalendarClock,
+    ChartColumn,
+    Gauge,
+    ShieldAlert,
+    Users,
+    Workflow
+} from "lucide-react";
+
 import { theme } from "@/lib/theme";
 
-import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useProjects } from "@/hooks/useProjects";
+import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
 import AnalyticsHeader from "@/components/analytics/AnalyticsHeader";
@@ -23,6 +36,73 @@ import ResourcePredictionCard from "@/components/analytics/ResourcePredictionCar
 import ProductivityAnalysisCard from "@/components/analytics/ProductivityAnalysisCard";
 import BottleneckAnalysisCard from "@/components/analytics/BottleneckAnalysisCard";
 import ExecutiveSummaryCard from "@/components/analytics/ExecutiveSummaryCard";
+
+const ANALYTICS = [
+
+    {
+        type: "summary",
+        title: "Executive Summary",
+        description: "Quick AI overview for project owners.",
+        icon: Brain
+    },
+
+    {
+        type: "health",
+        title: "Project Health",
+        description: "Overall health score.",
+        icon: Activity
+    },
+
+    {
+        type: "analysis",
+        title: "Project Analysis",
+        description: "Overall project assessment.",
+        icon: ChartColumn
+    },
+
+    {
+        type: "risk",
+        title: "Risk Analysis",
+        description: "Detect project risks.",
+        icon: ShieldAlert
+    },
+
+    {
+        type: "deadline",
+        title: "Deadline Prediction",
+        description: "Predict delivery timeline.",
+        icon: CalendarClock
+    },
+
+    {
+        type: "workload",
+        title: "Workload Analysis",
+        description: "Team workload distribution.",
+        icon: Users
+    },
+
+    {
+        type: "resource",
+        title: "Resource Prediction",
+        description: "Resource planning.",
+        icon: Workflow
+    },
+
+    {
+        type: "productivity",
+        title: "Productivity Analysis",
+        description: "Find top performers.",
+        icon: Gauge
+    },
+
+    {
+        type: "bottleneck",
+        title: "Bottleneck Analysis",
+        description: "Detect project blockers.",
+        icon: BarChart3
+    }
+
+];
 
 const AnalyticsPage = () => {
 
@@ -42,14 +122,23 @@ const AnalyticsPage = () => {
 
     } = useWorkspaces();
 
-    const workspaceMember = workspaces.find(
+    const workspace = useMemo(() => {
 
-        item => item.workspace.slug === slug
+        const current = workspaces.find(
 
-    );
+            item => item.workspace.slug === slug
 
-    const workspaceId =
-        workspaceMember?.workspace?.id;
+        );
+
+        return current?.workspace;
+
+    }, [
+
+        workspaces,
+
+        slug
+
+    ]);
 
     /*
     =====================================================
@@ -64,7 +153,9 @@ const AnalyticsPage = () => {
         loading: projectLoading
 
     } = useProjects(
-        workspaceId
+
+        workspace?.id
+
     );
 
     /*
@@ -119,25 +210,11 @@ const AnalyticsPage = () => {
 
         error,
 
-        refresh,
+        selected,
 
         analysis,
 
-        health,
-
-        risk,
-
-        deadline,
-
-        workload,
-
-        resources,
-
-        productivity,
-
-        bottlenecks,
-
-        summary
+        runAnalysis
 
     } = useAnalytics(
 
@@ -155,9 +232,7 @@ const AnalyticsPage = () => {
 
         workspaceLoading ||
 
-        projectLoading ||
-
-        loading
+        projectLoading
 
     ) {
 
@@ -191,36 +266,6 @@ const AnalyticsPage = () => {
 
     /*
     =====================================================
-    ERROR
-    =====================================================
-    */
-
-    if (error) {
-
-        return (
-
-            <div
-
-                className="flex h-[80vh] items-center justify-center"
-
-                style={{
-
-                    color: theme.text
-
-                }}
-
-            >
-
-                {error}
-
-            </div>
-
-        );
-
-    }
-
-    /*
-    =====================================================
     UI
     =====================================================
     */
@@ -229,11 +274,7 @@ const AnalyticsPage = () => {
 
         <main className="space-y-8">
 
-            <AnalyticsHeader
-
-                refresh={refresh}
-
-            />
+            <AnalyticsHeader />
 
             <ProjectSelector
 
@@ -245,59 +286,450 @@ const AnalyticsPage = () => {
 
             />
 
-            <ProjectAnalysisCard
+            {/* AI MENU */}
 
-                data={analysis}
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
 
-            />
+                {
 
-            <ProjectHealthCard
+                    ANALYTICS.map(item => {
 
-                data={health}
+                        const Icon = item.icon;
 
-            />
+                        return (
 
-            <RiskAnalysisCard
+                            <button
 
-                data={risk}
+                                key={item.type}
 
-            />
+                                onClick={() =>
 
-            <DeadlinePredictionCard
+                                    runAnalysis(
 
-                data={deadline}
+                                        item.type
 
-            />
+                                    )
 
-            <WorkloadAnalysisCard
+                                }
 
-                data={workload}
+                                className="rounded-3xl p-6 text-left transition-all duration-300 hover:-translate-y-1"
 
-            />
+                                style={{
 
-            <ResourcePredictionCard
+                                    background:
 
-                data={resources}
+                                        selected === item.type
 
-            />
+                                            ? "rgba(124,58,237,.18)"
 
-            <ProductivityAnalysisCard
+                                            : "rgba(13,13,18,.55)",
 
-                data={productivity}
+                                    border:
 
-            />
+                                        selected === item.type
 
-            <BottleneckAnalysisCard
+                                            ? `1px solid ${theme.primary}`
 
-                data={bottlenecks}
+                                            : "1px solid rgba(167,139,250,.08)"
 
-            />
+                                }}
 
-            <ExecutiveSummaryCard
+                            >
 
-                data={summary}
+                                <Icon
 
-            />
+                                    size={30}
+
+                                    color={theme.primaryLight}
+
+                                />
+
+                                <h2
+
+                                    className="mt-6 text-xl font-semibold"
+
+                                    style={{
+
+                                        color:
+
+                                            theme.text
+
+                                    }}
+
+                                >
+
+                                    {item.title}
+
+                                </h2>
+
+                                <p
+
+                                    className="mt-3"
+
+                                    style={{
+
+                                        color:
+
+                                            theme.secondary
+
+                                    }}
+
+                                >
+
+                                    {item.description}
+
+                                </p>
+
+                            </button>
+
+                        );
+
+                    })
+
+                }
+
+            </div>
+
+                        {/* ===========================================
+                LOADING
+            =========================================== */}
+
+            {
+
+                loading && (
+
+                    <div
+
+                        className="rounded-3xl p-10 text-center"
+
+                        style={{
+
+                            background: "rgba(13,13,18,.55)",
+
+                            border: "1px solid rgba(167,139,250,.08)"
+
+                        }}
+
+                    >
+
+                        <div
+
+                            className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-t-transparent"
+
+                            style={{
+
+                                borderColor:
+
+                                    "rgba(167,139,250,.25)",
+
+                                borderTopColor:
+
+                                    theme.primary
+
+                            }}
+
+                        />
+
+                        <h2
+
+                            className="mt-6 text-2xl font-semibold"
+
+                            style={{
+
+                                color: theme.text
+
+                            }}
+
+                        >
+
+                            Synapse AI is thinking...
+
+                        </h2>
+
+                        <p
+
+                            className="mt-3"
+
+                            style={{
+
+                                color: theme.secondary
+
+                            }}
+
+                        >
+
+                            Analyzing project data and generating insights.
+
+                        </p>
+
+                    </div>
+
+                )
+
+            }
+
+            {/* ===========================================
+                ERROR
+            =========================================== */}
+
+            {
+
+                error && (
+
+                    <div
+
+                        className="rounded-3xl p-8"
+
+                        style={{
+
+                            background:
+
+                                "rgba(239,68,68,.08)",
+
+                            border:
+
+                                "1px solid rgba(239,68,68,.25)",
+
+                            color:
+
+                                "#F87171"
+
+                        }}
+
+                    >
+
+                        {error}
+
+                    </div>
+
+                )
+
+            }
+
+            {/* ===========================================
+                EMPTY STATE
+            =========================================== */}
+
+            {
+
+                !loading &&
+
+                !analysis &&
+
+                !error && (
+
+                    <div
+
+                        className="rounded-3xl p-16 text-center"
+
+                        style={{
+
+                            background:
+
+                                "rgba(13,13,18,.55)",
+
+                            border:
+
+                                "1px solid rgba(167,139,250,.08)"
+
+                        }}
+
+                    >
+
+                        <Brain
+
+                            size={60}
+
+                            color={theme.primaryLight}
+
+                            className="mx-auto"
+
+                        />
+
+                        <h2
+
+                            className="mt-6 text-3xl font-bold"
+
+                            style={{
+
+                                color:
+
+                                    theme.text
+
+                            }}
+
+                        >
+
+                            AI Analytics
+
+                        </h2>
+
+                        <p
+
+                            className="mx-auto mt-4 max-w-2xl"
+
+                            style={{
+
+                                color:
+
+                                    theme.secondary
+
+                            }}
+
+                        >
+
+                            Choose any analysis above to generate an
+                            AI-powered report for the selected project.
+
+                        </p>
+
+                    </div>
+
+                )
+
+            }
+
+            {/* ===========================================
+                RESULT
+            =========================================== */}
+
+            {
+
+                !loading &&
+
+                analysis &&
+
+                <>
+
+                    {
+
+                        selected === "summary" && (
+
+                            <ExecutiveSummaryCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                    {
+
+                        selected === "analysis" && (
+
+                            <ProjectAnalysisCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                    {
+
+                        selected === "health" && (
+
+                            <ProjectHealthCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                    {
+
+                        selected === "risk" && (
+
+                            <RiskAnalysisCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                    {
+
+                        selected === "deadline" && (
+
+                            <DeadlinePredictionCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                    {
+
+                        selected === "workload" && (
+
+                            <WorkloadAnalysisCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                    {
+
+                        selected === "resource" && (
+
+                            <ResourcePredictionCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                    {
+
+                        selected === "productivity" && (
+
+                            <ProductivityAnalysisCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                    {
+
+                        selected === "bottleneck" && (
+
+                            <BottleneckAnalysisCard
+
+                                data={analysis}
+
+                            />
+
+                        )
+
+                    }
+
+                </>
+
+            }
 
         </main>
 

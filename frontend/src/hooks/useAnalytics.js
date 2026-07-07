@@ -1,28 +1,21 @@
 import {
     useCallback,
     useEffect,
+    useRef,
     useState
 } from "react";
 
 import {
 
+    getExecutiveSummary,
     getProjectAnalysis,
-
     getProjectHealth,
-
     getRiskAnalysis,
-
     getDeadlinePrediction,
-
     getWorkloadAnalysis,
-
     getResourcePrediction,
-
     getProductivityAnalysis,
-
-    getBottleneckAnalysis,
-
-    getExecutiveSummary
+    getBottleneckAnalysis
 
 } from "@/services/analytics.service";
 
@@ -30,51 +23,85 @@ export const useAnalytics = (
     projectId
 ) => {
 
-    const [loading, setLoading] =
-        useState(true);
+    const cacheRef = useRef({});
 
-    const [error, setError] =
-        useState(null);
+    const [
 
-    const [projectAnalysis, setProjectAnalysis] =
-        useState(null);
+        loading,
 
-    const [projectHealth, setProjectHealth] =
-        useState(null);
+        setLoading
 
-    const [riskAnalysis, setRiskAnalysis] =
-        useState(null);
+    ] = useState(false);
 
-    const [deadlinePrediction, setDeadlinePrediction] =
-        useState(null);
+    const [
 
-    const [workloadAnalysis, setWorkloadAnalysis] =
-        useState(null);
+        error,
 
-    const [resourcePrediction, setResourcePrediction] =
-        useState(null);
+        setError
 
-    const [productivityAnalysis, setProductivityAnalysis] =
-        useState(null);
+    ] = useState(null);
 
-    const [bottleneckAnalysis, setBottleneckAnalysis] =
-        useState(null);
+    const [
 
-    const [executiveSummary, setExecutiveSummary] =
-        useState(null);
+        selected,
+
+        setSelected
+
+    ] = useState(null);
+
+    const [
+
+        analysis,
+
+        setAnalysis
+
+    ] = useState(null);
 
     /*
     =====================================================
-    FETCH
+    RESET WHEN PROJECT CHANGES
     =====================================================
     */
 
-    const fetchAnalytics =
-        useCallback(async () => {
+    useEffect(() => {
 
-            if (!projectId) {
+        cacheRef.current = {};
 
-                setLoading(false);
+        setSelected(null);
+
+        setAnalysis(null);
+
+        setError(null);
+
+    }, [projectId]);
+
+    /*
+    =====================================================
+    RUN ANALYSIS
+    =====================================================
+    */
+
+    const runAnalysis = useCallback(
+
+        async (type) => {
+
+            if (!projectId) return;
+
+            setSelected(type);
+
+            /*
+            ============================================
+            CACHE
+            ============================================
+            */
+
+            if (cacheRef.current[type]) {
+
+                setAnalysis(
+
+                    cacheRef.current[type]
+
+                );
 
                 return;
 
@@ -86,101 +113,101 @@ export const useAnalytics = (
 
                 setError(null);
 
-                const [
+                let response;
 
-                    analysis,
+                switch (type) {
 
-                    health,
+                    case "summary":
 
-                    risk,
+                        response =
+                            await getExecutiveSummary(
+                                projectId
+                            );
 
-                    deadline,
+                        break;
 
-                    workload,
+                    case "analysis":
 
-                    resource,
+                        response =
+                            await getProjectAnalysis(
+                                projectId
+                            );
 
-                    productivity,
+                        break;
 
-                    bottleneck,
+                    case "health":
 
-                    executive
+                        response =
+                            await getProjectHealth(
+                                projectId
+                            );
 
-                ] = await Promise.all([
+                        break;
 
-                    getProjectAnalysis(projectId),
+                    case "risk":
 
-                    getProjectHealth(projectId),
+                        response =
+                            await getRiskAnalysis(
+                                projectId
+                            );
 
-                    getRiskAnalysis(projectId),
+                        break;
 
-                    getDeadlinePrediction(projectId),
+                    case "deadline":
 
-                    getWorkloadAnalysis(projectId),
+                        response =
+                            await getDeadlinePrediction(
+                                projectId
+                            );
 
-                    getResourcePrediction(projectId),
+                        break;
 
-                    getProductivityAnalysis(projectId),
+                    case "workload":
 
-                    getBottleneckAnalysis(projectId),
+                        response =
+                            await getWorkloadAnalysis(
+                                projectId
+                            );
 
-                    getExecutiveSummary(projectId)
+                        break;
 
-                ]);
+                    case "resource":
 
-                setProjectAnalysis(
+                        response =
+                            await getResourcePrediction(
+                                projectId
+                            );
 
-                    analysis.data
+                        break;
 
-                );
+                    case "productivity":
 
-                setProjectHealth(
+                        response =
+                            await getProductivityAnalysis(
+                                projectId
+                            );
 
-                    health.data
+                        break;
 
-                );
+                    case "bottleneck":
 
-                setRiskAnalysis(
+                        response =
+                            await getBottleneckAnalysis(
+                                projectId
+                            );
 
-                    risk.data
+                        break;
 
-                );
+                    default:
 
-                setDeadlinePrediction(
+                        return;
 
-                    deadline.data
+                }
 
-                );
+                cacheRef.current[type] =
+                    response;
 
-                setWorkloadAnalysis(
-
-                    workload.data
-
-                );
-
-                setResourcePrediction(
-
-                    resource.data
-
-                );
-
-                setProductivityAnalysis(
-
-                    productivity.data
-
-                );
-
-                setBottleneckAnalysis(
-
-                    bottleneck.data
-
-                );
-
-                setExecutiveSummary(
-
-                    executive.data
-
-                );
+                setAnalysis(response);
 
             }
 
@@ -188,7 +215,13 @@ export const useAnalytics = (
 
                 console.error(err);
 
-                setError(err);
+                setError(
+
+                    err.response?.data?.message ||
+
+                    "Failed to generate AI analysis."
+
+                );
 
             }
 
@@ -198,13 +231,31 @@ export const useAnalytics = (
 
             }
 
-        }, [projectId]);
+        },
 
-    useEffect(() => {
+        [projectId]
 
-        fetchAnalytics();
+    );
 
-    }, [fetchAnalytics]);
+    /*
+    =====================================================
+    HELPERS
+    =====================================================
+    */
+
+    const clearAnalysis = () => {
+
+        setSelected(null);
+
+        setAnalysis(null);
+
+    };
+
+    const clearCache = () => {
+
+        cacheRef.current = {};
+
+    };
 
     return {
 
@@ -212,27 +263,15 @@ export const useAnalytics = (
 
         error,
 
-        refresh:
+        selected,
 
-            fetchAnalytics,
+        analysis,
 
-        projectAnalysis,
+        runAnalysis,
 
-        projectHealth,
+        clearAnalysis,
 
-        riskAnalysis,
-
-        deadlinePrediction,
-
-        workloadAnalysis,
-
-        resourcePrediction,
-
-        productivityAnalysis,
-
-        bottleneckAnalysis,
-
-        executiveSummary
+        clearCache
 
     };
 
