@@ -6,7 +6,9 @@ import api from "@/api/axios";
 |--------------------------------------------------------------------------
 */
 
-export const getProjectAnalysis = async (projectId) => {
+export const getProjectAnalysis = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/project-analysis`
@@ -18,11 +20,13 @@ export const getProjectAnalysis = async (projectId) => {
 
 /*
 |--------------------------------------------------------------------------
-| Health
+| Project Health
 |--------------------------------------------------------------------------
 */
 
-export const getProjectHealth = async (projectId) => {
+export const getProjectHealth = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/project-health`
@@ -34,11 +38,13 @@ export const getProjectHealth = async (projectId) => {
 
 /*
 |--------------------------------------------------------------------------
-| Risk
+| Risk Analysis
 |--------------------------------------------------------------------------
 */
 
-export const getRiskAnalysis = async (projectId) => {
+export const getRiskAnalysis = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/risk-analysis`
@@ -50,11 +56,13 @@ export const getRiskAnalysis = async (projectId) => {
 
 /*
 |--------------------------------------------------------------------------
-| Deadline
+| Deadline Prediction
 |--------------------------------------------------------------------------
 */
 
-export const getDeadlinePrediction = async (projectId) => {
+export const getDeadlinePrediction = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/deadline-prediction`
@@ -66,11 +74,13 @@ export const getDeadlinePrediction = async (projectId) => {
 
 /*
 |--------------------------------------------------------------------------
-| Workload
+| Workload Analysis
 |--------------------------------------------------------------------------
 */
 
-export const getWorkloadAnalysis = async (projectId) => {
+export const getWorkloadAnalysis = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/workload-analysis`
@@ -86,7 +96,9 @@ export const getWorkloadAnalysis = async (projectId) => {
 |--------------------------------------------------------------------------
 */
 
-export const getResourcePrediction = async (projectId) => {
+export const getResourcePrediction = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/resource-prediction`
@@ -98,11 +110,13 @@ export const getResourcePrediction = async (projectId) => {
 
 /*
 |--------------------------------------------------------------------------
-| Productivity
+| Productivity Analysis
 |--------------------------------------------------------------------------
 */
 
-export const getProductivityAnalysis = async (projectId) => {
+export const getProductivityAnalysis = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/productivity-analysis`
@@ -114,11 +128,13 @@ export const getProductivityAnalysis = async (projectId) => {
 
 /*
 |--------------------------------------------------------------------------
-| Bottleneck
+| Bottleneck Analysis
 |--------------------------------------------------------------------------
 */
 
-export const getBottleneckAnalysis = async (projectId) => {
+export const getBottleneckAnalysis = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/bottleneck-analysis`
@@ -134,7 +150,9 @@ export const getBottleneckAnalysis = async (projectId) => {
 |--------------------------------------------------------------------------
 */
 
-export const getExecutiveSummary = async (projectId) => {
+export const getExecutiveSummary = async (
+    projectId
+) => {
 
     const response = await api.post(
         `/analytics/${projectId}/executive-summary`

@@ -30,38 +30,44 @@ export const useAnalytics = (
     projectId
 ) => {
 
-    const [analysis, setAnalysis] =
-        useState(null);
-
-    const [health, setHealth] =
-        useState(null);
-
-    const [risk, setRisk] =
-        useState(null);
-
-    const [deadline, setDeadline] =
-        useState(null);
-
-    const [workload, setWorkload] =
-        useState(null);
-
-    const [resources, setResources] =
-        useState(null);
-
-    const [productivity, setProductivity] =
-        useState(null);
-
-    const [bottlenecks, setBottlenecks] =
-        useState(null);
-
-    const [summary, setSummary] =
-        useState(null);
-
     const [loading, setLoading] =
         useState(true);
 
     const [error, setError] =
         useState(null);
+
+    const [projectAnalysis, setProjectAnalysis] =
+        useState(null);
+
+    const [projectHealth, setProjectHealth] =
+        useState(null);
+
+    const [riskAnalysis, setRiskAnalysis] =
+        useState(null);
+
+    const [deadlinePrediction, setDeadlinePrediction] =
+        useState(null);
+
+    const [workloadAnalysis, setWorkloadAnalysis] =
+        useState(null);
+
+    const [resourcePrediction, setResourcePrediction] =
+        useState(null);
+
+    const [productivityAnalysis, setProductivityAnalysis] =
+        useState(null);
+
+    const [bottleneckAnalysis, setBottleneckAnalysis] =
+        useState(null);
+
+    const [executiveSummary, setExecutiveSummary] =
+        useState(null);
+
+    /*
+    =====================================================
+    FETCH
+    =====================================================
+    */
 
     const fetchAnalytics =
         useCallback(async () => {
@@ -82,23 +88,23 @@ export const useAnalytics = (
 
                 const [
 
-                    analysisRes,
+                    analysis,
 
-                    healthRes,
+                    health,
 
-                    riskRes,
+                    risk,
 
-                    deadlineRes,
+                    deadline,
 
-                    workloadRes,
+                    workload,
 
-                    resourceRes,
+                    resource,
 
-                    productivityRes,
+                    productivity,
 
-                    bottleneckRes,
+                    bottleneck,
 
-                    summaryRes
+                    executive
 
                 ] = await Promise.all([
 
@@ -122,53 +128,70 @@ export const useAnalytics = (
 
                 ]);
 
-                setAnalysis(
-                    analysisRes.data
+                setProjectAnalysis(
+
+                    analysis.data
+
                 );
 
-                setHealth(
-                    healthRes.data
+                setProjectHealth(
+
+                    health.data
+
                 );
 
-                setRisk(
-                    riskRes.data
+                setRiskAnalysis(
+
+                    risk.data
+
                 );
 
-                setDeadline(
-                    deadlineRes.data
+                setDeadlinePrediction(
+
+                    deadline.data
+
                 );
 
-                setWorkload(
-                    workloadRes.data
+                setWorkloadAnalysis(
+
+                    workload.data
+
                 );
 
-                setResources(
-                    resourceRes.data
+                setResourcePrediction(
+
+                    resource.data
+
                 );
 
-                setProductivity(
-                    productivityRes.data
+                setProductivityAnalysis(
+
+                    productivity.data
+
                 );
 
-                setBottlenecks(
-                    bottleneckRes.data
+                setBottleneckAnalysis(
+
+                    bottleneck.data
+
                 );
 
-                setSummary(
-                    summaryRes.data
+                setExecutiveSummary(
+
+                    executive.data
+
                 );
 
             }
+
             catch (err) {
 
                 console.error(err);
 
-                setError(
-                    err.response?.data?.message ||
-                    "Failed to load analytics."
-                );
+                setError(err);
 
             }
+
             finally {
 
                 setLoading(false);
@@ -189,25 +212,27 @@ export const useAnalytics = (
 
         error,
 
-        refresh: fetchAnalytics,
+        refresh:
 
-        analysis,
+            fetchAnalytics,
 
-        health,
+        projectAnalysis,
 
-        risk,
+        projectHealth,
 
-        deadline,
+        riskAnalysis,
 
-        workload,
+        deadlinePrediction,
 
-        resources,
+        workloadAnalysis,
 
-        productivity,
+        resourcePrediction,
 
-        bottlenecks,
+        productivityAnalysis,
 
-        summary
+        bottleneckAnalysis,
+
+        executiveSummary
 
     };
 
