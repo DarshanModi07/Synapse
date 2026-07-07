@@ -16,7 +16,6 @@ import TeamsPage from "@/pages/owner/TeamsPage";
 import ProjectsPage from "@/pages/owner/ProjectsPage";
 import MembersPage from "@/pages/owner/MembersPage";
 import AnalyticsPage from "@/pages/owner/AnalyticsPage";
-import AIInsightsPage from "@/pages/owner/AIInsightsPage";
 import SettingsPage from "@/pages/owner/SettingsPage";
 import DepartmentDashboardPage from "@/pages/owner/DepartmentDashboardPage";
 import TeamDashboardPage from "@/pages/owner/TeamDashboardPage";
@@ -158,11 +157,6 @@ const AppRoutes = () => {
           <Route
             path="analytics"
             element={<AnalyticsPage />}
-          />
-
-          <Route
-            path="ai"
-            element={<AIInsightsPage />}
           />
 
           <Route

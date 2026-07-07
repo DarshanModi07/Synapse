@@ -55,13 +55,7 @@ export const sidebarConfig = {
           label: "Analytics",
           icon: ChartColumn,
           path: "analytics",
-        },
-
-        {
-          label: "AI Insights",
-          icon: BrainCircuit,
-          path: "ai",
-        },
+        }
       ],
     },
 

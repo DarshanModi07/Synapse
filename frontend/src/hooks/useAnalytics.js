@@ -25,37 +25,17 @@ export const useAnalytics = (
 
     const cacheRef = useRef({});
 
-    const [
+    const [loading, setLoading] =
+        useState(false);
 
-        loading,
+    const [error, setError] =
+        useState(null);
 
-        setLoading
+    const [selected, setSelected] =
+        useState(null);
 
-    ] = useState(false);
-
-    const [
-
-        error,
-
-        setError
-
-    ] = useState(null);
-
-    const [
-
-        selected,
-
-        setSelected
-
-    ] = useState(null);
-
-    const [
-
-        analysis,
-
-        setAnalysis
-
-    ] = useState(null);
+    const [analysis, setAnalysis] =
+        useState(null);
 
     /*
     =====================================================
@@ -90,9 +70,9 @@ export const useAnalytics = (
             setSelected(type);
 
             /*
-            ============================================
+            =====================================================
             CACHE
-            ============================================
+            =====================================================
             */
 
             if (cacheRef.current[type]) {
@@ -204,10 +184,23 @@ export const useAnalytics = (
 
                 }
 
-                cacheRef.current[type] =
-                    response;
+                /*
+                =====================================================
+                YOUR SERVICES RETURN:
+                {
+                    message,
+                    data
+                }
 
-                setAnalysis(response);
+                We only store the actual payload.
+                =====================================================
+                */
+
+                const payload = response.data;
+
+                cacheRef.current[type] = payload;
+
+                setAnalysis(payload);
 
             }
 
