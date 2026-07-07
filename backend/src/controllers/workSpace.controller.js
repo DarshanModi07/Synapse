@@ -106,6 +106,112 @@ export const createWorkSpace = async (req,res) => {
     }
 };
 
+export const updateWorkspace = async (req, res) => {
+    try {
+
+        const { workspaceId } = req.params;
+        let { name, description } = req.body;
+
+        if (
+            !workspaceId ||
+            !name ||
+            typeof name !== "string" ||
+            !description ||
+            typeof description !== "string"
+        ) {
+            return res.status(400).json({
+                message: "Workspace Name and Description are Required"
+            });
+        }
+
+        name = name.trim();
+
+        if (name.length < 3) {
+            return res.status(400).json({
+                message: "Workspace Name must be at least 3 chars long"
+            });
+        }
+
+        const workspace = await prisma.workspace.findUnique({
+            where: {
+                id: workspaceId
+            }
+        });
+
+        if (!workspace) {
+            return res.status(404).json({
+                message: "Workspace not found"
+            });
+        }
+
+        if (workspace.ownerId !== req.user.userId) {
+            return res.status(403).json({
+                message: "Only Workspace Owner can update workspace"
+            });
+        }
+
+        let logo = workspace.logo;
+
+        if (req.file) {
+
+            const uploadedLogo = await uploadToCloudinary(
+                req.file.buffer,
+                "workspace-logos"
+            );
+
+            logo = uploadedLogo.secure_url;
+
+        }
+
+        const slug = slugify(name, {
+            lower: true,
+            strict: true
+        });
+
+        const existingWorkspace = await prisma.workspace.findFirst({
+            where: {
+                slug,
+                NOT: {
+                    id: workspaceId
+                }
+            }
+        });
+
+        if (existingWorkspace) {
+            return res.status(409).json({
+                message: "Workspace with this name already exists"
+            });
+        }
+
+        const updatedWorkspace = await prisma.workspace.update({
+            where: {
+                id: workspaceId
+            },
+            data: {
+                name,
+                slug,
+                description,
+                logo
+            }
+        });
+
+        return res.status(200).json({
+            message: "Workspace updated successfully",
+            data: updatedWorkspace
+        });
+
+    }
+    catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+
+    }
+};
+
 export const getUserWorkSpaces = async (req, res) => {
     try {
         const userId = req.user.userId;

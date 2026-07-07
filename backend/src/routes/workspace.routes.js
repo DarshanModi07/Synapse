@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createWorkSpace,getUserWorkSpaces,getWorkspace,inviteUser , acceptInvite,rejectInvite,getWorkspaceMembers,removeMember,changeRole, ownerDashboard} from '../controllers/workSpace.controller.js';
+import { createWorkSpace,getUserWorkSpaces,getWorkspace,inviteUser , acceptInvite,rejectInvite,getWorkspaceMembers,removeMember,changeRole, ownerDashboard ,updateWorkspace} from '../controllers/workSpace.controller.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -14,5 +14,6 @@ router.post("/reject/:token", authMiddleware , rejectInvite)
 router.get("/:workspaceId/members",authMiddleware,getWorkspaceMembers)
 router.delete("/:workspaceId/member/:userId",authMiddleware,removeMember)
 router.patch('/:workspaceId/member/:userId/role',authMiddleware,changeRole)
+router.patch("/:workspaceId",authMiddleware,upload.single("logo"),updateWorkspace);
 
 export default router;
