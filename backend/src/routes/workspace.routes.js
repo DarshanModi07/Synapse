@@ -6,7 +6,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 const router = Router();
 router.post('/createWorkspace',authMiddleware,upload.single("logo"),createWorkSpace);
 router.post('/inviteUser', authMiddleware , inviteUser);
-router.get('/getUserWorkSpaces', authMiddleware , getUserWorkSpaces);
+router.get('/', authMiddleware, getUserWorkSpaces);
 router.get('/:slug', authMiddleware , getWorkspace);
 router.get('/:workspaceId/dashboard', authMiddleware , ownerDashboard);
 router.post("/accept/:token", authMiddleware , acceptInvite)

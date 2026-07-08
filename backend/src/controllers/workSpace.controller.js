@@ -110,6 +110,7 @@ export const updateWorkspace = async (req, res) => {
     try {
 
         const { workspaceId } = req.params;
+
         let { name, description } = req.body;
 
         if (
@@ -125,10 +126,11 @@ export const updateWorkspace = async (req, res) => {
         }
 
         name = name.trim();
+        description = description.trim();
 
         if (name.length < 3) {
             return res.status(400).json({
-                message: "Workspace Name must be at least 3 chars long"
+                message: "Workspace Name must be at least 3 characters long"
             });
         }
 
@@ -146,7 +148,7 @@ export const updateWorkspace = async (req, res) => {
 
         if (workspace.ownerId !== req.user.userId) {
             return res.status(403).json({
-                message: "Only Workspace Owner can update workspace"
+                message: "Only the workspace owner can update this workspace"
             });
         }
 
@@ -163,41 +165,58 @@ export const updateWorkspace = async (req, res) => {
 
         }
 
-        const slug = slugify(name, {
-            lower: true,
-            strict: true
-        });
-
         const existingWorkspace = await prisma.workspace.findFirst({
+
             where: {
-                slug,
+
+                name,
+
                 NOT: {
+
                     id: workspaceId
+
                 }
+
             }
+
         });
 
         if (existingWorkspace) {
+
             return res.status(409).json({
+
                 message: "Workspace with this name already exists"
+
             });
+
         }
 
         const updatedWorkspace = await prisma.workspace.update({
+
             where: {
+
                 id: workspaceId
+
             },
+
             data: {
+
                 name,
-                slug,
+
                 description,
+
                 logo
+
             }
+
         });
 
         return res.status(200).json({
+
             message: "Workspace updated successfully",
+
             data: updatedWorkspace
+
         });
 
     }
@@ -206,7 +225,9 @@ export const updateWorkspace = async (req, res) => {
         console.error(err);
 
         return res.status(500).json({
+
             message: "Internal Server Error"
+
         });
 
     }
@@ -283,87 +304,139 @@ export const getUserWorkSpaces = async (req, res) => {
 };
 
 export const getWorkspace = async (req, res) => {
+
     try {
+
         const { slug } = req.params;
-        const userId = req.user?.userId;
+
+        const userId = req.user.userId;
 
         if (!slug) {
+
             return res.status(400).json({
+
                 message: "Workspace slug is required"
-            });
-        }
 
-        if (!userId) {
-            return res.status(401).json({
-                message: "Unauthorized"
             });
-        }
 
-        
+        }
 
         const workspace = await prisma.workspace.findUnique({
+
             where: {
+
                 slug
+
             },
+
             select: {
+
                 id: true,
+
                 name: true,
+
                 slug: true,
+
+                description: true,
+
                 logo: true,
+
                 ownerId: true,
+
                 createdAt: true,
+
                 updatedAt: true,
+
                 workspaceMembers: {
+
                     where: {
+
                         userId
+
                     },
+
                     select: {
-                        id: true,
+
                         sys_role: true,
+
                         work_role: true
+
                     }
+
                 }
+
             }
+
         });
 
         if (!workspace) {
+
             return res.status(404).json({
+
                 message: "Workspace not found"
+
             });
+
         }
 
         if (workspace.workspaceMembers.length === 0) {
+
             return res.status(403).json({
+
                 message: "You do not have access to this workspace"
+
             });
+
         }
 
-        const memberInfo = workspace.workspaceMembers[0];
-
         return res.status(200).json({
+
             message: "Workspace fetched successfully",
+
             data: {
+
                 id: workspace.id,
+
                 name: workspace.name,
+
                 slug: workspace.slug,
+
+                description: workspace.description,
+
                 logo: workspace.logo,
+
                 ownerId: workspace.ownerId,
+
                 createdAt: workspace.createdAt,
+
                 updatedAt: workspace.updatedAt,
+
                 memberRole: {
-                    sysRole: memberInfo.sys_role,
-                    workRole: memberInfo.work_role
+
+                    sysRole: workspace.workspaceMembers[0].sys_role,
+
+                    workRole: workspace.workspaceMembers[0].work_role
+
                 }
+
             }
+
         });
 
-    } catch (err) {
-        console.error("Get Workspace Error:", err);
+    }
+
+    catch (err) {
+
+        console.log(err);
 
         return res.status(500).json({
-            message: "Internal server error"
+
+            message: "Internal Server Error"
+
         });
+
     }
+
 };
 
 export const inviteUser = async (req,res) => {

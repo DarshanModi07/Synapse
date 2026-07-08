@@ -46,27 +46,6 @@ const ProjectToolbar = ({
 
                 <button
 
-                    onClick={onAI}
-
-                    className="flex items-center gap-2 rounded-2xl px-5 py-3 transition"
-
-                    style={{
-                        background:
-                            "rgba(124,58,237,.18)",
-                        color:
-                            theme.primaryLight
-                    }}
-
-                >
-
-                    <Sparkles size={18} />
-
-                    AI Suggest
-
-                </button>
-
-                <button
-
                     onClick={onCreate}
 
                     className="flex items-center gap-2 rounded-2xl px-5 py-3 text-white transition"

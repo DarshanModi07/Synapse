@@ -1,43 +1,90 @@
 import { useEffect, useState } from "react";
+
 import {
-  getUserWorkspaces,
+    getUserWorkspaces,
 } from "@/services/workspace.service";
 
 export const useWorkspaces = () => {
-  const [workspaces, setWorkspaces] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  const fetchWorkspaces = async (
-    page = 1,
-    limit = 10
-  ) => {
-    try {
-      setLoading(true);
-      setError("");
+    const [workspaces, setWorkspaces] =
+        useState([]);
 
-      const response =
-        await getUserWorkspaces(page, limit);
+    const [loading, setLoading] =
+        useState(true);
 
-      setWorkspaces(response.data);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        "Failed to fetch workspaces."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    const [error, setError] =
+        useState("");
 
-  useEffect(() => {
-    fetchWorkspaces();
-  }, []);
+    const fetchWorkspaces = async (
 
-  return {
-    workspaces,
-    loading,
-    error,
-    refetch: fetchWorkspaces,
-  };
+        page = 1,
+
+        limit = 10
+
+    ) => {
+
+        try {
+
+            setLoading(true);
+
+            setError("");
+
+            const response =
+
+                await getUserWorkspaces(
+
+                    page,
+
+                    limit
+
+                );
+
+            setWorkspaces(
+
+                response.data
+
+            );
+
+        }
+
+        catch (err) {
+
+            console.error(err);
+
+            setError(
+
+                err.response?.data?.message ||
+
+                "Failed to fetch workspaces."
+
+            );
+
+        }
+
+        finally {
+
+            setLoading(false);
+
+        }
+
+    };
+
+    useEffect(() => {
+
+        fetchWorkspaces();
+
+    }, []);
+
+    return {
+
+        workspaces,
+
+        loading,
+
+        error,
+
+        refresh: fetchWorkspaces
+
+    };
+
 };
