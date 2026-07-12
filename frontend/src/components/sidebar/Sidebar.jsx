@@ -5,8 +5,9 @@ import { SidebarItem } from "../owner/SidebarItem";
 export const Sidebar = ({
   role = "owner",
   active = "Dashboard",
+  config,
 }) => {
-  const sections = sidebarConfig[role] || [];
+  const sections = config || sidebarConfig[role] || [];
 
   return (
     <aside

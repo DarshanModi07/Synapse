@@ -22,6 +22,21 @@ import TeamDashboardPage from "@/pages/owner/TeamDashboardPage";
 import ProjectDashboardPage from "@/pages/projectDashboard/ProjectDashboardPage";
 import ProjectTeamDashboardPage from "@/pages/projectTeamDashboard/ProjectTeamDashboardPage";
 
+import ManagerLayout from "@/layouts/ManagerLayout";
+import TeamLeadLayout from "@/layouts/TeamLeadLayout";
+import EmployeeLayout from "@/layouts/EmployeeLayout";
+
+import ManagerDashboardPage from "@/pages/manager/DashboardPage";
+import ManagerTeamsPage from "@/pages/manager/TeamsPage";
+import ManagerProjectsPage from "@/pages/manager/ProjectsPage";
+import ManagerMembersPage from "@/pages/manager/MembersPage";
+import ManagerTasksPage from "@/pages/manager/TasksPage";
+import ManagerAnalyticsPage from "@/pages/manager/AnalyticsPage";
+import ManagerSettingsPage from "@/pages/manager/SettingsPage";
+
+import TeamLeadDashboard from "@/pages/teamLead/DashboardPage";
+import EmployeeDashboard from "@/pages/employee/DashboardPage";
+
 const ProtectedRoute = ({ children }) => {
   const { profile } = useAuth();
 
@@ -164,6 +179,27 @@ const AppRoutes = () => {
             element={<SettingsPage />}
           />
 
+        </Route>
+
+        {/* Manager Layout */}
+        <Route path="manager" element={<ManagerLayout />}>
+          <Route index element={<ManagerDashboardPage />} />
+          <Route path="teams" element={<ManagerTeamsPage />} />
+          <Route path="projects" element={<ManagerProjectsPage />} />
+          <Route path="members" element={<ManagerMembersPage />} />
+          <Route path="tasks" element={<ManagerTasksPage />} />
+          <Route path="analytics" element={<ManagerAnalyticsPage />} />
+          <Route path="settings" element={<ManagerSettingsPage />} />
+        </Route>
+
+        {/* Team Lead Layout */}
+        <Route path="team-lead" element={<TeamLeadLayout />}>
+          <Route index element={<TeamLeadDashboard />} />
+        </Route>
+
+        {/* Employee Layout */}
+        <Route path="employee" element={<EmployeeLayout />}>
+          <Route index element={<EmployeeDashboard />} />
         </Route>
 
       </Route>

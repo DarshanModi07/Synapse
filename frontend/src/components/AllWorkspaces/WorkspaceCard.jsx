@@ -12,7 +12,15 @@ export const WorkspaceCard = ({ workspaceMember }) => {
   } = workspaceMember;
 
   const handleClick = () => {
-    navigate(`/workspace/${workspace.slug}`);
+    let path = `/workspace/${workspace.slug}`;
+    if (sys_role === "manager") {
+      path += "/manager";
+    } else if (sys_role === "team_lead" || sys_role === "teamLead") {
+      path += "/team-lead";
+    } else if (sys_role === "employee") {
+      path += "/employee";
+    }
+    navigate(path);
   };
 
   return (
