@@ -12,7 +12,8 @@ export const useManagerProjectDashboard = (projectId) => {
             const response = await api.get(
                 `/manager/projects/${projectId}/dashboard`
             );
-            setDashboard(response.data.data);
+            const responseData = response.data?.data?.data || response.data?.data || response.data;
+            setDashboard(responseData);
             setError(null);
         } catch (err) {
             console.error("Error fetching manager project dashboard:", err);

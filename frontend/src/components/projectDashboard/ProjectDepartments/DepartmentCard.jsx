@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { useNavigate, useParams } from "react-router-dom";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 import { theme } from "@/lib/theme";
 
@@ -20,8 +21,10 @@ const DepartmentCard = ({
 }) => {
 
     const navigate = useNavigate();
-
     const { slug } = useParams();
+    const { workspace } = useWorkspace();
+    
+    const rolePrefix = workspace?.memberRole?.sysRole === "manager" ? "/manager" : "";
 
     return (
 
@@ -82,13 +85,9 @@ const DepartmentCard = ({
                 <button
 
                     onClick={() =>
-
                         navigate(
-
-                            `/workspace/${slug}/departments/${department.id}`
-
+                            `/workspace/${slug}${rolePrefix}/departments/${department.id}`
                         )
-
                     }
 
                     className="rounded-xl p-2 transition hover:bg-white/5"

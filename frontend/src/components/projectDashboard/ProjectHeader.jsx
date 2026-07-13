@@ -59,18 +59,16 @@ const ProjectHeader = ({ project }) => {
                             className="text-4xl font-bold"
                             style={{
                                 color: theme.text
-                            }}
-                        >
-                            {project.name}
+                            }}>
+                            {project?.name}
                         </h1>
 
                         <p
                             className="mt-3 max-w-3xl"
                             style={{
                                 color: theme.secondary
-                            }}
-                        >
-                            {project.description ||
+                            }}>
+                            {project?.description ||
                                 "No description available."}
                         </p>
 
@@ -82,11 +80,11 @@ const ProjectHeader = ({ project }) => {
                             className="rounded-full px-4 py-2 text-sm font-semibold"
                             style={{
                                 background:
-                                    getStatusColor(project.status),
+                                    getStatusColor(project?.status),
                                 color: "#fff"
                             }}
                         >
-                            {project.status}
+                            {project?.status}
                         </div>
 
                     </div>
@@ -158,9 +156,8 @@ const ProjectHeader = ({ project }) => {
                         <h3
                             style={{
                                 color: theme.text
-                            }}
-                        >
-                            {project.workspace.name}
+                            }}>
+                            {project?.workspace?.name}
                         </h3>
 
                     </div>
@@ -188,9 +185,8 @@ const ProjectHeader = ({ project }) => {
                         <h3
                             style={{
                                 color: theme.text
-                            }}
-                        >
-                            {project.createdBy.name}
+                            }}>
+                            {project?.createdBy?.name}
                         </h3>
 
                     </div>
@@ -218,9 +214,8 @@ const ProjectHeader = ({ project }) => {
                         <h3
                             style={{
                                 color: theme.text
-                            }}
-                        >
-                            {project.startDate
+                            }}>
+                            {project?.startDate
                                 ? new Date(
                                       project.startDate
                                   ).toLocaleDateString()
@@ -252,9 +247,8 @@ const ProjectHeader = ({ project }) => {
                         <h3
                             style={{
                                 color: theme.text
-                            }}
-                        >
-                            {project.dueDate
+                            }}>
+                            {project?.dueDate
                                 ? new Date(
                                       project.dueDate
                                   ).toLocaleDateString()

@@ -206,6 +206,7 @@ const AppRoutes = () => {
           <Route path="departments/:departmentId" element={<ManagerDepartmentDashboardPage />} />
           <Route path="departments/:departmentId/teams" element={<ManagerTeamsPage />} />
           <Route path="teams/:teamId" element={<ManagerTeamDashboardPage />} />
+          <Route path="project-team/:projectTeamId" element={<ProjectTeamDashboardPage />} />
         </Route>
 
         {/* Team Lead Layout */}

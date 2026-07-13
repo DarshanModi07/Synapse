@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { useNavigate, useParams } from "react-router-dom";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 import { theme } from "@/lib/theme";
 
@@ -35,8 +36,10 @@ const ProjectCard = ({
 }) => {
 
     const navigate = useNavigate();
-
     const { slug } = useParams();
+    const { workspace } = useWorkspace();
+    
+    const rolePrefix = workspace?.memberRole?.sysRole === "manager" ? "/manager" : "";
 
     return (
 
@@ -104,13 +107,10 @@ const ProjectCard = ({
                 </div>
 
                 <button
-
                     onClick={() =>
-
                         navigate(
-                            `/workspace/${slug}/projects/${project.id}`
+                            `/workspace/${slug}${rolePrefix}/projects/${project.id}`
                         )
-
                     }
 
                     className="rounded-xl p-2 transition hover:bg-white/5"
