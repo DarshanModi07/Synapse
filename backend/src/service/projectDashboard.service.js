@@ -150,13 +150,10 @@ export const getProjectDashboardData = async (projectId, userId, role) => {
             await prisma.projectTeam.findMany({
 
                 where: {
-
                     projectDepartment: {
-
-                        projectId
-
+                        projectId,
+                        department: departmentFilter
                     }
-
                 },
 
                 include: {
@@ -223,19 +220,13 @@ export const getProjectDashboardData = async (projectId, userId, role) => {
             await prisma.task.findMany({
 
                 where: {
-
                     projectTeam: {
-
                         projectDepartment: {
-
-                            projectId
-
+                            projectId,
+                            department: departmentFilter
                         }
-
                     },
-
                     is_deleted: false
-
                 },
 
                 include: {
@@ -279,24 +270,16 @@ export const getProjectDashboardData = async (projectId, userId, role) => {
             await prisma.subTask.findMany({
 
                 where: {
-
                     task: {
-
                         projectTeam: {
-
                             projectDepartment: {
-
-                                projectId
-
+                                projectId,
+                                department: departmentFilter
                             }
-
                         }
-
                     },
-
                     is_deleted: false
-
-                }
+                },
 
             });
 
@@ -738,10 +721,12 @@ export const getProjectDashboardData = async (projectId, userId, role) => {
                 workspaceMember.sys_role === "owner",
 
             canAssignTeam:
-                workspaceMember.sys_role === "owner",
+                workspaceMember.sys_role === "owner" ||
+                workspaceMember.sys_role === "manager",
 
             canRemoveTeam:
-                workspaceMember.sys_role === "owner",
+                workspaceMember.sys_role === "owner" ||
+                workspaceMember.sys_role === "manager",
 
             canCreateTask:
                 workspaceMember.sys_role === "owner" ||

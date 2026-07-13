@@ -46,7 +46,7 @@ const OwnerLayout = () => {
         />
 
         {/* Page Content */}
-        <main className="min-h-[calc(100vh-150px)] flex-1">
+        <main className="min-h-[calc(100vh-150px)] flex-1 min-w-0">
           <Outlet />
         </main>
       </div>

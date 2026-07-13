@@ -116,7 +116,7 @@ const AssignTeamModal = ({
                     >
                         {departments?.map(d => (
                             <option key={d.projectDepartmentId} value={d.projectDepartmentId} style={{ background: theme.card }}>
-                                {d.department.name}
+                                {d.name}
                             </option>
                         ))}
                     </select>
