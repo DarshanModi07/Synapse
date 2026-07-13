@@ -14,6 +14,7 @@ import projectWorkItemRouter from "./workItem.routes.js"
 import aiRouter from "./ai.routes.js"
 import chatRouter from "./chat.routes.js"
 import analyticsRouter from "./analytics.routes.js";
+import managerRouter from "./manager.routes.js";
 
 const router = Router();
 
@@ -32,6 +33,7 @@ router.use('/api/work-item/',projectWorkItemRouter)
 router.use('/api/chat/',chatRouter)
 router.use("/api/analytics", analyticsRouter);
 router.use('/api/ai',aiRouter)
+router.use('/api/manager', managerRouter)
 
 
 export default router;

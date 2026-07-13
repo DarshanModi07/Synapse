@@ -6,16 +6,18 @@ export const SidebarItem = ({
   label,
   path,
   active,
+  basePath,
 }) => {
   const navigate = useNavigate();
   const { slug } = useParams();
 
+  const targetUrl = basePath
+    ? (path ? `${basePath}/${path}` : basePath)
+    : `/workspace/${slug}${path ? `/${path}` : ''}`;
+
   return (
     <button
-      onClick={() => {
-            console.log(`/workspace/${slug}/${path}`);
-            navigate(`/workspace/${slug}/${path}`);
-        }}
+      onClick={() => navigate(targetUrl)}
       className="group relative flex h-[58px] w-full items-center gap-4 rounded-2xl px-5 transition-all duration-300"
       style={{
         background: active

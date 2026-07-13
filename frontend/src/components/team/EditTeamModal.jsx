@@ -6,6 +6,7 @@ import { theme } from "@/lib/theme";
 import {
   getAvailableLeaders,
 } from "@/services/team.service";
+import { getManagerAvailableLeaders } from "@/services/manager.service";
 
 const EditTeamModal = ({
   open,
@@ -13,6 +14,7 @@ const EditTeamModal = ({
   onSave,
   team,
   loading,
+  managerMode,
 }) => {
 
   const [name, setName] =
@@ -46,30 +48,17 @@ const EditTeamModal = ({
   }, [open, team]);
 
   const fetchLeaders = async () => {
-
     try {
-
       setFetchingLeaders(true);
-
-      const response =
-        await getAvailableLeaders(
-          team.department.id
-        );
-
+      const response = managerMode
+        ? await getManagerAvailableLeaders(team.department.id)
+        : await getAvailableLeaders(team.department.id);
       setLeaders(response.data || []);
-
-    }
-    catch (err) {
-
+    } catch (err) {
       console.error(err);
-
-    }
-    finally {
-
+    } finally {
       setFetchingLeaders(false);
-
     }
-
   };
 
   const reset = () => {

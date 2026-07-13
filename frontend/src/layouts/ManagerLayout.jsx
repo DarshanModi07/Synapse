@@ -1,11 +1,13 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useParams } from "react-router-dom";
 
+import { OwnerNavbar } from "@/components/owner/OwnerNavbar";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { theme } from "@/lib/theme";
 import { managerConfig } from "@/components/manager/sidebar.config";
 
 const ManagerLayout = () => {
   const location = useLocation();
+  const { slug } = useParams();
 
   const currentPath = location.pathname.split("/").pop();
 
@@ -34,9 +36,7 @@ const ManagerLayout = () => {
         color: theme.text,
       }}
     >
-      <div className="h-16 border-b border-white/10 flex items-center px-10">
-        <h1 className="text-xl font-semibold">Manager Portal</h1>
-      </div>
+      <OwnerNavbar />
 
       {/* Main Layout */}
       <div className="mx-auto mt-10 flex max-w-[1850px] items-start gap-8 px-10">
@@ -45,6 +45,7 @@ const ManagerLayout = () => {
           role="manager"
           active={active}
           config={managerConfig}
+          basePath={`/workspace/${slug}/manager`}
         />
 
         {/* Page Content */}

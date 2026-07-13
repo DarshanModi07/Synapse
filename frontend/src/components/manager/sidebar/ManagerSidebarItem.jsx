@@ -15,12 +15,9 @@ const ManagerSidebarItem = ({
     const { slug } = useParams();
 
     const href =
-
         path === ""
-
-            ? `/workspace/${slug}`
-
-            : `/workspace/${slug}/${path}`;
+            ? `/workspace/${slug}/manager`
+            : `/workspace/${slug}/manager/${path}`;
 
     return (
 

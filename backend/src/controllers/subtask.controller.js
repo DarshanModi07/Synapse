@@ -103,6 +103,22 @@ export const createSubTask = async (req,res) => {
         })        
         }
 
+        if(checkUser.sys_role === "manager"){
+            const checkManagerOwnership = await prisma.department.findUnique({
+                where:{
+                    id: checkProjectTeam.projectDepartment.departmentId,
+                    managerId: userId,
+                    is_deleted: false
+                }
+            })
+            if(!checkManagerOwnership){
+                return res.status(403).json({
+                    message:"You do not have permission to manage subtasks in this department"
+                })
+            }
+        }
+
+
         const checkTarget = await prisma.workspaceMember.findUnique({
             where:{
                 workspaceId_userId:{

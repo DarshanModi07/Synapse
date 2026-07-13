@@ -20,7 +20,7 @@ export const userProfile = async (req,res) => {
         })
 
         if(!userData){
-            res.status(401).json({message:"User Profile Data not found"})
+            return res.status(401).json({message:"User Profile Data not found"})
         }
 
         res.status(200).json({

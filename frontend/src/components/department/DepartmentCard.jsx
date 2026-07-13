@@ -19,7 +19,7 @@ const DepartmentCard = ({
   return (
     <div
       onClick={() => onOpen(department)}
-      className="group cursor-pointer rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1"
+      className="group cursor-pointer rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.02]"
       style={{
         background: "rgba(13,13,18,.55)",
         border: "1px solid rgba(167,139,250,.10)",
@@ -27,6 +27,14 @@ const DepartmentCard = ({
         WebkitBackdropFilter: "blur(24px)",
         boxShadow:
           "0 12px 30px rgba(0,0,0,.25),0 0 28px rgba(124,58,237,.05)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.border = "1px solid rgba(167,139,250,.35)";
+        e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,.35),0 0 40px rgba(124,58,237,.2)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.border = "1px solid rgba(167,139,250,.10)";
+        e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,.25),0 0 28px rgba(124,58,237,.05)";
       }}
     >
       {/* Header */}
@@ -210,40 +218,45 @@ const DepartmentCard = ({
       </div>
 
       {/* Footer */}
+      {(onEdit || onDelete) && (
+        <div className="mt-8 flex gap-3">
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(department);
+              }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 transition hover:scale-[1.02]"
+              style={{
+                background: "rgba(255,255,255,.05)",
+                border: "1px solid rgba(255,255,255,.06)",
+                color: theme.text,
+              }}
+            >
+              <Pencil size={17} />
+              Edit
+            </button>
+          )}
 
-      <div className="mt-8 flex gap-3">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(department);
-          }}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 transition hover:scale-[1.02]"
-          style={{
-            background: "rgba(255,255,255,.05)",
-            border: "1px solid rgba(255,255,255,.06)",
-            color: theme.text,
-          }}
-        >
-          <Pencil size={17} />
-          Edit
-        </button>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(department);
-          }}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 transition hover:scale-[1.02]"
-          style={{
-            background: "rgba(255,0,0,.08)",
-            border: "1px solid rgba(255,0,0,.15)",
-            color: "#FF6B6B",
-          }}
-        >
-          <Trash2 size={17} />
-          Delete
-        </button>
-      </div>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(department);
+              }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 transition hover:scale-[1.02]"
+              style={{
+                background: "rgba(255,0,0,.08)",
+                border: "1px solid rgba(255,0,0,.15)",
+                color: "#FF6B6B",
+              }}
+            >
+              <Trash2 size={17} />
+              Delete
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

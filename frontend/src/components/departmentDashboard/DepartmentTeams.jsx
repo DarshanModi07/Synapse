@@ -8,34 +8,56 @@ import { theme } from "@/lib/theme";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
-const DepartmentTeams = ({ teams }) => {
+const DepartmentTeams = ({ teams, basePath, onViewAll }) => {
 
     const navigate = useNavigate();
     const { slug } = useParams();
+    
+    const resolvePath = (teamId) => {
+        if (basePath) {
+            return `${basePath}/teams/${teamId}`;
+        }
+        return `/workspace/${slug}/teams/${teamId}`;
+    };
 
   return (
     <section className="space-y-6">
 
       {/* Heading */}
 
-      <div>
-        <h2
-          className="text-3xl font-bold"
-          style={{
-            color: theme.text,
-          }}
-        >
-          Teams
-        </h2>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2
+            className="text-3xl font-bold"
+            style={{
+              color: theme.text,
+            }}
+          >
+            Teams
+          </h2>
 
-        <p
-          className="mt-2"
-          style={{
-            color: theme.secondary,
-          }}
-        >
-          Teams belonging to this department.
-        </p>
+          <p
+            className="mt-2"
+            style={{
+              color: theme.secondary,
+            }}
+          >
+            Teams belonging to this department.
+          </p>
+        </div>
+        {onViewAll && (
+          <button
+            onClick={onViewAll}
+            className="rounded-xl px-4 py-2 font-medium transition-all hover:opacity-80"
+            style={{
+              background: "rgba(124,58,237,.15)",
+              color: theme.primaryLight,
+              border: "1px solid rgba(124,58,237,.3)",
+            }}
+          >
+            View All Teams
+          </button>
+        )}
       </div>
 
       {/* Empty State */}
@@ -83,9 +105,7 @@ const DepartmentTeams = ({ teams }) => {
             <div
                 key={team.id}
                 onClick={() =>
-                    navigate(
-                        `/workspace/${slug}/teams/${team.id}`
-                    )
+                    navigate(resolvePath(team.id))
                 }
                 className="group cursor-pointer rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1"
                 style={{

@@ -10,10 +10,12 @@ const StatCard = ({
   icon: Icon,
   title,
   value,
+  onClick,
 }) => {
   return (
     <div
-      className="rounded-3xl p-7 transition-all duration-300 hover:-translate-y-1"
+      onClick={onClick}
+      className={`rounded-3xl p-7 transition-all duration-300 hover:-translate-y-1 ${onClick ? 'cursor-pointer hover:shadow-lg' : ''}`}
       style={{
         background: "rgba(13,13,18,.55)",
         border: "1px solid rgba(167,139,250,.10)",
@@ -66,6 +68,7 @@ const DepartmentStats = ({
         icon={Building2}
         title="Teams"
         value={statistics.teams}
+        onClick={statistics.onTeamsClick}
       />
 
       <StatCard

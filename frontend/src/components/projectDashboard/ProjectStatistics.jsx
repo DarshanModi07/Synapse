@@ -107,7 +107,7 @@ const ProjectStatistics = ({
                 <StatCard
                     icon={CheckSquare}
                     title="Tasks"
-                    value={statistics.tasks}
+                    value={typeof statistics.tasks === 'object' ? (statistics.tasks?.total || 0) : (statistics.tasks || 0)}
                     color="#22C55E"
                 />
 

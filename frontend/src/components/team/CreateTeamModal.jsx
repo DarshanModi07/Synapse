@@ -1,15 +1,9 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-
 import { theme } from "@/lib/theme";
-
-import {
-  getDepartments,
-} from "@/services/department.service";
-
-import {
-  getAvailableLeaders,
-} from "@/services/team.service";
+import { getDepartments } from "@/services/department.service";
+import { getAvailableLeaders } from "@/services/team.service";
+import { getManagerDepartments, getManagerAvailableLeaders } from "@/services/manager.service";
 
 const CreateTeamModal = ({
   open,
@@ -17,6 +11,7 @@ const CreateTeamModal = ({
   onCreate,
   loading,
   workspaceId,
+  managerMode,
 }) => {
 
   const [departments, setDepartments] =
@@ -65,55 +60,31 @@ const CreateTeamModal = ({
   }, [departmentId]);
 
   const fetchDepartments = async () => {
-
     try {
-
       setFetchingDepartments(true);
-
-      const response =
-        await getDepartments(workspaceId);
-
+      const response = managerMode 
+        ? await getManagerDepartments(workspaceId)
+        : await getDepartments(workspaceId);
       setDepartments(response.data || []);
-
-    }
-    catch (err) {
-
+    } catch (err) {
       console.error(err);
-
-    }
-    finally {
-
+    } finally {
       setFetchingDepartments(false);
-
     }
-
   };
 
   const fetchLeaders = async () => {
-
     try {
-
       setFetchingLeaders(true);
-
-      const response =
-        await getAvailableLeaders(
-          departmentId
-        );
-
+      const response = managerMode
+        ? await getManagerAvailableLeaders(departmentId)
+        : await getAvailableLeaders(departmentId);
       setLeaders(response.data || []);
-
-    }
-    catch (err) {
-
+    } catch (err) {
       console.error(err);
-
-    }
-    finally {
-
+    } finally {
       setFetchingLeaders(false);
-
     }
-
   };
 
   const reset = () => {

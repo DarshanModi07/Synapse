@@ -1,4 +1,5 @@
 import prisma from "../DB/db.config.js"
+import { validateManagerDepartmentOwnership } from "../utils/rbacHelpers.js";
 
 export const assignTeam = async (req, res) => {
     try {
@@ -46,6 +47,15 @@ export const assignTeam = async (req, res) => {
                 message:
                     "You are not a member of this workspace"
             });
+        }
+
+        if (checkUser.sys_role === "manager") {
+            const auth = await validateManagerDepartmentOwnership(userId, projectDepartment.departmentId);
+            if (!auth.authorized) {
+                return res.status(403).json({ message: auth.message });
+            }
+        } else if (checkUser.sys_role !== "owner") {
+            return res.status(403).json({ message: "You don't have permission to perform this action" });
         }
 
         const checkTeam = await prisma.team.findUnique({
@@ -258,6 +268,11 @@ export const removeTeam = async (req, res) => {
                                 workspaceId: true
                             }
 
+                        },
+                        department: {
+                            select: {
+                                id: true
+                            }
                         }
 
                     }
@@ -308,15 +323,15 @@ export const removeTeam = async (req, res) => {
 
         }
 
-        if (
-            workspaceMember.sys_role !== "owner" &&
-            workspaceMember.sys_role !== "manager"
-        ) {
-
+        if (workspaceMember.sys_role === "manager") {
+            const auth = await validateManagerDepartmentOwnership(userId, assignment.projectDepartment.department.id);
+            if (!auth.authorized) {
+                return res.status(403).json({ message: auth.message });
+            }
+        } else if (workspaceMember.sys_role !== "owner") {
             return res.status(403).json({
                 message: "Only Owner and Manager can remove teams"
             });
-
         }
 
         /*

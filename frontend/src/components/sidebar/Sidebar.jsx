@@ -6,6 +6,7 @@ export const Sidebar = ({
   role = "owner",
   active = "Dashboard",
   config,
+  basePath,
 }) => {
   const sections = config || sidebarConfig[role] || [];
 
@@ -56,6 +57,7 @@ export const Sidebar = ({
                     key={item.label}
                     {...item}
                     active={active === item.label}
+                    basePath={basePath}
                   />
                 ))}
               </div>

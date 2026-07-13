@@ -9,6 +9,7 @@ import AllWorkspacesPage from "@/pages/AllWorkspacesPage";
 import ProfilePage from "@/pages/ProfilePage";
 import WorkspacePage from "@/pages/WorkspacePage";
 import OwnerLayout from "@/layouts/OwnerLayout";
+import RoleProtectedRoute from "@/components/RoleProtectedRoute";
 
 import DashboardPage from "@/pages/owner/DashboardPage";
 import DepartmentsPage from "@/pages/owner/DepartmentsPage";
@@ -29,10 +30,13 @@ import EmployeeLayout from "@/layouts/EmployeeLayout";
 import ManagerDashboardPage from "@/pages/manager/DashboardPage";
 import ManagerTeamsPage from "@/pages/manager/TeamsPage";
 import ManagerProjectsPage from "@/pages/manager/ProjectsPage";
+import ManagerProjectDashboardPage from "@/pages/manager/ManagerProjectDashboardPage";
 import ManagerMembersPage from "@/pages/manager/MembersPage";
 import ManagerTasksPage from "@/pages/manager/TasksPage";
 import ManagerAnalyticsPage from "@/pages/manager/AnalyticsPage";
 import ManagerSettingsPage from "@/pages/manager/SettingsPage";
+import ManagerDepartmentDashboardPage from "@/pages/manager/DepartmentDashboardPage";
+import ManagerTeamDashboardPage from "@/pages/manager/TeamDashboardPage";
 
 import TeamLeadDashboard from "@/pages/teamLead/DashboardPage";
 import EmployeeDashboard from "@/pages/employee/DashboardPage";
@@ -122,7 +126,11 @@ const AppRoutes = () => {
 
         {/* Owner Layout */}
 
-        <Route element={<OwnerLayout />}>
+        <Route element={
+          <RoleProtectedRoute allowedRole="owner">
+            <OwnerLayout />
+          </RoleProtectedRoute>
+        }>
 
           <Route
             index
@@ -182,23 +190,39 @@ const AppRoutes = () => {
         </Route>
 
         {/* Manager Layout */}
-        <Route path="manager" element={<ManagerLayout />}>
+        <Route path="manager" element={
+          <RoleProtectedRoute allowedRole="manager">
+            <ManagerLayout />
+          </RoleProtectedRoute>
+        }>
           <Route index element={<ManagerDashboardPage />} />
           <Route path="teams" element={<ManagerTeamsPage />} />
           <Route path="projects" element={<ManagerProjectsPage />} />
+          <Route path="projects/:projectId" element={<ManagerProjectDashboardPage />} />
           <Route path="members" element={<ManagerMembersPage />} />
           <Route path="tasks" element={<ManagerTasksPage />} />
           <Route path="analytics" element={<ManagerAnalyticsPage />} />
           <Route path="settings" element={<ManagerSettingsPage />} />
+          <Route path="departments/:departmentId" element={<ManagerDepartmentDashboardPage />} />
+          <Route path="departments/:departmentId/teams" element={<ManagerTeamsPage />} />
+          <Route path="teams/:teamId" element={<ManagerTeamDashboardPage />} />
         </Route>
 
         {/* Team Lead Layout */}
-        <Route path="team-lead" element={<TeamLeadLayout />}>
+        <Route path="team-lead" element={
+          <RoleProtectedRoute allowedRole="team_lead">
+            <TeamLeadLayout />
+          </RoleProtectedRoute>
+        }>
           <Route index element={<TeamLeadDashboard />} />
         </Route>
 
         {/* Employee Layout */}
-        <Route path="employee" element={<EmployeeLayout />}>
+        <Route path="employee" element={
+          <RoleProtectedRoute allowedRole="employee">
+            <EmployeeLayout />
+          </RoleProtectedRoute>
+        }>
           <Route index element={<EmployeeDashboard />} />
         </Route>
 

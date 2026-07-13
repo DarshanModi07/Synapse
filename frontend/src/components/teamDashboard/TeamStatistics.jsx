@@ -27,13 +27,13 @@ const TeamStatistics = ({
 
     {
       title: "Active Tasks",
-      value: statistics.tasks ?? 0,
+      value: statistics.tasks?.total ?? 0,
       icon: CheckSquare,
     },
 
     {
       title: "Completed Tasks",
-      value: statistics.completedTasks ?? 0,
+      value: statistics.tasks?.completed ?? statistics.completedTasks ?? 0,
       icon: CircleCheckBig,
     },
 

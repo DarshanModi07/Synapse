@@ -72,6 +72,21 @@ const checkProjectTeam = await prisma.projectTeam.findUnique({
             })
         }
 
+        if(checkUser.sys_role === "manager"){
+            const checkManagerOwnership = await prisma.department.findUnique({
+                where:{
+                    id: checkProjectTeam.projectDepartment.departmentId,
+                    managerId: userId,
+                    is_deleted: false
+                }
+            })
+            if(!checkManagerOwnership){
+                return res.status(403).json({
+                    message:"You do not have permission to manage tasks in this department"
+                })
+            }
+        }
+
         const endDate = new Date(dueDate);
 
         if(isNaN(endDate.getTime())){
@@ -491,19 +506,27 @@ export const updateTask = async (req, res) => {
         }
 
         if (
-
             workspaceMember.sys_role === "employee" ||
-
             workspaceMember.sys_role === "team_lead"
-
         ) {
-
             return res.status(403).json({
-
                 message: "You are not allowed to update this task"
-
             });
+        }
 
+        if (workspaceMember.sys_role === "manager") {
+            const checkManagerOwnership = await prisma.department.findUnique({
+                where: {
+                    id: projectTeam.projectDepartment.departmentId,
+                    managerId: req.user.userId,
+                    is_deleted: false
+                }
+            });
+            if (!checkManagerOwnership) {
+                return res.status(403).json({
+                    message: "You do not have permission to manage tasks in this department"
+                });
+            }
         }
 
         /*
@@ -646,6 +669,21 @@ export const deleteTask = async(req,res) => {
             return res.status(403).json({
                 message:"You are not allowed to do this action"
         })        
+        }
+
+        if(checkUser.sys_role === "manager"){
+            const checkManagerOwnership = await prisma.department.findUnique({
+                where:{
+                    id: checkProjectTeam.projectDepartment.departmentId,
+                    managerId: userId,
+                    is_deleted: false
+                }
+            })
+            if(!checkManagerOwnership){
+                return res.status(403).json({
+                    message:"You do not have permission to manage tasks in this department"
+                })
+            }
         }
 
         const getSubTask = await prisma.subTask.findMany({
