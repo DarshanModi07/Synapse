@@ -7,15 +7,11 @@ import ProjectStatistics from "@/components/projectDashboard/ProjectStatistics";
 import ProjectDepartments from "@/components/projectDashboard/ProjectDepartments/ProjectDepartments";
 import ProjectTeams from "@/components/projectDashboard/ProjectTeams/ProjectTeams";
 import ProjectTaskBoard from "@/components/projectDashboard/ProjectTaskBoard/ProjectTaskBoard";
-import AITaskPlanningModal from "@/components/projectDashboard/AITaskPlanningModal";
-import { useState } from "react";
-import { Sparkles } from "lucide-react";
 
 import { createTask, updateTask, deleteTask } from "@/services/task.service";
 
 const ManagerProjectDashboardPage = () => {
     const { projectId } = useParams();
-    const [aiModalOpen, setAiModalOpen] = useState(false);
 
     const {
         dashboard,
@@ -100,6 +96,8 @@ const ManagerProjectDashboardPage = () => {
             />
 
             <ProjectTeams
+                projectId={projectId}
+                project={dashboard.project}
                 teams={dashboard.teams}
                 departments={dashboard.departments}
                 refresh={refresh}
@@ -107,13 +105,6 @@ const ManagerProjectDashboardPage = () => {
 
             <div className="flex items-center justify-between mt-12 mb-4">
                 <h2 className="text-2xl font-semibold text-white">Project Tasks</h2>
-                <button
-                    onClick={() => setAiModalOpen(true)}
-                    className="flex items-center gap-2 rounded-xl bg-purple-600/10 px-4 py-2 text-sm font-medium text-purple-400 hover:bg-purple-600/20"
-                >
-                    <Sparkles size={16} />
-                    AI Task Plan
-                </button>
             </div>
 
             <ProjectTaskBoard 
@@ -123,15 +114,6 @@ const ManagerProjectDashboardPage = () => {
                 onTaskEdit={handleTaskEdit}
                 onTaskDelete={handleTaskDelete}
             />
-
-            {aiModalOpen && (
-                <AITaskPlanningModal
-                    projectId={projectId}
-                    teams={dashboard.teams || []}
-                    onClose={() => setAiModalOpen(false)}
-                    onRefresh={refresh}
-                />
-            )}
 
         </main>
     );

@@ -522,7 +522,7 @@ export const getManagerTeamDashboard = async (req, res) => {
             if (task.status === "todo") acc.todo++;
             else if (task.status === "in_progress") acc.inProgress++;
             else if (task.status === "in_review") acc.inReview++;
-            else if (task.status === "completed") acc.completed++;
+            else if (task.status === "done") acc.completed++;
             return acc;
         }, { todo: 0, inProgress: 0, inReview: 0, completed: 0 });
 
@@ -856,26 +856,67 @@ export const getAllManagerProjects = async (req, res) => {
 export const generateManagerProjectTasksAI = async (req, res) => {
     try {
         const { projectId } = req.params;
+        const { teamId } = req.body;
         const userId = req.user.userId;
+
+        if (!teamId) {
+            return res.status(400).json({ message: 'Team ID is required to generate a context-aware plan.' });
+        }
 
         // 1. Verify Project
         const project = await prisma.project.findUnique({
             where: { id: projectId, is_deleted: false },
             include: {
                 projectDepartments: {
-                    include: { department: true }
-                },
-                projectTeams: {
-                    include: { team: true }
-                },
-                tasks: {
-                    where: { is_deleted: false }
+                    include: { 
+                        department: true,
+                        projectTeams: {
+                            include: { 
+                                team: {
+                                    include: {
+                                        teamMembers: {
+                                            include: { 
+                                                member: { 
+                                                    select: { 
+                                                        id: true,
+                                                        name: true, 
+                                                        workspaceMembers: {
+                                                            select: { work_role: true, workspaceId: true }
+                                                        }
+                                                    } 
+                                                } 
+                                            }
+                                        },
+                                        leader: { select: { name: true } },
+                                        department: { select: { name: true } }
+                                    }
+                                },
+                                tasks: {
+                                    where: { is_deleted: false, status: { not: 'done' } }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
 
-        if (!project) {
+        if (!project || project.is_deleted) {
             return res.status(404).json({ message: 'Project not found' });
+        }
+
+        // 1.5 Verify Workspace Member
+        const workspaceMember = await prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId: project.workspaceId,
+                    userId
+                }
+            }
+        });
+
+        if (!workspaceMember || (workspaceMember.sys_role !== 'owner' && workspaceMember.sys_role !== 'manager')) {
+            return res.status(403).json({ message: 'You do not have permission to manage this workspace' });
         }
 
         // 2. Verify Manager Ownership
@@ -887,25 +928,59 @@ export const generateManagerProjectTasksAI = async (req, res) => {
             return res.status(403).json({ message: 'You do not have permission to manage this project' });
         }
 
-        // 3. Prepare AI Prompt
-        const managerTeams = project.projectTeams.filter(
-            pt => managerDepartments.some(md => md.departmentId === pt.team.departmentId)
-        );
+        // 3. Verify Team Context & Prepare Prompt
+        const allProjectTeams = project.projectDepartments.flatMap(pd => pd.projectTeams || []);
+        const selectedProjectTeam = allProjectTeams.find(pt => pt.id === teamId);
+        
+        if (!selectedProjectTeam) {
+            return res.status(404).json({ message: 'Selected Team not found in this project' });
+        }
 
+        if (!managerDepartments.some(md => md.departmentId === selectedProjectTeam.team?.departmentId)) {
+            return res.status(403).json({ message: 'You do not have permission to manage the selected team for this project' });
+        }
+
+        const allProjectTasks = allProjectTeams.flatMap(pt => pt.tasks || []);
+
+        const team = selectedProjectTeam.team;
+        if (!team) {
+            return res.status(404).json({ message: 'Team data could not be found' });
+        }
+        
+        const membersList = team.teamMembers?.map(tm => {
+            const wm = tm.member?.workspaceMembers?.find(w => w.workspaceId === project.workspaceId);
+            return `- ${tm.member?.name || 'Unknown'} (${wm?.work_role || 'Member'})`;
+        }).join('\n') || 'No members assigned.';
+        
+        const activeTasksCount = selectedProjectTeam.tasks?.length || 0;
+        
+        const activeTasks = selectedProjectTeam.tasks?.map(t => `- ${t.title || 'Unnamed Task'} (${t.status || 'unknown'})`).join('\n') || 'No active tasks.';
+        
         const prompt = `
 You are an expert technical project manager. 
-A project named "${project.name}" requires a comprehensive task breakdown.
-Project Priority: ${project.priority}
-Project Deadline: ${project.dueDate}
+A project named "${project?.name || 'Unnamed Project'}" requires a comprehensive task breakdown.
+Project Description: ${project?.description || 'Not provided'}
+Project Deadline: ${project?.dueDate || 'Not set'}
 
-We have the following teams available:
-${managerTeams.map(pt => pt.team.name).join(', ') || 'No specific teams assigned yet.'}
+We need to generate tasks specifically for the following team:
+Team Name: ${team?.name || 'Unnamed Team'}
+Department: ${team?.department?.name || 'Unassigned'}
+Team Lead: ${team?.leader?.name || 'Unassigned'}
+Total Members: ${team.teamMembers?.length || 0}
+Members Details:
+${membersList}
 
-Current Progress: ${project.tasks.filter(t => t.status === 'completed').length} completed out of ${project.tasks.length} total tasks.
+Current Team Workload (${activeTasksCount} active tasks):
+${activeTasks}
 
-Please generate a structured list of milestones, and for each milestone, generate tasks and subtasks. 
-Suggest which team should handle each task. 
-Return ONLY valid JSON in the exact following structure:
+Current Project Progress: ${allProjectTasks.filter(t => t.status === 'done').length} completed out of ${allProjectTasks.length} total tasks.
+
+Please generate a structured project plan tailored for this team.
+Generate a list of milestones. For each milestone, generate actionable tasks and subtasks.
+Each task must include an estimated number of hours and a reason why it is assigned to this team.
+Each subtask must also include estimated hours.
+
+Return ONLY valid JSON in the exact following structure without markdown blocks:
 {
   "milestones": [
     {
@@ -914,10 +989,11 @@ Return ONLY valid JSON in the exact following structure:
         {
           "title": "Task Name",
           "description": "Task Description",
-          "priority": "medium",
-          "recommendedTeam": "Team Name",
+          "priority": "low | medium | high | urgent",
+          "estimatedHours": 5,
+          "reasonForAssignment": "Reason this task fits this team's skills",
           "subtasks": [
-            { "title": "Subtask Name", "priority": "medium" }
+            { "title": "Subtask Name", "priority": "medium", "estimatedHours": 2 }
           ]
         }
       ]
@@ -926,19 +1002,59 @@ Return ONLY valid JSON in the exact following structure:
 }
 `;
 
-        // 4. Call AI Service
-        const { generateSuggestion } = await import('../ai/ai.service.js');
-        const response = await generateSuggestion(prompt);
+        console.log("=========================================");
+        console.log("AI PROMPT:");
+        console.log("=========================================");
+        console.log(prompt);
+        console.log("=========================================");
 
-        const cleaned = response.replace(/```json/g, '').replace(/```/g, '').trim();
+        // 4. Call AI Service
+        const response = await generateSuggestion(prompt);
+        
+        console.log("=========================================");
+        console.log("RAW AI RESPONSE:");
+        console.log("=========================================");
+        console.log(response);
+        console.log("=========================================");
+
+        let cleaned = response;
+        if (typeof cleaned === 'string') {
+            cleaned = cleaned.replace(/```json/g, '').replace(/```/g, '').trim();
+        }
         
         let plan;
         try {
             plan = JSON.parse(cleaned);
         } catch (e) {
-            console.error('Failed to parse AI response:', cleaned);
-            return res.status(500).json({ message: 'Failed to generate a valid plan from AI' });
+            console.error('=========================================');
+            console.error('JSON PARSING FAILED');
+            console.error('Raw AI Output:', response);
+            console.error('Cleaned String:', cleaned);
+            console.error('Error Details:', e.message);
+            console.error('=========================================');
+            
+            // Do NOT silently catch errors, print original AI response
+            return res.status(500).json({ message: 'Failed to generate a valid plan from AI', rawResponse: response });
         }
+
+        // Normalize the AI response before returning to the frontend
+        if (!plan || typeof plan !== 'object') {
+            plan = { milestones: [] };
+        }
+        if (!Array.isArray(plan.milestones)) {
+            plan.milestones = [];
+        }
+
+        plan.milestones.forEach(m => {
+            if (!Array.isArray(m.tasks)) {
+                m.tasks = [];
+            }
+            m.tasks.forEach(t => {
+                if (!Array.isArray(t.subtasks)) {
+                    t.subtasks = [];
+                }
+            });
+        });
 
         return res.status(200).json({
             message: 'AI Task Plan generated successfully',
@@ -946,8 +1062,13 @@ Return ONLY valid JSON in the exact following structure:
         });
 
     } catch (err) {
+        console.error("========== AI TASK GENERATION ==========");
         console.error(err);
-        return res.status(500).json({ message: 'Internal Server Error during AI task generation' });
+        console.error(err.stack);
+        return res.status(500).json({
+            message: err.message,
+            stack: process.env.NODE_ENV === "development" ? err.stack : undefined
+        });
     }
 };
 
@@ -962,10 +1083,12 @@ export const approveManagerProjectTasks = async (req, res) => {
             where: { id: projectId, is_deleted: false },
             include: {
                 projectDepartments: {
-                    include: { department: true }
-                },
-                projectTeams: {
-                    include: { team: true }
+                    include: { 
+                        department: true,
+                        projectTeams: {
+                            include: { team: true }
+                        }
+                    }
                 }
             }
         });
@@ -984,8 +1107,9 @@ export const approveManagerProjectTasks = async (req, res) => {
         }
 
         // 3. Flatten & Validate assigned teams
-        const allowedProjectTeamIds = project.projectTeams
-            .filter(pt => managerDepartments.some(md => md.departmentId === pt.team.departmentId))
+        const allProjectTeams = project.projectDepartments.flatMap(pd => pd.projectTeams || []);
+        const allowedProjectTeamIds = allProjectTeams
+            .filter(pt => managerDepartments.some(md => md.departmentId === pt.team?.departmentId))
             .map(pt => pt.id);
 
         let createdCount = 0;
@@ -996,10 +1120,21 @@ export const approveManagerProjectTasks = async (req, res) => {
                 continue; // Skip tasks not properly assigned to a manager's team
             }
 
+            // Securely format the extra metadata into the description
+            let finalDescription = t.description || '';
+            if (t.estimatedHours) {
+                finalDescription += `\n\n**Estimated Hours:** ${t.estimatedHours} hrs`;
+            }
+            if (t.reasonForAssignment) {
+                finalDescription += `\n**Assignment Reason:** ${t.reasonForAssignment}`;
+            }
+
+            const finalTitle = t.milestoneTitle ? `[${t.milestoneTitle}] ${t.title}` : t.title;
+
             const newTask = await prisma.task.create({
                 data: {
-                    title: t.title,
-                    description: t.description || null,
+                    title: finalTitle,
+                    description: finalDescription.trim() || null,
                     priority: t.priority || 'medium',
                     dueDate: project.dueDate,
                     projectTeam: { connect: { id: t.projectTeamId } },
@@ -1011,9 +1146,10 @@ export const approveManagerProjectTasks = async (req, res) => {
 
             if (t.subtasks && Array.isArray(t.subtasks)) {
                 for (const st of t.subtasks) {
+                    const stTitle = st.estimatedHours ? `${st.title} (${st.estimatedHours} hrs)` : st.title;
                     await prisma.subTask.create({
                         data: {
-                            title: st.title,
+                            title: stTitle,
                             priority: st.priority || 'medium',
                             dueDate: project.dueDate,
                             task: { connect: { id: newTask.id } },

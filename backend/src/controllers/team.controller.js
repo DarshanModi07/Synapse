@@ -1108,7 +1108,7 @@ export const teamDashboard = async (req, res) => {
 
         const completedTasks =
             tasks.filter(
-                task => task.status === "completed"
+                task => task.status === "done"
             ).length;
 
         const pendingTasks =

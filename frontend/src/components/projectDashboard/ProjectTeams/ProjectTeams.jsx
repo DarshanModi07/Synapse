@@ -3,6 +3,9 @@ import { useState } from "react";
 import TeamCard from "./TeamCard";
 import AssignTeamModal from "./AssignTeamModal";
 import RemoveTeamDialog from "./RemoveTeamDialog";
+import AITaskPlanningModal from "../AITaskPlanningModal";
+
+import { Sparkles } from "lucide-react";
 
 import {
     assignTeam,
@@ -10,10 +13,14 @@ import {
 } from "@/services/projectTeam.service";
 
 const ProjectTeams = ({
+    projectId,
+    project,
     teams = [],
     departments = [],
     refresh
 }) => {
+
+    const [aiModalOpen, setAiModalOpen] = useState(false);
 
     const [assignOpen, setAssignOpen] =
         useState(false);
@@ -136,19 +143,24 @@ const ProjectTeams = ({
 
                     </div>
 
-                    <button
-
-                        onClick={() =>
-                            setAssignOpen(true)
-                        }
-
-                        className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium transition hover:bg-violet-500"
-
-                    >
-
-                        Assign Team
-
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() =>
+                                setAssignOpen(true)
+                            }
+                            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium transition hover:bg-violet-500"
+                        >
+                            Assign Team
+                        </button>
+                        
+                        <button
+                            onClick={() => setAiModalOpen(true)}
+                            className="flex items-center gap-2 rounded-xl bg-purple-600/10 px-4 py-2 text-sm font-medium text-purple-400 hover:bg-purple-600/20 transition"
+                        >
+                            <Sparkles size={16} />
+                            AI Task Planner
+                        </button>
+                    </div>
 
                 </div>
 
@@ -241,6 +253,16 @@ const ProjectTeams = ({
                 onRemove={handleRemove}
 
             />
+
+            {aiModalOpen && (
+                <AITaskPlanningModal
+                    projectId={projectId}
+                    project={project}
+                    teams={teams}
+                    onClose={() => setAiModalOpen(false)}
+                    onRefresh={refresh}
+                />
+            )}
 
         </>
 

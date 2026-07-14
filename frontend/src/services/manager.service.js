@@ -15,8 +15,8 @@ export const getAllManagerWorkspaceTeams = async (workspaceId) => {
   return response.data;
 };
 
-export const generateManagerProjectTasksAI = async (projectId) => {
-  const response = await api.post(`/manager/projects/${projectId}/ai-tasks`);
+export const generateManagerProjectTasksAI = async (projectId, data) => {
+  const response = await api.post(`/manager/projects/${projectId}/ai-tasks`, data);
   return response.data;
 };
 

@@ -9,24 +9,14 @@ const ManagerLayout = () => {
   const location = useLocation();
   const { slug } = useParams();
 
-  const currentPath = location.pathname.split("/").pop();
-
-  const activeMap = {
-    manager: "Dashboard",
-    teams: "Teams",
-    projects: "Projects",
-    members: "Members",
-    tasks: "Tasks",
-    analytics: "Analytics",
-    settings: "Settings",
-  };
-
-  let active = activeMap[currentPath];
-
-  // Dashboard Route
-  if (currentPath === "manager") {
-    active = "Dashboard";
-  }
+  let active = "Dashboard";
+  if (location.pathname.includes("/departments")) active = "Departments";
+  else if (location.pathname.includes("/teams")) active = "Teams";
+  else if (location.pathname.includes("/projects")) active = "Projects";
+  else if (location.pathname.includes("/members")) active = "Members";
+  else if (location.pathname.includes("/tasks")) active = "Tasks";
+  else if (location.pathname.includes("/analytics")) active = "Analytics";
+  else if (location.pathname.includes("/settings")) active = "Settings";
 
   return (
     <div

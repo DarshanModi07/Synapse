@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { Sparkles, Loader2, X, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Loader2, X, Plus, Trash2, Users, User, Activity } from "lucide-react";
 import { generateManagerProjectTasksAI, approveManagerProjectTasks } from "@/services/manager.service";
 
-const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
+const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefresh }) => {
+    const [step, setStep] = useState(1);
+    const [selectedTeamId, setSelectedTeamId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -10,28 +12,64 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
     // Our interactive plan state
     const [plan, setPlan] = useState(null);
 
+    const handleSelectTeam = (teamId) => {
+        setSelectedTeamId(teamId);
+        setStep(2);
+    };
+
     const handleGenerate = async () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await generateManagerProjectTasksAI(projectId);
+            const data = await generateManagerProjectTasksAI(projectId, { teamId: selectedTeamId });
             const aiPlan = data.data;
 
-            // Map AI plan to include projectTeamId based on recommendedTeam matching or default to first team
-            if (aiPlan?.milestones) {
-                aiPlan.milestones.forEach(m => {
-                    if (m.tasks) {
-                        m.tasks.forEach(t => {
-                            const match = teams.find(team => team.team.name.toLowerCase() === t.recommendedTeam?.toLowerCase());
-                            t.projectTeamId = match ? match.id : (teams.length > 0 ? teams[0].id : "");
-                            if (!t.subtasks) t.subtasks = [];
-                        });
-                    }
-                });
+            let normalizedPlan = aiPlan;
+            if (!normalizedPlan || typeof normalizedPlan !== 'object') {
+                normalizedPlan = { milestones: [] };
             }
-            setPlan(aiPlan);
+
+            if (!Array.isArray(normalizedPlan.milestones)) {
+                if (normalizedPlan.milestones && typeof normalizedPlan.milestones === 'object') {
+                    normalizedPlan.milestones = Object.values(normalizedPlan.milestones);
+                } else {
+                    normalizedPlan.milestones = [];
+                }
+            }
+
+            normalizedPlan.milestones.forEach(m => {
+                if (!m.title) m.title = "Unnamed Milestone";
+                
+                if (!Array.isArray(m.tasks)) {
+                    if (m.tasks && typeof m.tasks === 'object') {
+                        m.tasks = Object.values(m.tasks);
+                    } else {
+                        m.tasks = [];
+                    }
+                }
+                
+                m.tasks.forEach(t => {
+                    if (!t.title) t.title = "Unnamed Task";
+                    if (!t.projectTeamId) t.projectTeamId = selectedTeamId;
+                    
+                    if (!Array.isArray(t.subtasks)) {
+                        if (t.subtasks && typeof t.subtasks === 'object') {
+                            t.subtasks = Object.values(t.subtasks);
+                        } else {
+                            t.subtasks = [];
+                        }
+                    }
+                    
+                    t.subtasks.forEach(st => {
+                        if (!st.title) st.title = "Unnamed Subtask";
+                    });
+                });
+            });
+
+            setPlan(normalizedPlan);
+            setStep(3);
         } catch (err) {
-            setError(err.response?.data?.message || "Failed to generate plan");
+            setError(err?.response?.data?.message || "Failed to generate plan");
         } finally {
             setLoading(false);
         }
@@ -40,8 +78,13 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
     const handleApprove = async () => {
         if (!plan) return;
         
-        // Ensure all tasks have a projectTeamId assigned
-        const tasksToApprove = plan.milestones.flatMap(m => m.tasks);
+        const tasksToApprove = plan.milestones.flatMap(m => {
+            return m.tasks.map(t => ({
+                ...t,
+                milestoneTitle: m.title // Send milestone title so backend can format it
+            }));
+        });
+
         if (tasksToApprove.some(t => !t.projectTeamId)) {
             setError("All tasks must be assigned to a team before approval.");
             return;
@@ -54,13 +97,34 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
             onRefresh();
             onClose();
         } catch (err) {
-            setError(err.response?.data?.message || "Failed to approve plan");
+            setError(err?.response?.data?.message || "Failed to approve plan");
         } finally {
             setSaving(false);
         }
     };
 
-    // Helper functions to mutate plan state
+    // --- State Mutations ---
+    const addMilestone = () => {
+        const newPlan = { ...plan };
+        newPlan.milestones.push({
+            title: "New Milestone",
+            tasks: []
+        });
+        setPlan(newPlan);
+    };
+
+    const updateMilestone = (mIndex, value) => {
+        const newPlan = { ...plan };
+        newPlan.milestones[mIndex].title = value;
+        setPlan(newPlan);
+    };
+
+    const deleteMilestone = (mIndex) => {
+        const newPlan = { ...plan };
+        newPlan.milestones.splice(mIndex, 1);
+        setPlan(newPlan);
+    };
+
     const updateTask = (mIndex, tIndex, field, value) => {
         const newPlan = { ...plan };
         newPlan.milestones[mIndex].tasks[tIndex][field] = value;
@@ -78,8 +142,10 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
         newPlan.milestones[mIndex].tasks.push({
             title: "New Task",
             description: "",
+            estimatedHours: 0,
             priority: "medium",
-            projectTeamId: teams.length > 0 ? teams[0].id : "",
+            reasonForAssignment: "",
+            projectTeamId: selectedTeamId,
             subtasks: []
         });
         setPlan(newPlan);
@@ -101,7 +167,8 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
         const newPlan = { ...plan };
         newPlan.milestones[mIndex].tasks[tIndex].subtasks.push({
             title: "New Subtask",
-            priority: "medium"
+            priority: "medium",
+            estimatedHours: 0
         });
         setPlan(newPlan);
     };
@@ -116,8 +183,12 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
                             <Sparkles size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-semibold text-white">AI Task Plan</h2>
-                            <p className="text-sm text-zinc-400">Review, edit, and approve AI suggested tasks.</p>
+                            <h2 className="text-xl font-semibold text-white">AI Task Planner</h2>
+                            <p className="text-sm text-zinc-400">
+                                {step === 1 && "Select a team to generate context-aware tasks."}
+                                {step === 2 && "Ready to generate your plan."}
+                                {step === 3 && "Review, edit, and approve AI suggested tasks."}
+                            </p>
                         </div>
                     </div>
                     <button onClick={onClose} className="rounded-xl p-2 hover:bg-white/5">
@@ -133,12 +204,65 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
                         </div>
                     )}
 
-                    {!plan && !loading && (
+                    {/* Step 1: Select Team */}
+                    {step === 1 && (
+                        <div className="space-y-6">
+                            {/* Project Information */}
+                            {project && (
+                                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-5 mb-8">
+                                    <h3 className="text-lg font-semibold text-white mb-2">{project.name}</h3>
+                                    {project.description && <p className="text-sm text-zinc-400 mb-4">{project.description}</p>}
+                                    <div className="flex items-center gap-4 text-sm">
+                                        <span className="flex items-center gap-1.5 px-3 py-1 bg-zinc-800 rounded-lg text-zinc-300">
+                                            Priority: <span className="capitalize text-white">{project.priority}</span>
+                                        </span>
+                                        {project.dueDate && (
+                                            <span className="flex items-center gap-1.5 px-3 py-1 bg-zinc-800 rounded-lg text-zinc-300">
+                                                Deadline: <span className="text-white">{new Date(project.dueDate).toLocaleDateString()}</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <h3 className="text-lg font-medium text-white px-1">Select Team to Generate Plan For</h3>
+                            {teams.length === 0 ? (
+                                <div className="text-center text-zinc-500 py-12">No teams assigned to this project yet. Please assign a team first.</div>
+                            ) : (
+                                <div className="grid gap-5 md:grid-cols-2">
+                                    {teams.map(t => {
+                                        const membersCount = t.members || 0;
+                                        const activeTasks = t.tasks || 0;
+                                        
+                                        return (
+                                            <div 
+                                                key={t.projectTeamId}
+                                                onClick={() => handleSelectTeam(t.projectTeamId)}
+                                                className="cursor-pointer rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-purple-500/50 hover:bg-zinc-900 transition"
+                                            >
+                                                <h3 className="text-lg font-semibold text-white mb-1">{t.name || "Unnamed Team"}</h3>
+                                                <p className="text-sm text-zinc-400 mb-4">{t.department?.name}</p>
+                                                
+                                                <div className="flex flex-col gap-2 text-sm text-zinc-400">
+                                                    <div className="flex items-center gap-2"><User size={14}/> <span>Lead: {t.leader?.name || "Unassigned"}</span></div>
+                                                    <div className="flex items-center gap-2"><Users size={14}/> <span>{membersCount} Members</span></div>
+                                                    <div className="flex items-center gap-2"><Activity size={14}/> <span>Current Workload: {activeTasks} Total Tasks</span></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Step 2: Generate */}
+                    {step === 2 && !loading && (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <Sparkles size={48} className="mb-4 text-purple-500/50" />
-                            <h3 className="mb-2 text-lg font-medium text-white">Ready to generate your plan?</h3>
+                            <h3 className="mb-2 text-lg font-medium text-white">Generate Plan for Team</h3>
                             <p className="mb-6 max-w-md text-zinc-400">
-                                Our AI will analyze your project details and teams to suggest a structured set of milestones, tasks, and subtasks.
+                                Our AI will analyze the project context and this team's current workload to suggest an optimal, structured set of milestones, tasks, and subtasks.
                             </p>
                             <button
                                 onClick={handleGenerate}
@@ -150,27 +274,40 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
                         </div>
                     )}
 
-                    {loading && (
+                    {/* Loading State */}
+                    {step === 2 && loading && (
                         <div className="flex flex-col items-center justify-center py-12">
                             <Loader2 size={40} className="mb-4 animate-spin text-purple-500" />
                             <p className="text-zinc-400">Analyzing project and generating tasks...</p>
                         </div>
                     )}
 
-                    {plan && !loading && (
+                    {/* Step 3: Review Plan */}
+                    {step === 3 && plan && (
                         <div className="space-y-8">
                             {plan.milestones?.map((milestone, i) => (
-                                <div key={i} className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-5">
-                                    <h3 className="mb-4 text-lg font-semibold text-white">
-                                        {milestone.title}
-                                    </h3>
+                                <div key={i} className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-5 relative group/milestone">
+                                    <button 
+                                        onClick={() => deleteMilestone(i)}
+                                        className="absolute top-5 right-5 text-zinc-500 hover:text-red-400 opacity-0 group-hover/milestone:opacity-100 transition-opacity"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                    <div className="mb-6 pr-8">
+                                        <input 
+                                            value={milestone.title}
+                                            onChange={(e) => updateMilestone(i, e.target.value)}
+                                            className="w-full bg-transparent text-xl font-semibold text-white outline-none border-b border-transparent focus:border-purple-500 pb-1"
+                                            placeholder="Milestone Title"
+                                        />
+                                    </div>
                                     
                                     <div className="space-y-4">
                                         {milestone.tasks?.map((task, j) => (
-                                            <div key={j} className="rounded-xl border border-zinc-800 bg-black/40 p-4 relative group">
+                                            <div key={j} className="rounded-xl border border-zinc-800 bg-black/40 p-4 relative group/task">
                                                 <button 
                                                     onClick={() => deleteTask(i, j)}
-                                                    className="absolute top-4 right-4 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-4 right-4 text-zinc-500 hover:text-red-400 opacity-0 group-hover/task:opacity-100 transition-opacity"
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -200,24 +337,47 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
                                                     <div>
                                                         <label className="text-xs text-zinc-500 mb-1 block">Assigned Team</label>
                                                         <select 
-                                                            value={task.projectTeamId}
+                                                            value={task.projectTeamId || ""}
                                                             onChange={(e) => updateTask(i, j, "projectTeamId", e.target.value)}
                                                             className="w-full bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-white focus:border-purple-500 outline-none p-1.5"
                                                         >
                                                             <option value="" disabled>Select Team</option>
                                                             {teams.map(t => (
-                                                                <option key={t.id} value={t.id}>{t.team.name}</option>
+                                                                <option key={t.projectTeamId} value={t.projectTeamId}>{t.name}</option>
                                                             ))}
                                                         </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 gap-4 md:grid-cols-4 mb-4">
+                                                    <div className="md:col-span-1">
+                                                        <label className="text-xs text-zinc-500 mb-1 block">Est. Hours</label>
+                                                        <input 
+                                                            type="number"
+                                                            value={task.estimatedHours || ""}
+                                                            onChange={(e) => updateTask(i, j, "estimatedHours", parseFloat(e.target.value) || 0)}
+                                                            className="w-full bg-transparent border-b border-zinc-700 text-sm text-zinc-300 focus:border-purple-500 outline-none pb-1"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    <div className="md:col-span-3">
+                                                        <label className="text-xs text-zinc-500 mb-1 block">Reason for Assignment</label>
+                                                        <input 
+                                                            value={task.reasonForAssignment || ""}
+                                                            onChange={(e) => updateTask(i, j, "reasonForAssignment", e.target.value)}
+                                                            className="w-full bg-transparent border-b border-zinc-700 text-sm text-zinc-400 focus:border-purple-500 outline-none pb-1"
+                                                            placeholder="Why this team?"
+                                                        />
                                                     </div>
                                                 </div>
 
                                                 <div className="mb-4">
                                                     <label className="text-xs text-zinc-500 mb-1 block">Description</label>
                                                     <input 
-                                                        value={task.description}
+                                                        value={task.description || ""}
                                                         onChange={(e) => updateTask(i, j, "description", e.target.value)}
                                                         className="w-full bg-transparent border-b border-zinc-700 text-sm text-zinc-300 focus:border-purple-500 outline-none pb-1"
+                                                        placeholder="Detailed description..."
                                                     />
                                                 </div>
 
@@ -238,6 +398,14 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
                                                                     value={subtask.title}
                                                                     onChange={(e) => updateSubtask(i, j, k, "title", e.target.value)}
                                                                     className="flex-1 bg-transparent border-b border-zinc-800 text-xs text-zinc-300 focus:border-purple-500 outline-none pb-1"
+                                                                />
+                                                                <input 
+                                                                    type="number"
+                                                                    value={subtask.estimatedHours || ""}
+                                                                    onChange={(e) => updateSubtask(i, j, k, "estimatedHours", parseFloat(e.target.value) || 0)}
+                                                                    className="w-16 bg-transparent border-b border-zinc-800 text-xs text-zinc-300 focus:border-purple-500 outline-none pb-1 text-center"
+                                                                    placeholder="Hrs"
+                                                                    title="Estimated Hours"
                                                                 />
                                                                 <select 
                                                                     value={subtask.priority}
@@ -268,17 +436,23 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
                                             onClick={() => addTask(i)}
                                             className="w-full rounded-xl border border-dashed border-zinc-700 bg-transparent py-3 text-sm text-zinc-400 hover:border-purple-500 hover:text-purple-400 transition-colors flex items-center justify-center gap-2"
                                         >
-                                            <Plus size={16} /> Add Custom Task
+                                            <Plus size={16} /> Add Task
                                         </button>
                                     </div>
                                 </div>
                             ))}
+                            <button 
+                                onClick={addMilestone}
+                                className="w-full rounded-2xl border-2 border-dashed border-zinc-800 bg-transparent py-4 text-sm font-medium text-zinc-400 hover:border-purple-500/50 hover:text-purple-400 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Plus size={18} /> Add New Milestone
+                            </button>
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                {plan && !loading && (
+                {step === 3 && plan && (
                     <div className="flex items-center justify-between border-t border-zinc-800 bg-[#0A0A0A] p-6">
                         <div className="text-sm text-zinc-400">
                             Please review all assignments and priorities carefully before approving.
@@ -302,7 +476,7 @@ const AITaskPlanningModal = ({ projectId, teams = [], onClose, onRefresh }) => {
                                         Approving...
                                     </>
                                 ) : (
-                                    "Approve & Create Tasks"
+                                    "Approve & Assign Tasks"
                                 )}
                             </button>
                         </div>

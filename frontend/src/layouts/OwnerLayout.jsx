@@ -7,25 +7,14 @@ import { theme } from "@/lib/theme";
 const OwnerLayout = () => {
   const location = useLocation();
 
-  const currentPath = location.pathname.split("/").pop();
-
-  const activeMap = {
-    "": "Dashboard",
-    departments: "Departments",
-    teams: "Teams",
-    projects: "Projects",
-    members: "Members",
-    analytics: "Analytics",
-    ai: "AI Insights",
-    settings: "Settings",
-  };
-
-  let active = activeMap[currentPath];
-
-  // Dashboard Route
-  if (/^\/workspace\/[^/]+$/.test(location.pathname)) {
-    active = "Dashboard";
-  }
+  let active = "Dashboard";
+  if (location.pathname.includes("/departments")) active = "Departments";
+  else if (location.pathname.includes("/teams")) active = "Teams";
+  else if (location.pathname.includes("/projects")) active = "Projects";
+  else if (location.pathname.includes("/members")) active = "Members";
+  else if (location.pathname.includes("/analytics")) active = "Analytics";
+  else if (location.pathname.includes("/ai")) active = "AI Insights";
+  else if (location.pathname.includes("/settings")) active = "Settings";
 
   return (
     <div
