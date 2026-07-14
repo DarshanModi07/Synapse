@@ -14,16 +14,16 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
     const [validationErrors, setValidationErrors] = useState({});
     
     // Cache for team members fetched dynamically
-    const [teamMembersCache, setTeamMembersCache] = useState({});
+    const [teamMembersByTeamId, setTeamMembersByTeamId] = useState({});
 
     const fetchTeamMembers = async (pTeamId) => {
         if (!pTeamId) return;
-        setTeamMembersCache(prev => {
+        setTeamMembersByTeamId(prev => {
             if (prev[pTeamId]) return prev;
             
             // Trigger fetch asynchronously
             getManagerTeamMembers(pTeamId).then(members => {
-                setTeamMembersCache(current => ({ ...current, [pTeamId]: members }));
+                setTeamMembersByTeamId(current => ({ ...current, [pTeamId]: members }));
             }).catch(err => {
                 console.error("Failed to fetch team members for dropdown", err);
             });
@@ -116,17 +116,26 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                         if (!st.assignedEmployeeId) {
                             errors[`${mIndex}-${tIndex}-${sIndex}`] = "Employee must be assigned.";
                         } else {
-                            const availableMembers = teamMembersCache[t.projectTeamId] || [];
+                            const availableMembers = teamMembersByTeamId[t.projectTeamId] || [];
                             if (!availableMembers.some(member => member.id === st.assignedEmployeeId)) {
                                 errors[`${mIndex}-${tIndex}-${sIndex}`] = "Employee is not a member of the selected team.";
                             }
                         }
-                        console.log({ projectTeamId: t.projectTeamId, employeeId: st.assignedEmployeeId });
                     });
                 }
                 return {
-                    ...t,
-                    milestoneTitle: m.title // Send milestone title so backend can format it
+                    title: t.title,
+                    assignedTeamId: t.projectTeamId,
+                    milestoneTitle: m.title,
+                    description: t.description,
+                    priority: t.priority,
+                    estimatedHours: t.estimatedHours,
+                    subtasks: t.subtasks?.map(st => ({
+                        title: st.title,
+                        assignedEmployeeId: st.assignedEmployeeId,
+                        priority: st.priority,
+                        estimatedHours: st.estimatedHours
+                    })) || []
                 };
             });
         });
@@ -137,7 +146,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
             return;
         }
 
-        if (tasksToApprove.some(t => !t.projectTeamId)) {
+        if (tasksToApprove.some(t => !t.assignedTeamId)) {
             setError("All tasks must be assigned to a team before approval.");
             return;
         }
@@ -492,10 +501,10 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                                                                         className={`bg-transparent text-xs outline-none w-28 truncate ${hasError ? 'text-red-400' : 'text-zinc-400'}`}
                                                                     >
                                                                         <option value="">Unassigned</option>
-                                                                        {getTeamMembersForTask(task.projectTeamId).map(m => (
-                                                                            <option key={m.id} value={m.id}>
-                                                                                {m.name} ({m.work_role})
-                                                                            </option>
+                                                                        {teamMembersByTeamId[task.projectTeamId] && teamMembersByTeamId[task.projectTeamId].map(member => (
+                                                                        <option key={member.id} value={member.id}>
+                                                                            {member.name} {member.isLeader ? "(Leader)" : `(${member.work_role})`}
+                                                                        </option>
                                                                         ))}
                                                                     </select>
                                                                     <button 

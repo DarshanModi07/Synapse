@@ -1097,7 +1097,7 @@ export const getManagerTeamMembers = async (req, res) => {
         const { teamId } = req.params;
         // The teamId provided here from the frontend is actually the projectTeamId
         const projectTeam = await prisma.projectTeam.findUnique({
-            where: { id: teamId, is_deleted: false },
+            where: { id: teamId },
             include: {
                 team: {
                     include: {
@@ -1117,13 +1117,17 @@ export const getManagerTeamMembers = async (req, res) => {
             return res.status(404).json({ message: "Team not found" });
         }
 
+        console.log(projectTeam.team.teamMembers);
+
         const members = [];
         if (projectTeam.team.leader) {
             members.push({
                 id: projectTeam.team.leader.id,
                 name: projectTeam.team.leader.name,
                 avatar: projectTeam.team.leader.avatar,
-                work_role: 'Leader'
+                work_role: 'Leader',
+                role: 'leader',
+                isLeader: true
             });
         }
 
@@ -1133,11 +1137,14 @@ export const getManagerTeamMembers = async (req, res) => {
                     id: tm.member.id,
                     name: tm.member.name,
                     avatar: tm.member.avatar,
-                    work_role: 'Member' // In a real app we'd fetch actual work role if stored, fallback to Member
+                    work_role: 'Member',
+                    role: 'member',
+                    isLeader: false
                 });
             }
         });
 
+        console.log("Returned Members:", members);
         return res.status(200).json(members);
 
     } catch (err) {
@@ -1202,29 +1209,23 @@ export const approveManagerProjectTasks = async (req, res) => {
 
         // 4. Create tasks and subtasks sequentially to ensure integrity
         for (const t of tasks) {
-            if (!t.projectTeamId || !allowedProjectTeamIds.includes(t.projectTeamId)) {
+            const teamIdForTask = t.assignedTeamId || t.projectTeamId;
+            if (!teamIdForTask || !allowedProjectTeamIds.includes(teamIdForTask)) {
                 continue; // Skip tasks not properly assigned to a manager's team
             }
 
             // Securely format the extra metadata into the description
-            let finalDescription = t.description || '';
-            if (t.estimatedHours) {
-                finalDescription += `\n\n**Estimated Hours:** ${t.estimatedHours} hrs`;
-            }
-            if (t.reasonForAssignment) {
-                finalDescription += `\n**Assignment Reason:** ${t.reasonForAssignment}`;
-            }
-
-            const finalTitle = t.milestoneTitle ? `[${t.milestoneTitle}] ${t.title}` : t.title;
-
+            const mTitle = t.milestoneTitle ? `Milestone: ${t.milestoneTitle}\n` : '';
+            const tDesc = t.description ? `\n${t.description}` : '';
+            
             const newTask = await prisma.task.create({
                 data: {
-                    title: finalTitle,
-                    description: finalDescription.trim() || null,
-                    priority: t.priority || 'medium',
+                    title: t.title,
+                    description: `${mTitle}${tDesc}`.trim() || undefined,
                     dueDate: project.dueDate,
-                    projectTeam: { connect: { id: t.projectTeamId } },
+                    projectTeam: { connect: { id: teamIdForTask } },
                     createdBy: { connect: { id: userId } },
+                    priority: t.priority || 'medium',
                     status: 'todo'
                 }
             });
@@ -1232,15 +1233,17 @@ export const approveManagerProjectTasks = async (req, res) => {
 
             if (t.subtasks && Array.isArray(t.subtasks)) {
                 // Find the specific projectTeam to validate members
-                const pt = allProjectTeams.find(p => p.id === t.projectTeamId);
+                const pt = allProjectTeams.find(p => p.id === teamIdForTask);
                 const validMemberIds = pt?.team?.teamMembers?.map(tm => tm.memberId) || [];
                 if (pt?.team?.leaderId) {
                     validMemberIds.push(pt.team.leaderId);
                 }
 
+                console.log("Team Members:", pt?.team?.teamMembers);
+
                 for (const st of t.subtasks) {
                     console.log({ 
-                        teamId: t.projectTeamId, 
+                        teamId: teamIdForTask, 
                         employeeId: st.assignedEmployeeId, 
                         teamMembers: validMemberIds 
                     });
@@ -1252,11 +1255,13 @@ export const approveManagerProjectTasks = async (req, res) => {
                     if (!validMemberIds.includes(st.assignedEmployeeId)) {
                         return res.status(403).json({ 
                             message: 'Employee is not a member of the selected Team.',
-                            teamId: t.projectTeamId,
+                            teamId: teamIdForTask,
                             employeeId: st.assignedEmployeeId,
                             validMembers: validMemberIds
                         });
                     }
+
+                    console.log("Validated Employee IDs");
 
                     const stTitle = st.estimatedHours ? `${st.title} (${st.estimatedHours} hrs)` : st.title;
                     await prisma.subTask.create({
