@@ -1092,10 +1092,69 @@ Return ONLY valid JSON in the exact following structure without markdown blocks:
     }
 };
 
+export const getManagerTeamMembers = async (req, res) => {
+    try {
+        const { teamId } = req.params;
+        // The teamId provided here from the frontend is actually the projectTeamId
+        const projectTeam = await prisma.projectTeam.findUnique({
+            where: { id: teamId, is_deleted: false },
+            include: {
+                team: {
+                    include: {
+                        leader: true,
+                        teamMembers: {
+                            include: {
+                                member: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!projectTeam || !projectTeam.team) {
+            // It could be a regular Team ID fallback if needed, but per requirement it's the dropdown selected team (projectTeamId)
+            return res.status(404).json({ message: "Team not found" });
+        }
+
+        const members = [];
+        if (projectTeam.team.leader) {
+            members.push({
+                id: projectTeam.team.leader.id,
+                name: projectTeam.team.leader.name,
+                avatar: projectTeam.team.leader.avatar,
+                work_role: 'Leader'
+            });
+        }
+
+        projectTeam.team.teamMembers?.forEach(tm => {
+            if (tm.member && tm.member.id !== projectTeam.team.leaderId) {
+                members.push({
+                    id: tm.member.id,
+                    name: tm.member.name,
+                    avatar: tm.member.avatar,
+                    work_role: 'Member' // In a real app we'd fetch actual work role if stored, fallback to Member
+                });
+            }
+        });
+
+        return res.status(200).json(members);
+
+    } catch (err) {
+        console.error("========== GET TEAM MEMBERS ==========");
+        console.error(err);
+        return res.status(500).json({ message: err.message });
+    }
+};
+
 export const approveManagerProjectTasks = async (req, res) => {
     try {
         const { projectId } = req.params;
         const { tasks } = req.body;
+        
+        console.log("===== BULK TASKS PAYLOAD =====");
+        console.log(JSON.stringify(req.body, null, 2));
+        
         const userId = req.user.userId;
 
         // 1. Verify Project
@@ -1180,8 +1239,23 @@ export const approveManagerProjectTasks = async (req, res) => {
                 }
 
                 for (const st of t.subtasks) {
-                    if (st.assignedToId && !validMemberIds.includes(st.assignedToId)) {
-                        return res.status(403).json({ message: 'Employee is not a member of the selected Team.' });
+                    console.log({ 
+                        teamId: t.projectTeamId, 
+                        employeeId: st.assignedEmployeeId, 
+                        teamMembers: validMemberIds 
+                    });
+
+                    if (!st.assignedEmployeeId) {
+                        return res.status(400).json({ message: 'All subtasks must be assigned to an employee.' });
+                    }
+
+                    if (!validMemberIds.includes(st.assignedEmployeeId)) {
+                        return res.status(403).json({ 
+                            message: 'Employee is not a member of the selected Team.',
+                            teamId: t.projectTeamId,
+                            employeeId: st.assignedEmployeeId,
+                            validMembers: validMemberIds
+                        });
                     }
 
                     const stTitle = st.estimatedHours ? `${st.title} (${st.estimatedHours} hrs)` : st.title;
@@ -1192,7 +1266,7 @@ export const approveManagerProjectTasks = async (req, res) => {
                             dueDate: project.dueDate,
                             task: { connect: { id: newTask.id } },
                             assignedBy: { connect: { id: userId } },
-                            assignedTo: st.assignedToId ? { connect: { id: st.assignedToId } } : undefined,
+                            assignedTo: st.assignedEmployeeId ? { connect: { id: st.assignedEmployeeId } } : undefined,
                             status: 'todo'
                         }
                     });

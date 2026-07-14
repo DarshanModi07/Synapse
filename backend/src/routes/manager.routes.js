@@ -15,7 +15,8 @@ import {
     managerProjectDashboard,
     getAllManagerProjects,
     generateManagerProjectTasksAI,
-    approveManagerProjectTasks
+    approveManagerProjectTasks,
+    getManagerTeamMembers
 } from "../controllers/manager.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
@@ -38,6 +39,7 @@ router.delete("/teams/:teamId/delete", authMiddleware, deleteManagerTeam);
 router.post("/teams/:teamId/member/add", authMiddleware, addManagerTeamMember);
 router.delete("/teams/:teamId/member/delete", authMiddleware, removeManagerTeamMember);
 router.get("/teams/:teamId/dashboard", authMiddleware, getManagerTeamDashboard);
+router.get("/teams/:teamId/members", authMiddleware, getManagerTeamMembers);
 router.get("/departments/:departmentId/available-leaders", authMiddleware, getManagerAvailableLeaders);
 
 export default router;

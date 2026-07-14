@@ -72,6 +72,11 @@ export const getManagerTeamDashboard = async (teamId) => {
   return response.data;
 };
 
+export const getManagerTeamMembers = async (teamId) => {
+  const response = await api.get(`/manager/teams/${teamId}/members`);
+  return response.data;
+};
+
 export const getManagerAvailableLeaders = async (departmentId) => {
   const response = await api.get(`/manager/departments/${departmentId}/available-leaders`);
   return response.data;

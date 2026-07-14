@@ -194,6 +194,18 @@ export const getProjectDashboardData = async (projectId, userId, role) => {
 
                                 }
 
+                            },
+
+                            teamMembers: {
+                                include: {
+                                    member: {
+                                        select: {
+                                            id: true,
+                                            name: true,
+                                            avatar: true
+                                        }
+                                    }
+                                }
                             }
 
                         }
@@ -613,6 +625,9 @@ export const getProjectDashboardData = async (projectId, userId, role) => {
 
                     department:
                         projectTeam.team.department,
+                    
+                    teamMembers:
+                        projectTeam.team.teamMembers,
 
                     /*
                     ----------------------------------

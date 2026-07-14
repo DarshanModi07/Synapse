@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Sparkles, Loader2, X, Plus, Trash2, Users, User, Activity } from "lucide-react";
-import { generateManagerProjectTasksAI, approveManagerProjectTasks } from "@/services/manager.service";
+import { generateManagerProjectTasksAI, approveManagerProjectTasks, getManagerTeamMembers } from "@/services/manager.service";
 
 const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefresh }) => {
     const [step, setStep] = useState(1);
@@ -11,7 +11,27 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
 
     // Our interactive plan state
     const [plan, setPlan] = useState(null);
-    const [teamMembers, setTeamMembers] = useState([]);
+    const [validationErrors, setValidationErrors] = useState({});
+    
+    // Cache for team members fetched dynamically
+    const [teamMembersCache, setTeamMembersCache] = useState({});
+
+    const fetchTeamMembers = async (pTeamId) => {
+        if (!pTeamId) return;
+        setTeamMembersCache(prev => {
+            if (prev[pTeamId]) return prev;
+            
+            // Trigger fetch asynchronously
+            getManagerTeamMembers(pTeamId).then(members => {
+                setTeamMembersCache(current => ({ ...current, [pTeamId]: members }));
+            }).catch(err => {
+                console.error("Failed to fetch team members for dropdown", err);
+            });
+            
+            // Return optimistic empty array while fetching to prevent redundant calls
+            return { ...prev, [pTeamId]: [] };
+        });
+    };
 
     const handleSelectTeam = (teamId) => {
         setSelectedTeamId(teamId);
@@ -24,7 +44,6 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
         try {
             const data = await generateManagerProjectTasksAI(projectId, { teamId: selectedTeamId });
             const aiPlan = data.data;
-            setTeamMembers(data.members || []);
 
             let normalizedPlan = aiPlan;
             if (!normalizedPlan || typeof normalizedPlan !== 'object') {
@@ -40,6 +59,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
             }
 
             normalizedPlan.milestones.forEach(m => {
+                if (!m.id) m.id = crypto.randomUUID();
                 if (!m.title) m.title = "Unnamed Milestone";
                 
                 if (!Array.isArray(m.tasks)) {
@@ -51,6 +71,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                 }
                 
                 m.tasks.forEach(t => {
+                    if (!t.id) t.id = crypto.randomUUID();
                     if (!t.title) t.title = "Unnamed Task";
                     if (!t.projectTeamId) t.projectTeamId = selectedTeamId;
                     
@@ -63,13 +84,20 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                     }
                     
                     t.subtasks.forEach(st => {
+                        if (!st.id) st.id = crypto.randomUUID();
                         if (!st.title) st.title = "Unnamed Subtask";
+                        if (!st.assignedEmployeeId) st.assignedEmployeeId = "";
                     });
                 });
             });
 
             setPlan(normalizedPlan);
             setStep(3);
+            
+            // Pre-fetch members for the initially assigned team
+            if (selectedTeamId) {
+                fetchTeamMembers(selectedTeamId);
+            }
         } catch (err) {
             setError(err?.response?.data?.message || "Failed to generate plan");
         } finally {
@@ -78,19 +106,43 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
     };
 
     const handleApprove = async () => {
-        if (!plan) return;
-        
-        const tasksToApprove = plan.milestones.flatMap(m => {
-            return m.tasks.map(t => ({
-                ...t,
-                milestoneTitle: m.title // Send milestone title so backend can format it
-            }));
+        setValidationErrors({});
+        const errors = {};
+        const tasksToApprove = plan.milestones.flatMap((m, mIndex) => {
+            return m.tasks.map((t, tIndex) => {
+                // Validation for Bug 4
+                if (t.subtasks) {
+                    t.subtasks.forEach((st, sIndex) => {
+                        if (!st.assignedEmployeeId) {
+                            errors[`${mIndex}-${tIndex}-${sIndex}`] = "Employee must be assigned.";
+                        } else {
+                            const availableMembers = teamMembersCache[t.projectTeamId] || [];
+                            if (!availableMembers.some(member => member.id === st.assignedEmployeeId)) {
+                                errors[`${mIndex}-${tIndex}-${sIndex}`] = "Employee is not a member of the selected team.";
+                            }
+                        }
+                        console.log({ projectTeamId: t.projectTeamId, employeeId: st.assignedEmployeeId });
+                    });
+                }
+                return {
+                    ...t,
+                    milestoneTitle: m.title // Send milestone title so backend can format it
+                };
+            });
         });
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+            setError("Please fix the assignment errors highlighted below.");
+            return;
+        }
 
         if (tasksToApprove.some(t => !t.projectTeamId)) {
             setError("All tasks must be assigned to a team before approval.");
             return;
         }
+
+        console.log(JSON.stringify(tasksToApprove, null, 2));
 
         setSaving(true);
         setError(null);
@@ -109,6 +161,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
     const addMilestone = () => {
         const newPlan = { ...plan };
         newPlan.milestones.push({
+            id: crypto.randomUUID(),
             title: "New Milestone",
             tasks: []
         });
@@ -130,6 +183,14 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
     const updateTask = (mIndex, tIndex, field, value) => {
         const newPlan = { ...plan };
         newPlan.milestones[mIndex].tasks[tIndex][field] = value;
+        // Bug 2: Clear employee selection on team change
+        if (field === "projectTeamId") {
+            const t = newPlan.milestones[mIndex].tasks[tIndex];
+            if (t.subtasks) {
+                t.subtasks.forEach(st => st.assignedEmployeeId = "");
+            }
+            fetchTeamMembers(value);
+        }
         setPlan(newPlan);
     };
 
@@ -142,6 +203,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
     const addTask = (mIndex) => {
         const newPlan = { ...plan };
         newPlan.milestones[mIndex].tasks.push({
+            id: crypto.randomUUID(),
             title: "New Task",
             description: "",
             estimatedHours: 0,
@@ -168,10 +230,11 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
     const addSubtask = (mIndex, tIndex) => {
         const newPlan = { ...plan };
         newPlan.milestones[mIndex].tasks[tIndex].subtasks.push({
+            id: crypto.randomUUID(),
             title: "New Subtask",
             priority: "medium",
             estimatedHours: 0,
-            assignedToId: ""
+            assignedEmployeeId: ""
         });
         setPlan(newPlan);
     };
@@ -289,7 +352,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                     {step === 3 && plan && (
                         <div className="space-y-8">
                             {plan.milestones?.map((milestone, i) => (
-                                <div key={i} className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-5 relative group/milestone">
+                                <div key={milestone.id} className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-5 relative group/milestone">
                                     <button 
                                         onClick={() => deleteMilestone(i)}
                                         className="absolute top-5 right-5 text-zinc-500 hover:text-red-400 opacity-0 group-hover/milestone:opacity-100 transition-opacity"
@@ -307,7 +370,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                                     
                                     <div className="space-y-4">
                                         {milestone.tasks?.map((task, j) => (
-                                            <div key={j} className="rounded-xl border border-zinc-800 bg-black/40 p-4 relative group/task">
+                                            <div key={task.id} className="rounded-xl border border-zinc-800 bg-black/40 p-4 relative group/task">
                                                 <button 
                                                     onClick={() => deleteTask(i, j)}
                                                     className="absolute top-4 right-4 text-zinc-500 hover:text-red-400 opacity-0 group-hover/task:opacity-100 transition-opacity"
@@ -395,8 +458,12 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                                                         </button>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        {task.subtasks?.map((subtask, k) => (
-                                                            <div key={k} className="flex items-center gap-2">
+                                                        {task.subtasks?.map((subtask, k) => {
+                                                            const errorKey = `${i}-${j}-${k}`;
+                                                            const hasError = validationErrors[errorKey];
+                                                            return (
+                                                                <div key={subtask.id} className="flex flex-col gap-1">
+                                                                    <div className={`flex items-center gap-2 rounded px-2 py-1 ${hasError ? 'border border-red-500/50 bg-red-500/5' : ''}`}>
                                                                 <input 
                                                                     value={subtask.title}
                                                                     onChange={(e) => updateSubtask(i, j, k, "title", e.target.value)}
@@ -419,26 +486,29 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                                                                     <option value="medium">Medium</option>
                                                                     <option value="high">High</option>
                                                                 </select>
-                                                                <select 
-                                                                    value={subtask.assignedToId || ""}
-                                                                    onChange={(e) => updateSubtask(i, j, k, "assignedToId", e.target.value)}
-                                                                    className="bg-transparent text-xs text-zinc-400 outline-none w-28 truncate"
-                                                                >
-                                                                    <option value="">Unassigned</option>
-                                                                    {teamMembers.map(m => (
-                                                                        <option key={m.id} value={m.id}>
-                                                                            {m.name} ({m.work_role})
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                                <button 
-                                                                    onClick={() => deleteSubtask(i, j, k)}
-                                                                    className="text-zinc-600 hover:text-red-400"
-                                                                >
-                                                                    <X size={14} />
-                                                                </button>
+                                                                    <select 
+                                                                        value={subtask.assignedEmployeeId || ""}
+                                                                        onChange={(e) => updateSubtask(i, j, k, "assignedEmployeeId", e.target.value)}
+                                                                        className={`bg-transparent text-xs outline-none w-28 truncate ${hasError ? 'text-red-400' : 'text-zinc-400'}`}
+                                                                    >
+                                                                        <option value="">Unassigned</option>
+                                                                        {getTeamMembersForTask(task.projectTeamId).map(m => (
+                                                                            <option key={m.id} value={m.id}>
+                                                                                {m.name} ({m.work_role})
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                    <button 
+                                                                        onClick={() => deleteSubtask(i, j, k)}
+                                                                        className="text-zinc-600 hover:text-red-400"
+                                                                    >
+                                                                        <X size={14} />
+                                                                    </button>
+                                                                </div>
+                                                                {hasError && <span className="text-[10px] text-red-500 italic ml-2">{hasError}</span>}
                                                             </div>
-                                                        ))}
+                                                        );
+                                                        })}
                                                         {(!task.subtasks || task.subtasks.length === 0) && (
                                                             <div className="text-xs text-zinc-600 italic">No subtasks</div>
                                                         )}
