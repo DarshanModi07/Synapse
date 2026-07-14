@@ -1289,3 +1289,163 @@ export const approveManagerProjectTasks = async (req, res) => {
         return res.status(500).json({ message: 'Internal Server Error during task approval' });
     }
 };
+
+export const getManagerWorkspaceMembers = async (req, res) => {
+    console.log("MANAGER MEMBERS ENDPOINT HIT");
+    try {
+        const { workspaceId } = req.params;
+        const userId = req.user.userId;
+
+        console.log("Workspace:", workspaceId);
+        console.log("Manager:", userId);
+
+        // 1. Find departments managed by the user
+        const managedDepartments = await prisma.department.findMany({
+            where: {
+                managerId: userId,
+                workspaceId,
+                is_deleted: false
+            },
+            select: { id: true, name: true }
+        });
+
+        if (managedDepartments.length === 0) {
+            return res.status(200).json({
+                message: "No managed departments found",
+                data: [],
+                analytics: { totalMembers: 0, totalTeamLeads: 0, totalEmployees: 0, totalTeams: 0, activeMembers: 0 }
+            });
+        }
+
+        const managedDepartmentIds = managedDepartments.map(d => d.id);
+
+        // 2. Find all teams under those departments
+        const managedTeams = await prisma.team.findMany({
+            where: {
+                departmentId: { in: managedDepartmentIds },
+                is_deleted: false
+            },
+            select: { id: true, name: true, leaderId: true, departmentId: true }
+        });
+
+        const teamIds = managedTeams.map(t => t.id);
+
+        // 3. Find all team members
+        const teamMembers = await prisma.teamMember.findMany({
+            where: { teamId: { in: teamIds } },
+            select: { memberId: true, teamId: true, joinedAt: true }
+        });
+
+        // Collect unique user IDs
+        const userIds = new Set();
+        managedTeams.forEach(t => { if (t.leaderId) userIds.add(t.leaderId); });
+        teamMembers.forEach(tm => userIds.add(tm.memberId));
+
+        if (userIds.size === 0) {
+             return res.status(200).json({
+                message: "No members found in managed departments",
+                data: [],
+                analytics: { totalMembers: 0, totalTeamLeads: 0, totalEmployees: 0, totalTeams: managedTeams.length, activeMembers: 0 }
+            });
+        }
+
+        // 4. Fetch the users with their details and stats
+        const membersData = await prisma.workspaceMember.findMany({
+            where: {
+                workspaceId,
+                userId: { in: Array.from(userIds) }
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                        isActive: true,
+                        createdAt: true,
+                        assignedSubTasks: {
+                            where: { is_deleted: false },
+                            select: { id: true, status: true }
+                        },
+                        teamMembers: {
+                            where: { teamId: { in: teamIds } },
+                            include: { team: { select: { id: true, name: true, department: { select: { name: true } } } } }
+                        },
+                        teamLeaders: {
+                            where: { id: { in: teamIds } },
+                            select: { id: true, name: true, department: { select: { name: true } } }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 5. Format response and calculate analytics
+        let totalTeamLeads = 0;
+        let totalEmployees = 0;
+        let activeMembers = 0;
+
+        const formattedMembers = membersData.map(wm => {
+            const user = wm.user;
+            
+            if (user.isActive) activeMembers++;
+
+            const isTeamLead = user.teamLeaders.length > 0;
+            if (isTeamLead) totalTeamLeads++;
+            else totalEmployees++;
+
+            // Combine departments and teams from both leader and member associations
+            const memberTeams = user.teamMembers.map(tm => tm.team);
+            const leaderTeams = user.teamLeaders;
+            
+            // Avoid duplicates
+            const allTeams = [...leaderTeams, ...memberTeams].filter((team, index, self) => 
+                index === self.findIndex((t) => t.id === team.id)
+            );
+            
+            const departments = Array.from(new Set(allTeams.map(t => t.department.name)));
+
+            const completedTasks = user.assignedSubTasks.filter(st => st.status === 'done').length;
+            const pendingTasks = user.assignedSubTasks.length - completedTasks;
+
+            return {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+                sys_role: wm.sys_role,
+                work_role: wm.work_role,
+                isActive: user.isActive,
+                joinedDate: wm.joinedAt,
+                isTeamLead,
+                teams: allTeams.map(t => t.name),
+                departments,
+                stats: {
+                    assignedProjects: 0,
+                    assignedTasks: user.assignedSubTasks.length,
+                    completedTasks,
+                    pendingTasks
+                }
+            };
+        });
+
+        console.log("Members found:", formattedMembers.length);
+
+        return res.status(200).json({
+            message: "Members fetched successfully",
+            data: formattedMembers,
+            analytics: {
+                totalMembers: formattedMembers.length,
+                totalTeamLeads,
+                totalEmployees,
+                totalTeams: managedTeams.length,
+                activeMembers
+            }
+        });
+
+    } catch (error) {
+        console.error("Error fetching manager members:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};

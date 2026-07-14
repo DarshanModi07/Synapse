@@ -31,7 +31,7 @@ import ManagerDashboardPage from "@/pages/manager/DashboardPage";
 import ManagerTeamsPage from "@/pages/manager/TeamsPage";
 import ManagerProjectsPage from "@/pages/manager/ProjectsPage";
 import ManagerProjectDashboardPage from "@/pages/manager/ManagerProjectDashboardPage";
-import ManagerMembersPage from "@/pages/manager/MembersPage";
+import ManagerMembersPage from "@/pages/manager/ManagerMembersPage";
 import ManagerTasksPage from "@/pages/manager/TasksPage";
 import ManagerAnalyticsPage from "@/pages/manager/AnalyticsPage";
 import ManagerSettingsPage from "@/pages/manager/SettingsPage";

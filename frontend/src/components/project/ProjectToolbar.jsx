@@ -1,6 +1,7 @@
 import { Search, Plus, Sparkles } from "lucide-react";
 
 import { theme } from "@/lib/theme";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 const ProjectToolbar = ({
     search,
@@ -8,6 +9,8 @@ const ProjectToolbar = ({
     onCreate,
     onAI
 }) => {
+    const { workspace } = useWorkspace();
+    const canCreateProject = workspace?.memberRole?.sysRole === "owner";
 
     return (
 
@@ -43,26 +46,18 @@ const ProjectToolbar = ({
             {/* Buttons */}
 
             <div className="flex gap-3">
-
-                <button
-
-                    onClick={onCreate}
-
-                    className="flex items-center gap-2 rounded-2xl px-5 py-3 text-white transition"
-
-                    style={{
-                        background:
-                            theme.primary
-                    }}
-
-                >
-
-                    <Plus size={18} />
-
-                    Create Project
-
-                </button>
-
+                {canCreateProject && onCreate && (
+                    <button
+                        onClick={onCreate}
+                        className="flex items-center gap-2 rounded-2xl px-5 py-3 text-white transition"
+                        style={{
+                            background: theme.primary
+                        }}
+                    >
+                        <Plus size={18} />
+                        Create Project
+                    </button>
+                )}
             </div>
 
         </div>

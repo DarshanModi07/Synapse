@@ -87,3 +87,16 @@ export const getManagerProjectDashboard = async (projectId) => {
   return response.data;
 };
 
+export const getManagerWorkspaceMembers = async (
+    workspaceId,
+    params = {}
+) => {
+    const response = await api.get(
+        `/manager/${workspaceId}/members`,
+        {
+            params,
+        }
+    );
+
+    return response.data;
+};

@@ -44,12 +44,9 @@ export const createProject = async (req, res) => {
             });
         }
 
-        if (
-            checkWorkSpaceMember.sys_role !== "owner" &&
-            checkWorkSpaceMember.sys_role !== "manager"
-        ) {
+        if (checkWorkSpaceMember.sys_role !== "owner") {
             return res.status(403).json({
-                message: "You are not allowed to create projects"
+                message: "Only workspace owners can create projects."
             });
         }
 
