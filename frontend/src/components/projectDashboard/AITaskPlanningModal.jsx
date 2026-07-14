@@ -11,6 +11,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
 
     // Our interactive plan state
     const [plan, setPlan] = useState(null);
+    const [teamMembers, setTeamMembers] = useState([]);
 
     const handleSelectTeam = (teamId) => {
         setSelectedTeamId(teamId);
@@ -23,6 +24,7 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
         try {
             const data = await generateManagerProjectTasksAI(projectId, { teamId: selectedTeamId });
             const aiPlan = data.data;
+            setTeamMembers(data.members || []);
 
             let normalizedPlan = aiPlan;
             if (!normalizedPlan || typeof normalizedPlan !== 'object') {
@@ -168,7 +170,8 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
         newPlan.milestones[mIndex].tasks[tIndex].subtasks.push({
             title: "New Subtask",
             priority: "medium",
-            estimatedHours: 0
+            estimatedHours: 0,
+            assignedToId: ""
         });
         setPlan(newPlan);
     };
@@ -415,6 +418,18 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
                                                                     <option value="low">Low</option>
                                                                     <option value="medium">Medium</option>
                                                                     <option value="high">High</option>
+                                                                </select>
+                                                                <select 
+                                                                    value={subtask.assignedToId || ""}
+                                                                    onChange={(e) => updateSubtask(i, j, k, "assignedToId", e.target.value)}
+                                                                    className="bg-transparent text-xs text-zinc-400 outline-none w-28 truncate"
+                                                                >
+                                                                    <option value="">Unassigned</option>
+                                                                    {teamMembers.map(m => (
+                                                                        <option key={m.id} value={m.id}>
+                                                                            {m.name} ({m.work_role})
+                                                                        </option>
+                                                                    ))}
                                                                 </select>
                                                                 <button 
                                                                     onClick={() => deleteSubtask(i, j, k)}

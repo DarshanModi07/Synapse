@@ -947,11 +947,30 @@ export const generateManagerProjectTasksAI = async (req, res) => {
             return res.status(404).json({ message: 'Team data could not be found' });
         }
         
-        const membersList = team.teamMembers?.map(tm => {
-            const wm = tm.member?.workspaceMembers?.find(w => w.workspaceId === project.workspaceId);
-            return `- ${tm.member?.name || 'Unknown'} (${wm?.work_role || 'Member'})`;
-        }).join('\n') || 'No members assigned.';
+        const membersListForFrontend = [];
         
+        // Add Leader
+        if (team.leader) {
+            membersListForFrontend.push({
+                id: team.leader.id,
+                name: team.leader.name,
+                work_role: 'Leader'
+            });
+        }
+        
+        // Add Members
+        team.teamMembers?.forEach(tm => {
+            if (tm.member && tm.member.id !== team.leader?.id) {
+                const wm = tm.member?.workspaceMembers?.find(w => w.workspaceId === project.workspaceId);
+                membersListForFrontend.push({
+                    id: tm.member.id,
+                    name: tm.member.name,
+                    work_role: wm?.work_role || 'Member'
+                });
+            }
+        });
+        
+        const membersList = membersListForFrontend.map(m => `- ${m.name || 'Unknown'} (${m.work_role})`).join('\n') || 'No members assigned.';
         const activeTasksCount = selectedProjectTeam.tasks?.length || 0;
         
         const activeTasks = selectedProjectTeam.tasks?.map(t => `- ${t.title || 'Unnamed Task'} (${t.status || 'unknown'})`).join('\n') || 'No active tasks.';
@@ -1058,7 +1077,8 @@ Return ONLY valid JSON in the exact following structure without markdown blocks:
 
         return res.status(200).json({
             message: 'AI Task Plan generated successfully',
-            data: plan
+            data: plan,
+            members: membersListForFrontend
         });
 
     } catch (err) {
@@ -1086,7 +1106,14 @@ export const approveManagerProjectTasks = async (req, res) => {
                     include: { 
                         department: true,
                         projectTeams: {
-                            include: { team: true }
+                            include: { 
+                                team: {
+                                    include: {
+                                        teamMembers: true,
+                                        leader: true
+                                    }
+                                } 
+                            }
                         }
                     }
                 }
@@ -1145,7 +1172,18 @@ export const approveManagerProjectTasks = async (req, res) => {
             createdCount++;
 
             if (t.subtasks && Array.isArray(t.subtasks)) {
+                // Find the specific projectTeam to validate members
+                const pt = allProjectTeams.find(p => p.id === t.projectTeamId);
+                const validMemberIds = pt?.team?.teamMembers?.map(tm => tm.memberId) || [];
+                if (pt?.team?.leaderId) {
+                    validMemberIds.push(pt.team.leaderId);
+                }
+
                 for (const st of t.subtasks) {
+                    if (st.assignedToId && !validMemberIds.includes(st.assignedToId)) {
+                        return res.status(403).json({ message: 'Employee is not a member of the selected Team.' });
+                    }
+
                     const stTitle = st.estimatedHours ? `${st.title} (${st.estimatedHours} hrs)` : st.title;
                     await prisma.subTask.create({
                         data: {
@@ -1154,6 +1192,7 @@ export const approveManagerProjectTasks = async (req, res) => {
                             dueDate: project.dueDate,
                             task: { connect: { id: newTask.id } },
                             assignedBy: { connect: { id: userId } },
+                            assignedTo: st.assignedToId ? { connect: { id: st.assignedToId } } : undefined,
                             status: 'todo'
                         }
                     });
