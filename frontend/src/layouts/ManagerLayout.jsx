@@ -14,7 +14,6 @@ const ManagerLayout = () => {
   else if (location.pathname.includes("/teams")) active = "Teams";
   else if (location.pathname.includes("/projects")) active = "Projects";
   else if (location.pathname.includes("/members")) active = "Members";
-  else if (location.pathname.includes("/tasks")) active = "Tasks";
   else if (location.pathname.includes("/analytics")) active = "Analytics";
   else if (location.pathname.includes("/settings")) active = "Settings";
 

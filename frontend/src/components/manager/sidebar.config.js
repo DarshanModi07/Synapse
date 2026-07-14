@@ -32,11 +32,6 @@ export const managerConfig = [
         icon: UserRound,
         path: "members",
       },
-      {
-        label: "Tasks",
-        icon: CheckSquare,
-        path: "tasks",
-      },
     ],
   },
   {

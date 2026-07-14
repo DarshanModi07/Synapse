@@ -63,31 +63,14 @@ const ManagerSidebar = () => {
             {/* Navigation */}
 
             <nav className="flex flex-col gap-2">
-
-                {
-
-                    managerNavigation.map(
-
-                        (item) => (
-
-                            <ManagerSidebarItem
-
-                                key={item.title}
-
-                                title={item.title}
-
-                                icon={item.icon}
-
-                                path={item.path}
-
-                            />
-
-                        )
-
-                    )
-
-                }
-
+                {managerNavigation.map((item) => (
+                    <ManagerSidebarItem
+                        key={item.title}
+                        title={item.title}
+                        icon={item.icon}
+                        path={item.path}
+                    />
+                ))}
             </nav>
 
         </aside>

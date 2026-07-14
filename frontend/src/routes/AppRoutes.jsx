@@ -32,7 +32,6 @@ import ManagerTeamsPage from "@/pages/manager/TeamsPage";
 import ManagerProjectsPage from "@/pages/manager/ProjectsPage";
 import ManagerProjectDashboardPage from "@/pages/manager/ManagerProjectDashboardPage";
 import ManagerMembersPage from "@/pages/manager/ManagerMembersPage";
-import ManagerTasksPage from "@/pages/manager/TasksPage";
 import ManagerAnalyticsPage from "@/pages/manager/AnalyticsPage";
 import ManagerSettingsPage from "@/pages/manager/SettingsPage";
 import ManagerDepartmentDashboardPage from "@/pages/manager/DepartmentDashboardPage";
@@ -200,7 +199,6 @@ const AppRoutes = () => {
           <Route path="projects" element={<ManagerProjectsPage />} />
           <Route path="projects/:projectId" element={<ManagerProjectDashboardPage />} />
           <Route path="members" element={<ManagerMembersPage />} />
-          <Route path="tasks" element={<ManagerTasksPage />} />
           <Route path="analytics" element={<ManagerAnalyticsPage />} />
           <Route path="settings" element={<ManagerSettingsPage />} />
           <Route path="departments/:departmentId" element={<ManagerDepartmentDashboardPage />} />
