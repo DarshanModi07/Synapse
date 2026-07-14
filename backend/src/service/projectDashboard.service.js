@@ -864,6 +864,8 @@ export const getProjectDashboardData = async (projectId, userId, role) => {
 
                 teams,
 
+                tasks,
+
                 recentTasks,
 
                 activity

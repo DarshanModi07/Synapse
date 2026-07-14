@@ -93,22 +93,19 @@ const ProjectTaskBoard = ({
                 </button>
             </div>
             
-            <div className="flex space-x-6 overflow-x-auto pb-4">
-                {columns.map(col => (
-                    <div 
-                        key={col.id} 
-                        className={`flex min-w-[320px] flex-col rounded-2xl border ${col.color} bg-[#0A0A0A] p-4`}
-                    >
-                        <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-zinc-300">
+            <div className="flex flex-col space-y-10 pb-8 mt-6">
+                {columns.map(col => col.tasks.length > 0 && (
+                    <div key={col.id} className="flex flex-col">
+                        <div className="mb-4 flex items-center gap-3 border-b border-zinc-800/60 pb-3">
+                            <h3 className="text-lg font-medium text-zinc-200">
                                 {col.title}
                             </h3>
-                            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
+                            <span className="rounded-full bg-zinc-800/80 px-2.5 py-0.5 text-xs font-semibold text-zinc-400">
                                 {col.tasks.length}
                             </span>
                         </div>
                         
-                        <div className="flex flex-col space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {col.tasks.map(task => (
                                 <TaskCard 
                                     key={task.id} 
@@ -117,14 +114,14 @@ const ProjectTaskBoard = ({
                                     onDelete={() => openDelete(task)}
                                 />
                             ))}
-                            {col.tasks.length === 0 && (
-                                <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-500">
-                                    No tasks
-                                </div>
-                            )}
                         </div>
                     </div>
                 ))}
+                {tasks.length === 0 && (
+                    <div className="rounded-2xl border border-dashed border-zinc-800 p-12 text-center text-zinc-500">
+                        No tasks in this project yet.
+                    </div>
+                )}
             </div>
 
             <CreateTaskModal

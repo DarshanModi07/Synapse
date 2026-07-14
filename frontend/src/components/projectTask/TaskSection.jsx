@@ -1,6 +1,5 @@
-import { useState } from "react";
-
-import { Plus } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Search } from "lucide-react";
 
 import { theme } from "@/lib/theme";
 
@@ -120,7 +119,18 @@ const TaskSection = ({
 
     };
 
-        /*
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const filteredTasks = useMemo(() => {
+        if (!searchQuery.trim()) return tasks;
+        const q = searchQuery.toLowerCase();
+        return tasks.filter(t => 
+            t.title.toLowerCase().includes(q) || 
+            (t.description && t.description.toLowerCase().includes(q))
+        );
+    }, [tasks, searchQuery]);
+
+    /*
     =====================================================
     UI
     =====================================================
@@ -137,58 +147,35 @@ const TaskSection = ({
                 <div className="flex items-center justify-between">
 
                     <div>
-
-                        <h2
-
-                            className="text-2xl font-semibold"
-
-                            style={{
-
-                                color: theme.text
-
-                            }}
-
-                        >
-
-                            Tasks
-
+                        <h2 className="text-[22px] font-semibold text-zinc-100 flex items-center gap-3">
+                            Tasks 
+                            <span className="text-sm font-medium bg-zinc-800/80 text-zinc-400 px-2.5 py-0.5 rounded-full">
+                                {filteredTasks.length}
+                            </span>
                         </h2>
-
-                        <p
-
-                            className="mt-1"
-
-                            style={{
-
-                                color: theme.secondary
-
-                            }}
-
-                        >
-
-                            Create, edit and manage project tasks.
-
-                        </p>
-
                     </div>
 
-                    <button
+                    <div className="flex items-center gap-4">
+                        {/* Search Bar */}
+                        <div className="relative group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-violet-400 transition-colors" size={16} />
+                            <input 
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-zinc-900/50 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-sm text-zinc-200 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 w-64 transition-all placeholder:text-zinc-600"
+                            />
+                        </div>
 
-                        onClick={() =>
-
-                            setCreateOpen(true)
-
-                        }
-
-                        className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 font-medium text-white transition hover:bg-violet-500"
-
-                    >
-
-                        <Plus size={18} />
-
-                        Create Task
-
-                    </button>
+                        <button
+                            onClick={() => setCreateOpen(true)}
+                            className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2 font-medium text-white transition hover:bg-violet-500"
+                        >
+                            <Plus size={18} />
+                            Create Task
+                        </button>
+                    </div>
 
                 </div>
 
@@ -196,7 +183,7 @@ const TaskSection = ({
 
                 <TaskGrid
 
-                    tasks={tasks}
+                    tasks={filteredTasks}
 
                     loading={loading}
 
