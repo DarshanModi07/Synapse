@@ -19,6 +19,7 @@ import {
     getManagerTeamMembers,
     getManagerWorkspaceMembers
 } from "../controllers/manager.controller.js";
+import { getManagerAnalytics } from "../controllers/managerAnalytics.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();
@@ -27,6 +28,7 @@ router.get("/:workspaceId/departments", authMiddleware, getMyDepartments);
 router.get("/:workspaceId/teams", authMiddleware, getAllMyManagerTeams);
 router.get("/:workspaceId/projects", authMiddleware, getAllManagerProjects);
 router.get("/:workspaceId/members", authMiddleware, getManagerWorkspaceMembers);
+router.get("/analytics", authMiddleware, getManagerAnalytics);
 router.get("/projects/:projectId/dashboard", authMiddleware, managerProjectDashboard);
 router.post("/projects/:projectId/ai-tasks", authMiddleware, generateManagerProjectTasksAI);
 router.post("/projects/:projectId/bulk-tasks", authMiddleware, approveManagerProjectTasks);

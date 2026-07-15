@@ -44,14 +44,4 @@ export const managerConfig = [
       },
     ],
   },
-  {
-    title: "System",
-    items: [
-      {
-        label: "Settings",
-        icon: Settings,
-        path: "settings",
-      },
-    ],
-  },
 ];
