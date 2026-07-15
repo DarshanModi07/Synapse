@@ -27,7 +27,7 @@ const TeamLeadTaskBoard = ({ tasks, onTaskClick }) => {
   return (
     <div className="space-y-6">
       
-      <div className="flex justify-between items-center bg-[#13111C]/80 backdrop-blur-xl p-4 rounded-2xl border border-[#2D2B45] shadow-md">
+      <div className="flex justify-between items-center bg-[#13111C] p-4 rounded-xl border border-[#2D2B45]">
         <div className="relative w-80">
           <Search className="w-4 h-4 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2" />
           <input 
@@ -35,11 +35,11 @@ const TeamLeadTaskBoard = ({ tasks, onTaskClick }) => {
             placeholder="Search active tasks..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#08070F] border border-[#2D2B45] rounded-xl py-2 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-[#7C3AED]/50 transition-colors"
+            className="w-full bg-[#08070F] border border-[#2D2B45] rounded-xl py-2 pl-11 pr-4 text-sm text-white focus:outline-none focus:border-[#7C3AED]/50"
           />
         </div>
-        <div className="text-sm text-gray-400 flex items-center gap-2 px-4 py-2 bg-[#08070F]/50 rounded-xl border border-[#2D2B45]">
-          <CheckCircle className="w-4 h-4 text-emerald-400" /> 
+        <div className="text-sm text-gray-400 flex items-center gap-2 px-4 py-2 bg-[#08070F] rounded-xl border border-[#2D2B45]">
+          <CheckCircle className="w-4 h-4 text-green-400" /> 
           Completed Archive: <strong className="text-white">{completedTasks.length}</strong> tasks
         </div>
       </div>
@@ -48,19 +48,19 @@ const TeamLeadTaskBoard = ({ tasks, onTaskClick }) => {
         {columns.map(col => {
           const colTasks = filteredTasks.filter(t => t.status === col.id);
           return (
-            <div key={col.id} className="min-w-[320px] bg-[#13111C]/40 rounded-3xl p-3 border border-[#2D2B45] relative flex flex-col max-h-[700px]">
-              <div className="flex items-center justify-between mb-3 px-2 sticky top-0 bg-[#13111C]/90 backdrop-blur-md z-10 py-3 rounded-t-xl">
+            <div key={col.id} className="min-w-[320px] bg-[#08070F] rounded-xl p-4 border border-[#2D2B45]">
+              <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-2">
-                  <span className={`px-3 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider ${col.color}`}>
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-bold border uppercase tracking-wider ${col.color}`}>
                     {col.title}
                   </span>
-                  <span className="text-xs text-gray-500 font-bold bg-[#08070F] px-2 py-0.5 rounded-full border border-[#2D2B45]">{colTasks.length}</span>
+                  <span className="text-xs text-gray-500 font-bold bg-[#13111C] px-2 py-0.5 rounded border border-[#2D2B45]">{colTasks.length}</span>
                 </div>
               </div>
               
-              <div className="space-y-3 overflow-y-auto pr-1 pb-2 custom-scrollbar">
+              <div className="space-y-3">
                 {colTasks.length === 0 ? (
-                  <div className="p-6 text-center border border-dashed border-[#2D2B45] rounded-2xl text-gray-600 text-sm font-medium bg-[#08070F]/50">
+                  <div className="p-6 text-center border border-dashed border-[#2D2B45] rounded-xl text-gray-600 text-sm font-medium">
                     No active tasks
                   </div>
                 ) : (
@@ -68,43 +68,40 @@ const TeamLeadTaskBoard = ({ tasks, onTaskClick }) => {
                     <div 
                       key={task.id} 
                       onClick={() => onTaskClick(task)}
-                      className="p-3 bg-[#0D0D12] hover:bg-[#1a1a24] backdrop-blur-xl rounded-xl border border-[#2D2B45] shadow-md cursor-pointer transition-all hover:-translate-y-1 hover:border-[#7C3AED]/50 hover:shadow-[0_8px_30px_rgba(124,58,237,0.15)] group"
+                      className="p-4 bg-[#13111C] hover:bg-[#1a1a24] rounded-xl border border-[#2D2B45] cursor-pointer transition-colors group"
                     >
-                      <div className="flex justify-between items-start mb-1.5">
-                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold border uppercase ${getPriorityColor(task.priority)}`}>
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${getPriorityColor(task.priority)}`}>
                           {task.priority}
                         </span>
                         <button className="text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreVertical className="w-3.5 h-3.5" />
+                          <MoreVertical className="w-4 h-4" />
                         </button>
                       </div>
                       
-                      <h4 className="text-white font-semibold text-sm mb-2 line-clamp-2 leading-tight">{task.title}</h4>
+                      <h4 className="text-white font-medium text-sm mb-3 line-clamp-2">{task.title}</h4>
                       
                       <div className="flex flex-col gap-2 mt-2 text-[11px]">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5 text-gray-400">
-                            <Layers className="w-3 h-3 text-[#A78BFA]" />
+                            <Layers className="w-3.5 h-3.5 text-purple-400" />
                             <span className="truncate max-w-[100px]">{task.teamName}</span>
                           </div>
                           <div className="flex items-center gap-1.5 text-gray-500">
-                            <CalendarDays className="w-3 h-3" />
+                            <CalendarDays className="w-3.5 h-3.5" />
                             <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '--'}</span>
                           </div>
                         </div>
 
-                        {/* Progress Indicator */}
-                        <div className="w-full bg-[#13111C] h-1 rounded-full overflow-hidden mt-1">
-                          <div className="h-full bg-gradient-to-r from-blue-500 to-[#7C3AED]" style={{ width: `${task.progress || 0}%` }} />
-                        </div>
-                        
-                        <div className="mt-1 pt-2 border-t border-[#2D2B45] flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${task.createdBy?.name || "System"}`} alt="Avatar" className="w-5 h-5 rounded-full border border-[#2D2B45] bg-[#13111C]" />
-                            <span className="text-[10px] text-gray-400 font-medium">{task.createdBy?.name || "System"}</span>
+                        <div className="mt-2 pt-3 border-t border-[#2D2B45] flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-5 h-5 rounded-full bg-[#08070F] flex items-center justify-center border border-[#2D2B45]">
+                              <User className="w-3 h-3 text-gray-400" />
+                            </div>
+                            <span className="text-[10px] text-gray-500 font-medium">{task.createdBy?.name || "System"}</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#A78BFA] bg-[#7C3AED]/10 px-1.5 py-0.5 rounded border border-[#7C3AED]/20">
-                            {task.subtasks?.length || 0} Sub
+                          <span className="text-[10px] font-medium text-gray-400 bg-[#08070F] px-2 py-1 rounded border border-[#2D2B45]">
+                            {task.subtasks?.length || 0} Subtasks
                           </span>
                         </div>
                       </div>
