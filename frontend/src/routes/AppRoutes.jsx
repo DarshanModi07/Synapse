@@ -36,7 +36,11 @@ import ManagerAnalyticsPage from "@/pages/manager/AnalyticsPage";
 import ManagerDepartmentDashboardPage from "@/pages/manager/DepartmentDashboardPage";
 import ManagerTeamDashboardPage from "@/pages/manager/TeamDashboardPage";
 
-import TeamLeadDashboard from "@/pages/teamLead/DashboardPage";
+import TeamLeadDashboardPage from "@/pages/teamLead/TeamLeadDashboardPage";
+import TeamLeadProjectsPage from "@/pages/teamLead/TeamLeadProjectsPage";
+import TeamLeadMembersPage from "@/pages/teamLead/TeamLeadMembersPage";
+import TeamLeadAnalyticsPage from "@/pages/teamLead/TeamLeadAnalyticsPage";
+
 import EmployeeDashboard from "@/pages/employee/DashboardPage";
 
 const ProtectedRoute = ({ children }) => {
@@ -211,7 +215,10 @@ const AppRoutes = () => {
             <TeamLeadLayout />
           </RoleProtectedRoute>
         }>
-          <Route index element={<TeamLeadDashboard />} />
+          <Route index element={<TeamLeadDashboardPage />} />
+          <Route path="projects" element={<TeamLeadProjectsPage />} />
+          <Route path="members" element={<TeamLeadMembersPage />} />
+          <Route path="analytics" element={<TeamLeadAnalyticsPage />} />
         </Route>
 
         {/* Employee Layout */}

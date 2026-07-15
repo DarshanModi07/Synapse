@@ -563,7 +563,7 @@ export const getManagerAvailableLeaders = async (req, res) => {
             where: {
                 workspaceId: department.workspaceId,
                 sys_role: { in: ["employee", "team_lead"] },
-                is_active: true
+                user: { isActive: true }
             },
             select: { userId: true, user: { select: { id: true, name: true, email: true, avatar: true } } }
         });
@@ -574,6 +574,8 @@ export const getManagerAvailableLeaders = async (req, res) => {
             email: member.user.email,
             avatar: member.user.avatar
         }));
+
+        console.log("Available leaders:", formattedLeaders);
 
         return res.status(200).json({
             message: "Available leaders fetched successfully",
