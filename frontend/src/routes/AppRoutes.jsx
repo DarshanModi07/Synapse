@@ -38,6 +38,7 @@ import ManagerTeamDashboardPage from "@/pages/manager/TeamDashboardPage";
 
 import TeamLeadDashboardPage from "@/pages/teamLead/TeamLeadDashboardPage";
 import TeamLeadProjectsPage from "@/pages/teamLead/TeamLeadProjectsPage";
+import TeamLeadProjectDetailsPage from "@/pages/teamLead/TeamLeadProjectDetailsPage";
 import TeamLeadMembersPage from "@/pages/teamLead/TeamLeadMembersPage";
 import TeamLeadAnalyticsPage from "@/pages/teamLead/TeamLeadAnalyticsPage";
 
@@ -217,6 +218,7 @@ const AppRoutes = () => {
         }>
           <Route index element={<TeamLeadDashboardPage />} />
           <Route path="projects" element={<TeamLeadProjectsPage />} />
+          <Route path="projects/:projectId" element={<TeamLeadProjectDetailsPage />} />
           <Route path="members" element={<TeamLeadMembersPage />} />
           <Route path="analytics" element={<TeamLeadAnalyticsPage />} />
         </Route>

@@ -603,20 +603,46 @@ export const getAllManagerTeams = async (req, res) => {
             include: {
                 leader: { select: { id: true, name: true, email: true, avatar: true } },
                 department: { select: { id: true, name: true } },
-                _count: { select: { teamMembers: true, teamProjects: true } }
+                _count: { select: { teamMembers: true, teamProjects: true } },
+                teamProjects: {
+                    include: {
+                        tasks: {
+                            where: { is_deleted: false },
+                            select: { status: true }
+                        }
+                    }
+                }
             },
             orderBy: { createdAt: "desc" }
         });
 
-        const formattedTeams = teams.map((team) => ({
-            id: team.id,
-            name: team.name,
-            createdAt: team.createdAt,
-            leader: team.leader,
-            department: team.department,
-            members: team._count.teamMembers,
-            projects: team._count.teamProjects
-        }));
+        const formattedTeams = teams.map((team) => {
+            const allTasks = team.teamProjects ? team.teamProjects.flatMap(tp => tp.tasks || []) : [];
+            const totalTasks = allTasks.length;
+            const completedTasks = allTasks.filter(t => t.status === 'done').length;
+            const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            
+            console.log({
+                teamId: team.id,
+                teamName: team.name,
+                members: team._count.teamMembers,
+                projects: team._count.teamProjects,
+                tasks: totalTasks,
+                progress: progress
+            });
+
+            return {
+                id: team.id,
+                name: team.name,
+                createdAt: team.createdAt,
+                leader: team.leader,
+                department: team.department,
+                members: team._count.teamMembers,
+                projects: team._count.teamProjects,
+                tasks: totalTasks,
+                progress: progress
+            };
+        });
 
         return res.status(200).json({
             message: formattedTeams.length ? "Teams fetched successfully" : "No teams found",
@@ -662,20 +688,46 @@ export const getAllMyManagerTeams = async (req, res) => {
             include: {
                 leader: { select: { id: true, name: true, email: true, avatar: true } },
                 department: { select: { id: true, name: true } },
-                _count: { select: { teamMembers: true, teamProjects: true } }
+                _count: { select: { teamMembers: true, teamProjects: true } },
+                teamProjects: {
+                    include: {
+                        tasks: {
+                            where: { is_deleted: false },
+                            select: { status: true }
+                        }
+                    }
+                }
             },
             orderBy: { createdAt: "desc" }
         });
 
-        const formattedTeams = teams.map((team) => ({
-            id: team.id,
-            name: team.name,
-            createdAt: team.createdAt,
-            leader: team.leader,
-            department: team.department,
-            members: team._count.teamMembers,
-            projects: team._count.teamProjects
-        }));
+        const formattedTeams = teams.map((team) => {
+            const allTasks = team.teamProjects ? team.teamProjects.flatMap(tp => tp.tasks || []) : [];
+            const totalTasks = allTasks.length;
+            const completedTasks = allTasks.filter(t => t.status === 'done').length;
+            const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+            console.log({
+                teamId: team.id,
+                teamName: team.name,
+                members: team._count.teamMembers,
+                projects: team._count.teamProjects,
+                tasks: totalTasks,
+                progress: progress
+            });
+
+            return {
+                id: team.id,
+                name: team.name,
+                createdAt: team.createdAt,
+                leader: team.leader,
+                department: team.department,
+                members: team._count.teamMembers,
+                projects: team._count.teamProjects,
+                tasks: totalTasks,
+                progress: progress
+            };
+        });
 
         return res.status(200).json({
             message: formattedTeams.length ? "Teams fetched successfully" : "No teams found",

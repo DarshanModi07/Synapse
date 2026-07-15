@@ -15,6 +15,8 @@ import aiRouter from "./ai.routes.js"
 import chatRouter from "./chat.routes.js"
 import analyticsRouter from "./analytics.routes.js";
 import managerRouter from "./manager.routes.js";
+import teamLeadRouter from "./teamLead.routes.js";
+import teamLeadProjectRouter from "./teamLeadProject.routes.js";
 
 const router = Router();
 
@@ -34,6 +36,8 @@ router.use('/api/chat/',chatRouter)
 router.use("/api/analytics", analyticsRouter);
 router.use('/api/ai',aiRouter)
 router.use('/api/manager', managerRouter)
+router.use('/api/team-lead', teamLeadRouter)
+router.use('/api/team-lead/projects', teamLeadProjectRouter)
 
 
 export default router;
