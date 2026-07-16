@@ -1,15 +1,19 @@
 import { Router } from "express";
 import { 
-    getTeamLeadDashboard,
-    getTeamLeadMembers,
-    getTeamLeadAnalytics
+    getTeamLeadDashboard
 } from "../controllers/teamLead.controller.js";
+import { getTeamLeadAnalytics } from "../controllers/teamLeadAnalytics.controller.js";
+import {
+    getAllTeamLeadMembers,
+    getTeamLeadMemberDetails
+} from "../controllers/teamLeadMember.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 router.get("/dashboard", authMiddleware, getTeamLeadDashboard);
-router.get("/members", authMiddleware, getTeamLeadMembers);
+router.get("/members", authMiddleware, getAllTeamLeadMembers);
+router.get("/members/:memberId", authMiddleware, getTeamLeadMemberDetails);
 router.get("/analytics", authMiddleware, getTeamLeadAnalytics);
 
 console.log("Team Lead routes loaded successfully");

@@ -277,23 +277,45 @@ export const getTeamLeadProjectDetails = async (req, res) => {
 // ==========================================
 export const createSubTask = async (req, res) => {
     try {
+        console.log("================================");
+        console.log("TASK ID:", req.params.taskId);
+        console.log("USER:", req.user?.id || req.user?.userId);
+        console.log("BODY:", req.body);
+        
         const { taskId } = req.params;
         const { title, description, priority, assignedToId, dueDate } = req.body;
-        const userId = req.user.userId || req.user.id;
+        const userId = req.user?.id || req.user?.userId;
 
-        const subTask = await prisma.subTask.create({
-            data: {
-                title,
-                description,
-                priority,
-                taskId,
-                assignedToId,
-                assignedById: userId,
-                dueDate: dueDate ? new Date(dueDate) : null
+        const task = await prisma.task.findUnique({
+            where: {
+                id: taskId
             }
         });
-        return res.status(201).json({ success: true, data: subTask });
+
+        console.log("TASK:", task);
+
+        try {
+            const subTask = await prisma.subTask.create({
+                data: {
+                    title,
+                    description,
+                    priority,
+                    taskId,
+                    assignedToId: assignedToId ? assignedToId : null,
+                    assignedById: userId,
+                    dueDate: dueDate ? new Date(dueDate) : null
+                }
+            });
+            console.log("SUBTASK CREATED:", subTask);
+            console.log("================================");
+            return res.status(201).json({ success: true, data: subTask });
+        } catch (error) {
+            console.log("PRISMA ERROR:", error.message);
+            console.dir(error, { depth: null });
+            throw error;
+        }
     } catch (error) {
+        console.log("OUTER ERROR:", error.message);
         return res.status(500).json({ message: "Error creating subtask." });
     }
 };
