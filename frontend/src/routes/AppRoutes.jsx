@@ -43,7 +43,9 @@ import TeamLeadMembersPage from "@/pages/teamLead/TeamLeadMembersPage";
 import TeamLeadMemberDetailsPage from "@/pages/teamLead/TeamLeadMemberDetailsPage";
 import TeamLeadAnalyticsPage from "@/pages/teamLead/TeamLeadAnalyticsPage";
 
-import EmployeeDashboard from "@/pages/employee/DashboardPage";
+import EmployeeDashboardPage from "@/pages/employee/EmployeeDashboardPage";
+import EmployeeTasksPage from "@/pages/employee/EmployeeTasksPage";
+import EmployeeAnalyticsPage from "@/pages/employee/EmployeeAnalyticsPage";
 
 const ProtectedRoute = ({ children }) => {
   const { profile } = useAuth();
@@ -231,7 +233,9 @@ const AppRoutes = () => {
             <EmployeeLayout />
           </RoleProtectedRoute>
         }>
-          <Route index element={<EmployeeDashboard />} />
+          <Route index element={<EmployeeDashboardPage />} />
+          <Route path="tasks" element={<EmployeeTasksPage />} />
+          <Route path="analytics" element={<EmployeeAnalyticsPage />} />
         </Route>
 
       </Route>
