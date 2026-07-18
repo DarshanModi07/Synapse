@@ -22,6 +22,10 @@ const teamLeadProjectService = {
     const response = await api.patch(`/team-lead/projects/subtask/${subTaskId}`, data);
     return response.data.data;
   },
+  deleteSubTask: async (subTaskId) => {
+    const response = await api.delete(`/team-lead/projects/subtask/${subTaskId}`);
+    return response.data;
+  },
 
   // WorkItem Mutations
   createWorkItem: async (subTaskId, data) => {
@@ -32,6 +36,10 @@ const teamLeadProjectService = {
     const response = await api.patch(`/team-lead/projects/workitem/${workItemId}`, data);
     return response.data.data;
   },
+  deleteWorkItem: async (workItemId) => {
+    const response = await api.delete(`/team-lead/projects/workitem/${workItemId}`);
+    return response.data;
+  },
 
   // AI Generators
   generateSubTasksAI: async (taskId) => {
@@ -41,6 +49,16 @@ const teamLeadProjectService = {
   generateWorkItemsAI: async (subTaskId) => {
     const response = await api.post(`/team-lead/projects/subtask/${subTaskId}/ai/workitems`);
     return response.data.data; // Expected { workItems: [...] }
+  },
+
+  // Review Endpoints
+  approveSubTask: async (subTaskId) => {
+    const response = await api.post(`/team-lead/projects/subtask/${subTaskId}/approve`);
+    return response.data.data;
+  },
+  rejectSubTask: async (subTaskId, data) => {
+    const response = await api.post(`/team-lead/projects/subtask/${subTaskId}/reject`, data);
+    return response.data.data;
   }
 };
 

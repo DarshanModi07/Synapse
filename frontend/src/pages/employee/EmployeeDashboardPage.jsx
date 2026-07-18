@@ -23,7 +23,7 @@ const EmployeeDashboardPage = () => {
     const handleUpdateStatus = async (type, id, status, progress, actualHours) => {
         try {
             await updateStatus(type, id, status, progress, actualHours);
-            refetch(); // Refresh dashboard data after updating
+            refetch(true); // Silent refresh to avoid UI flicker
         } catch (e) {
             console.error("Error updating status", e);
         }
@@ -77,19 +77,19 @@ const EmployeeDashboardPage = () => {
     if (!dashboardData) return null;
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-6 pb-12 max-w-[1400px] mx-auto mt-4">
             <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">Employee Dashboard</h1>
+                <h1 className="text-[32px] font-bold text-[#F9FAFB] tracking-tight">Employee Dashboard</h1>
                 <p className="text-gray-400 mt-1">Welcome back. Here's everything assigned to you across all teams.</p>
             </div>
 
             {/* Top Overview Cards */}
             <EmployeeOverviewCards dashboardData={dashboardData} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 {/* Left Column (70% - ~8 cols) */}
-                <div className="lg:col-span-8 space-y-8">
+                <div className="lg:col-span-8 space-y-6">
                     <EmployeeSubTaskBoard subTasks={dashboardData.subTasks} updateStatus={handleUpdateStatus} />
                     <EmployeeDeadlineWidget deadlines={dashboardData.deadlines} />
                     <EmployeeRecentAssignments assignments={dashboardData.recentAssignments} />
@@ -97,7 +97,7 @@ const EmployeeDashboardPage = () => {
                 </div>
 
                 {/* Right Column (30% - ~4 cols) */}
-                <div className="lg:col-span-4 space-y-8">
+                <div className="lg:col-span-4 space-y-6">
                     <EmployeeProductivityCard productivity={dashboardData.productivity} />
                     <EmployeeTeamBreakdown teams={dashboardData.teamBreakdown} />
                     <EmployeeAIInsights aiInsights={dashboardData.aiInsights} />

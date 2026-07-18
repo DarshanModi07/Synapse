@@ -1,5 +1,4 @@
 import React from 'react';
-import { BarChart } from 'lucide-react';
 
 const EmployeeProgressOverview = ({ progressOverview }) => {
     if (!progressOverview) return null;
@@ -9,20 +8,18 @@ const EmployeeProgressOverview = ({ progressOverview }) => {
     const renderProgressBar = (label, value, colorClass, bgClass) => (
         <div className="mb-4 last:mb-0">
             <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-semibold text-gray-300">{label}</span>
-                <span className={`text-xs font-bold ${colorClass}`}>{value}%</span>
+                <span className="text-[12px] font-semibold text-[#6B7280]">{label}</span>
+                <span className={`text-[12px] font-bold ${colorClass}`}>{value}%</span>
             </div>
-            <div className="h-2 w-full bg-[#08070F] rounded-full overflow-hidden border border-[#2D2B45]">
-                <div className={`h-full ${bgClass} rounded-full`} style={{ width: `${value}%` }} />
+            <div className="h-1.5 w-full bg-[#08070F] rounded-[4px] overflow-hidden border border-[#2D2B45]/50">
+                <div className={`h-full ${bgClass} rounded-[4px]`} style={{ width: `${value}%` }} />
             </div>
         </div>
     );
 
     return (
-        <div className="bg-[#13111C] border border-[#2D2B45] rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                <BarChart className="w-5 h-5 text-emerald-400" /> Progress Overview
-            </h2>
+        <div className="bg-[#13111C] border border-[#2D2B45] rounded-[10px] p-4">
+            <h2 className="text-[18px] font-semibold text-[#F9FAFB] mb-4">Progress Overview</h2>
             
             <div className="space-y-2">
                 {renderProgressBar('Overall Progress', overall, 'text-emerald-400', 'bg-emerald-500')}

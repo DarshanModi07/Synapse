@@ -63,12 +63,12 @@ const TeamLeadMembersPage = () => {
     }
 
     return (
-        <div className="space-y-8 pb-20 max-w-7xl mx-auto mt-4">
+        <div className="space-y-8 pb-20 max-w-[1400px] mx-auto mt-4">
             
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">Team Members</h1>
-                <p className="text-gray-400 mt-1 max-w-2xl">
+                <h1 className="text-[32px] font-bold text-[#F9FAFB] tracking-tight">Team Members</h1>
+                <p className="text-[14px] text-[#6B7280] mt-1 max-w-2xl">
                     Monitor productivity, assignments, and performance across all teams under your leadership.
                 </p>
             </div>
@@ -76,28 +76,28 @@ const TeamLeadMembersPage = () => {
             {/* Overview Cards */}
             {analytics && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-[#13111C] border border-[#2D2B45] rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden group">
-                        <div className="text-gray-500 mb-1 group-hover:text-purple-400 transition-colors"><Users size={20} /></div>
-                        <p className="text-sm font-medium text-gray-400">Total Members</p>
-                        <p className="text-3xl font-bold text-white">{analytics.totalMembers}</p>
+                    <div className="bg-[#13111C] border border-[#2D2B45] rounded-[10px] p-5 flex flex-col gap-2 relative overflow-hidden group">
+                        <div className="text-[#6B7280] mb-1 group-hover:text-purple-400 transition-colors"><Users size={20} /></div>
+                        <p className="text-[13px] font-medium text-[#6B7280]">Total Members</p>
+                        <p className="text-[24px] font-bold text-[#F9FAFB]">{analytics.totalMembers}</p>
                     </div>
 
-                    <div className="bg-[#13111C] border border-[#2D2B45] rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden group">
+                    <div className="bg-[#13111C] border border-[#2D2B45] rounded-[10px] p-5 flex flex-col gap-2 relative overflow-hidden group">
                         <div className="text-blue-500 mb-1 group-hover:text-blue-400 transition-colors"><Activity size={20} /></div>
-                        <p className="text-sm font-medium text-gray-400">Active Members</p>
-                        <p className="text-3xl font-bold text-blue-400">{analytics.activeMembers}</p>
+                        <p className="text-[13px] font-medium text-[#6B7280]">Active Members</p>
+                        <p className="text-[24px] font-bold text-blue-400">{analytics.activeMembers}</p>
                     </div>
 
-                    <div className="bg-[#13111C] border border-[#2D2B45] rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden group">
+                    <div className="bg-[#13111C] border border-[#2D2B45] rounded-[10px] p-5 flex flex-col gap-2 relative overflow-hidden group">
                         <div className="text-emerald-500 mb-1 group-hover:text-emerald-400 transition-colors"><CheckCircle2 size={20} /></div>
-                        <p className="text-sm font-medium text-gray-400">Completed Tasks</p>
-                        <p className="text-3xl font-bold text-emerald-400">{analytics.completedTasks}</p>
+                        <p className="text-[13px] font-medium text-[#6B7280]">Completed Tasks</p>
+                        <p className="text-[24px] font-bold text-emerald-400">{analytics.completedTasks}</p>
                     </div>
 
-                    <div className="bg-[#13111C] border border-[#2D2B45] rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden group">
+                    <div className="bg-[#13111C] border border-[#2D2B45] rounded-[10px] p-5 flex flex-col gap-2 relative overflow-hidden group">
                         <div className="text-purple-500 mb-1 group-hover:text-purple-400 transition-colors"><Target size={20} /></div>
-                        <p className="text-sm font-medium text-gray-400">Average Team Progress</p>
-                        <p className="text-3xl font-bold text-purple-400">{analytics.teamProgress}%</p>
+                        <p className="text-[13px] font-medium text-[#6B7280]">Average Team Progress</p>
+                        <p className="text-[24px] font-bold text-purple-400">{analytics.teamProgress}%</p>
                     </div>
                 </div>
             )}

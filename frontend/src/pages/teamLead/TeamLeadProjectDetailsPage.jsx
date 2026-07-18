@@ -5,6 +5,7 @@ import TeamLeadTaskBoard from "../../components/teamLead/TeamLeadTaskBoard";
 import TeamLeadSubTaskBoard from "../../components/teamLead/TeamLeadSubTaskBoard";
 import TeamLeadWorkItemBoard from "../../components/teamLead/TeamLeadWorkItemBoard";
 import { ProgressCard } from "@/components/owner/dashboard/ProgressCard";
+import ErrorBoundary from "../../components/common/ErrorBoundary";
 import { 
   FolderKanban, 
   ArrowLeft,
@@ -28,10 +29,15 @@ const TeamLeadProjectDetailsPage = () => {
     handleGenerateAISubTasks,
     handleGenerateAIWorkItems,
     clearAiSuggestions,
+    removeAiSuggestion,
     handleCreateSubTask,
     handleUpdateSubTask,
+    handleApproveSubTask,
+    handleRejectSubTask,
+    handleDeleteSubTask,
     handleCreateWorkItem,
-    handleUpdateWorkItem
+    handleUpdateWorkItem,
+    handleDeleteWorkItem
   } = useTeamLeadProjectDetails(projectId);
 
   // Drilldown states
@@ -52,7 +58,7 @@ const TeamLeadProjectDetailsPage = () => {
   if (error || !data) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <div className="text-red-400 bg-red-500/10 p-6 rounded-2xl flex flex-col items-center border border-red-500/20">
+        <div className="text-red-400 bg-red-500/10 p-6 rounded-2xl flex flex-col items-center border border-red-500/20 shadow-sm">
           <AlertCircle className="w-8 h-8 mb-2" />
           <span>{error || "Failed to load project."}</span>
         </div>
@@ -67,72 +73,78 @@ const TeamLeadProjectDetailsPage = () => {
   const currentSubTask = selectedSubTask && currentTask ? currentTask.subtasks.find(s => s.id === selectedSubTask.id) : null;
 
   return (
-    <div className="space-y-6 pb-20 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-20 max-w-[1400px] mx-auto mt-4">
       
       {/* Navigation */}
       <Link 
         to={`/workspace/${slug}/team-lead/projects`}
-        className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-[13px] text-[#6B7280] hover:text-[#F9FAFB] transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> Back to Global Portfolio
       </Link>
 
       {/* Project Header */}
-      <div className="bg-[#13111C] p-6 rounded-2xl border border-[#2D2B45] flex justify-between items-center">
+      <div className="bg-[#13111C] p-6 rounded-[14px] shadow-sm border border-[#2D2B45] flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-3">
-            <Target className="w-6 h-6 text-purple-500" />
+          <h1 className="text-[24px] font-bold text-[#F9FAFB] mb-1 flex items-center gap-3">
+            <Target className="w-6 h-6 text-[#6B7280]" />
             {overview.name}
           </h1>
-          <p className="text-gray-400 text-sm max-w-2xl mt-2">
+          <p className="text-[#6B7280] text-[13px] max-w-2xl mt-2">
             {overview.description || "No description provided."}
           </p>
         </div>
         <div className="text-right">
-          <span className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Progress</span>
-          <span className="text-3xl font-bold text-white">{overview.progress}%</span>
+          <span className="text-[11px] text-[#6B7280] uppercase tracking-wider block mb-1 font-medium">Progress</span>
+          <span className="text-[28px] font-bold text-emerald-400">{overview.progress}%</span>
         </div>
       </div>
 
       {/* Project Details Card */}
-      <div className="bg-[#13111C] p-6 rounded-2xl border border-[#2D2B45]">
-        <h3 className="text-base font-bold text-white mb-4">Project Details</h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="bg-[#13111C] p-6 rounded-[14px] shadow-sm border border-[#2D2B45]">
+        <h3 className="text-[14px] font-bold text-[#F9FAFB] mb-5">Project Details</h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
           <div>
-            <span className="text-xs text-gray-500 block mb-1">Department</span>
-            <span className="text-sm text-white font-medium">{overview.department}</span>
+            <span className="text-[11px] text-[#6B7280] block mb-1">Department</span>
+            <span className="text-[13px] text-[#F9FAFB] font-medium flex items-center gap-2"><Building2 className="w-4 h-4 text-fuchsia-400" /> {overview.department}</span>
           </div>
           <div>
-            <span className="text-xs text-gray-500 block mb-1">Manager</span>
-            <span className="text-sm text-white font-medium">{overview.manager}</span>
+            <span className="text-[11px] text-[#6B7280] block mb-1">Manager</span>
+            <span className="text-[13px] text-[#F9FAFB] font-medium">{overview.manager}</span>
           </div>
           <div>
-            <span className="text-xs text-gray-500 block mb-1">Due Date</span>
-            <span className="text-sm text-white font-medium">{overview.dueDate ? new Date(overview.dueDate).toLocaleDateString() : 'N/A'}</span>
+            <span className="text-[11px] text-[#6B7280] block mb-1">Due Date</span>
+            <span className={`text-[13px] font-medium flex items-center gap-2 ${new Date(overview.dueDate) < new Date() ? 'text-red-500' : 'text-[#F9FAFB]'}`}>
+              <CalendarDays className={`w-4 h-4 ${new Date(overview.dueDate) < new Date() ? 'text-red-500' : 'text-blue-400'}`} />
+              {overview.dueDate ? new Date(overview.dueDate).toLocaleDateString() : 'N/A'}
+            </span>
           </div>
           <div>
-            <span className="text-xs text-gray-500 block mb-1">Status</span>
-            <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">{overview.status}</span>
+            <span className="text-[11px] text-[#6B7280] block mb-1">Status</span>
+            <span className="text-[13px] font-semibold text-[#6B7280] uppercase tracking-wider">{overview.status}</span>
           </div>
           <div>
-            <span className="text-xs text-gray-500 block mb-1">Teams / Tasks</span>
-            <span className="text-sm text-white font-medium">{teamInfo.length} Teams / {tasks.length} Tasks</span>
+            <span className="text-[11px] text-[#6B7280] block mb-1">Teams / Tasks</span>
+            <span className="text-[13px] text-[#F9FAFB] font-medium flex items-center gap-2">
+              <FolderKanban className="w-4 h-4 text-purple-400" />
+              {teamInfo.length} Teams / {tasks.length} Tasks
+            </span>
           </div>
         </div>
       </div>
 
       {/* Assigned Teams Section */}
-      <div className="bg-[#13111C] p-6 rounded-2xl border border-[#2D2B45]">
-        <h3 className="text-base font-bold text-white mb-4">Assigned Teams</h3>
+      <div className="bg-[#13111C] p-6 rounded-[14px] shadow-sm border border-[#2D2B45]">
+        <h3 className="text-[14px] font-bold text-[#F9FAFB] mb-5">Assigned Teams</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {teamInfo.map(team => (
-            <div key={team.id} className="p-4 rounded-xl bg-[#08070F] border border-[#2D2B45]">
-              <h4 className="text-white font-semibold text-sm mb-3">{team.name}</h4>
-              <div className="flex justify-between text-xs text-gray-400 mb-2">
-                <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5"/> {team.members} Members</span>
-                <span className="flex items-center gap-1"><FolderKanban className="w-3.5 h-3.5"/> {team.totalTasks} Tasks</span>
+            <div key={team.id} className="p-5 rounded-[10px] bg-[#08070F] border border-[#2D2B45] hover:border-blue-500/30 transition-colors">
+              <h4 className="text-[#F9FAFB] font-semibold text-[13px] mb-3">{team.name}</h4>
+              <div className="flex justify-between text-[11px] text-[#6B7280] mb-3 font-medium">
+                <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5"/> {team.members} Members</span>
+                <span className="flex items-center gap-1.5"><FolderKanban className="w-3.5 h-3.5"/> {team.totalTasks} Tasks</span>
               </div>
-              <div className="w-full bg-[#13111C] h-1.5 rounded-full overflow-hidden">
+              <div className="w-full bg-[#13111C] h-1.5 rounded-full overflow-hidden border border-[#2D2B45]">
                 <div className="h-full bg-blue-500 rounded-full" style={{ width: `${team.totalTasks > 0 ? (team.completedTasks / team.totalTasks) * 100 : 0}%` }} />
               </div>
             </div>
@@ -142,21 +154,21 @@ const TeamLeadProjectDetailsPage = () => {
 
       {/* Breadcrumbs for Drilldown */}
       {(selectedTask || selectedSubTask) && (
-        <div className="flex items-center gap-2 text-sm text-gray-400 bg-[#13111C] px-5 py-3 rounded-xl border border-[#2D2B45] overflow-x-auto whitespace-nowrap">
-          <button onClick={() => { setSelectedTask(null); setSelectedSubTask(null); }} className="hover:text-white font-medium transition-colors flex items-center gap-2">
+        <div className="flex items-center gap-2 text-[13px] text-[#6B7280] bg-[#13111C] px-5 py-3 rounded-[10px] shadow-sm border border-[#2D2B45] overflow-x-auto whitespace-nowrap">
+          <button onClick={() => { setSelectedTask(null); setSelectedSubTask(null); }} className="hover:text-[#F9FAFB] font-medium transition-colors flex items-center gap-2">
             <FolderKanban className="w-4 h-4"/> Task Board
           </button>
           {selectedTask && (
             <>
-              <ChevronRight className="w-4 h-4 text-gray-600" />
-              <button onClick={() => setSelectedSubTask(null)} className={`hover:text-white font-medium transition-colors ${!selectedSubTask ? 'text-purple-400' : ''}`}>
+              <ChevronRight className="w-4 h-4 text-[#2D2B45]" />
+              <button onClick={() => setSelectedSubTask(null)} className={`hover:text-[#F9FAFB] font-medium transition-colors ${!selectedSubTask ? 'text-purple-400' : ''}`}>
                 {currentTask?.title}
               </button>
             </>
           )}
           {selectedSubTask && (
             <>
-              <ChevronRight className="w-4 h-4 text-gray-600" />
+              <ChevronRight className="w-4 h-4 text-[#2D2B45]" />
               <span className="text-blue-400 font-medium truncate max-w-[200px]">{currentSubTask?.title}</span>
             </>
           )}
@@ -164,7 +176,7 @@ const TeamLeadProjectDetailsPage = () => {
       )}
 
       {/* Task Board */}
-      <div className="bg-[#13111C] p-6 rounded-2xl border border-[#2D2B45] min-h-[500px]">
+      <div className="bg-[#13111C] p-6 rounded-[14px] shadow-sm border border-[#2D2B45] min-h-[500px]">
         {!selectedTask && (
           <TeamLeadTaskBoard 
             tasks={tasks} 
@@ -182,6 +194,10 @@ const TeamLeadProjectDetailsPage = () => {
             aiLoading={aiLoading.subtasks}
             aiSuggestions={aiSuggestions}
             clearAiSuggestions={clearAiSuggestions}
+            removeAiSuggestion={removeAiSuggestion}
+            onApproveSubTask={handleApproveSubTask}
+            onRejectSubTask={handleRejectSubTask}
+            onDeleteSubTask={handleDeleteSubTask}
             onWorkItemClick={(subTask) => setSelectedSubTask(subTask)}
           />
         )}
@@ -191,32 +207,34 @@ const TeamLeadProjectDetailsPage = () => {
             subTask={currentSubTask}
             onCreateWorkItem={handleCreateWorkItem}
             onUpdateWorkItem={handleUpdateWorkItem}
+            onDeleteWorkItem={handleDeleteWorkItem}
             onGenerateAI={handleGenerateAIWorkItems}
             aiLoading={aiLoading.workitems}
             aiSuggestions={aiSuggestions}
             clearAiSuggestions={clearAiSuggestions}
+            removeAiSuggestion={removeAiSuggestion}
           />
         )}
       </div>
 
       {/* AI Insights Section */}
       {!selectedTask && (
-        <div className="bg-[#13111C] p-6 rounded-2xl border border-[#2D2B45]">
-          <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-fuchsia-400" /> AI Suggestions
+        <div className="bg-[#13111C] p-6 rounded-[14px] shadow-sm border border-[#2D2B45]">
+          <h3 className="text-[14px] font-bold text-[#F9FAFB] mb-5 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#6B7280]" /> AI Suggestions
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10">
-              <h4 className="text-red-400 text-sm font-semibold mb-2">Delayed Tasks</h4>
-              <p className="text-xs text-gray-400">0 tasks are currently past their due date.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-5 rounded-[10px] bg-[#08070F] border border-[#2D2B45] hover:border-red-500/30 transition-colors">
+              <h4 className="text-[#6B7280] text-[13px] font-bold mb-2">Delayed Tasks</h4>
+              <p className="text-[12px] text-[#6B7280]">0 tasks are currently past their due date.</p>
             </div>
-            <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/10">
-              <h4 className="text-orange-400 text-sm font-semibold mb-2">Risk Analysis</h4>
-              <p className="text-xs text-gray-400">Project timeline is stable. Progress matches expected velocity.</p>
+            <div className="p-5 rounded-[10px] bg-[#08070F] border border-[#2D2B45] hover:border-emerald-500/30 transition-colors">
+              <h4 className="text-[#6B7280] text-[13px] font-bold mb-2">Risk Analysis</h4>
+              <p className="text-[12px] text-[#6B7280]">Project timeline is stable. Progress matches expected velocity.</p>
             </div>
-            <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/10">
-              <h4 className="text-purple-400 text-sm font-semibold mb-2">Recommendations</h4>
-              <p className="text-xs text-gray-400">Review the {analytics.inReview} tasks currently waiting in the review queue to unblock teams.</p>
+            <div className="p-5 rounded-[10px] bg-[#08070F] border border-[#2D2B45] hover:border-purple-500/30 transition-colors">
+              <h4 className="text-[#6B7280] text-[13px] font-bold mb-2">Recommendations</h4>
+              <p className="text-[12px] text-[#6B7280]">Review the {analytics.inReview} tasks currently waiting in the review queue to unblock teams.</p>
             </div>
           </div>
         </div>
@@ -225,4 +243,10 @@ const TeamLeadProjectDetailsPage = () => {
   );
 };
 
-export default TeamLeadProjectDetailsPage;
+const TeamLeadProjectDetailsPageWithBoundary = () => (
+  <ErrorBoundary>
+    <TeamLeadProjectDetailsPage />
+  </ErrorBoundary>
+);
+
+export default TeamLeadProjectDetailsPageWithBoundary;

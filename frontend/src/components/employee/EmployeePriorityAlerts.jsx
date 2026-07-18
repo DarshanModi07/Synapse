@@ -8,43 +8,61 @@ const EmployeePriorityAlerts = ({ priorityAlerts }) => {
 
     if (high.length === 0 && medium.length === 0 && low.length === 0) {
         return (
-            <div className="bg-[#13111C] border border-[#2D2B45] rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-yellow-400" /> Priority Alerts
-                </h2>
-                <div className="text-center py-6 border border-dashed border-[#2D2B45] rounded-xl">
-                    <p className="text-gray-500 text-sm">No active alerts.</p>
+            <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 className="text-[14px] font-bold text-[#F9FAFB]">Priority Alerts</h2>
+                        <p className="text-[12px] text-[#6B7280]">Important notifications</p>
+                    </div>
+                    <div className="p-2 bg-red-500/10 rounded-full">
+                        <AlertTriangle size={18} className="text-red-400" />
+                    </div>
+                </div>
+                <div className="text-center py-6 text-[#6B7280] text-[13px] bg-[#08070F] rounded-[10px] border border-[#2D2B45]">
+                    No active alerts.
                 </div>
             </div>
         );
     }
 
-    const renderAlertList = (items, label, colorClass, dotClass) => {
+    const renderTable = (items, label, titleColor) => {
         if (!items || items.length === 0) return null;
         return (
-            <div className="mb-4 last:mb-0">
-                <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${colorClass}`}>{label}</h3>
-                <ul className="space-y-2">
-                    {items.map((item, idx) => (
-                        <li key={idx} className="text-sm text-gray-300 flex items-center gap-2">
-                            <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} /> {item.title}
-                        </li>
-                    ))}
-                </ul>
+            <div className="mb-6 last:mb-0">
+                <h3 className={`text-[12px] font-bold mb-2 ${titleColor}`}>{label}</h3>
+                <div className="border border-[#2D2B45] rounded-[10px] overflow-hidden">
+                    <table className="w-full text-left">
+                        <tbody className="divide-y divide-[#2D2B45]">
+                            {items.map((item, idx) => (
+                                <tr key={idx} className="hover:bg-[#1a1825] transition-colors bg-[#13111C]">
+                                    <td className="p-3 text-[13px] text-[#F9FAFB] font-medium w-full">
+                                        {item.title}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
     };
 
     return (
-        <div className="bg-[#13111C] border border-[#2D2B45] rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-400" /> Priority Alerts
-            </h2>
+        <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-[14px] font-bold text-[#F9FAFB]">Priority Alerts</h2>
+                    <p className="text-[12px] text-[#6B7280]">Important notifications</p>
+                </div>
+                <div className="p-2 bg-red-500/10 rounded-full">
+                    <AlertTriangle size={18} className="text-red-400" />
+                </div>
+            </div>
             
-            <div className="space-y-2">
-                {renderAlertList(high, 'HIGH PRIORITY', 'text-red-400', 'bg-red-400')}
-                {renderAlertList(medium, 'MEDIUM', 'text-orange-400', 'bg-orange-400')}
-                {renderAlertList(low, 'LOW', 'text-gray-400', 'bg-gray-400')}
+            <div>
+                {renderTable(high, 'HIGH PRIORITY', 'text-red-400')}
+                {renderTable(medium, 'MEDIUM', 'text-orange-400')}
+                {renderTable(low, 'LOW', 'text-[#6B7280]')}
             </div>
         </div>
     );

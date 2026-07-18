@@ -1,5 +1,7 @@
 import prisma from "../DB/db.config.js";
 import { generateSuggestion } from "../ai/ai.service.js";
+import { createNotification } from "../service/notification.service.js";
+import { recalculateTaskProgress } from "../services/taskAutomation.service.js";
 
 // ==========================================
 // 1. GET ALL PROJECTS (Cross-Team Aggregation)
@@ -325,11 +327,34 @@ export const updateSubTask = async (req, res) => {
         const { subTaskId } = req.params;
         const updates = req.body;
         
+        const existingSubTask = await prisma.subTask.findUnique({
+            where: { id: subTaskId }
+        });
+
+        if (!existingSubTask) {
+            return res.status(404).json({ success: false, message: "SubTask not found." });
+        }
+
+        if (
+            existingSubTask.status === "done" || 
+            existingSubTask.status === "cancelled" || 
+            existingSubTask.status === "in_review"
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "This SubTask cannot be edited."
+            });
+        }
+
         if (updates.dueDate) updates.dueDate = new Date(updates.dueDate);
 
         const subTask = await prisma.subTask.update({
             where: { id: subTaskId },
-            data: updates
+            data: updates,
+            include: {
+                workItems: true,
+                assignedTo: true
+            }
         });
         return res.status(200).json({ success: true, data: subTask });
     } catch (error) {
@@ -442,5 +467,139 @@ export const generateWorkItemsAI = async (req, res) => {
     } catch (error) {
         console.error("AI WorkItem Error:", error);
         return res.status(500).json({ message: "Failed to generate AI Work Items." });
+    }
+};
+
+export const approveSubTask = async (req, res) => {
+    try {
+        const { subTaskId } = req.params;
+        const subTask = await prisma.subTask.findUnique({ where: { id: subTaskId } });
+        
+        if (!subTask) return res.status(404).json({ message: "SubTask not found." });
+
+        const updatedSubTask = await prisma.subTask.update({
+            where: { id: subTaskId },
+            data: { status: "done" }
+        });
+
+        await recalculateTaskProgress(updatedSubTask.taskId);
+
+        if (subTask.assignedToId) {
+            await createNotification({
+                userId: subTask.assignedToId,
+                type: "workitem_approved",
+                payload: {
+                    subTaskId: subTaskId,
+                    message: `Subtask "${updatedSubTask.title}" has been approved and marked as done.`
+                }
+            });
+            await createNotification({
+                userId: subTask.assignedToId,
+                type: "subtask_completed",
+                payload: {
+                    subTaskId: subTaskId,
+                    message: `Subtask "${updatedSubTask.title}" is officially completed.`
+                }
+            });
+        }
+
+        return res.status(200).json({ success: true, message: "SubTask approved.", data: updatedSubTask });
+    } catch (error) {
+        console.error("Error approving subtask:", error);
+        return res.status(500).json({ message: "Failed to approve subtask." });
+    }
+};
+
+export const rejectSubTask = async (req, res) => {
+    try {
+        const { subTaskId } = req.params;
+        const { reviewComments } = req.body;
+        const subTask = await prisma.subTask.findUnique({ where: { id: subTaskId } });
+        
+        if (!subTask) return res.status(404).json({ message: "SubTask not found." });
+
+        const updatedSubTask = await prisma.subTask.update({
+            where: { id: subTaskId },
+            data: { status: "in_progress" }
+        });
+
+        await recalculateTaskProgress(updatedSubTask.taskId);
+
+        if (subTask.assignedToId) {
+            await createNotification({
+                userId: subTask.assignedToId,
+                type: "workitem_rejected",
+                payload: {
+                    subTaskId: subTaskId,
+                    message: `Subtask "${updatedSubTask.title}" needs changes.`,
+                    comments: reviewComments
+                }
+            });
+        }
+
+        return res.status(200).json({ success: true, message: "SubTask rejected.", data: updatedSubTask });
+    } catch (error) {
+        console.error("Error rejecting subtask:", error);
+        return res.status(500).json({ message: "Failed to reject subtask." });
+    }
+};
+
+// ==========================================
+// Delete Endpoints
+// ==========================================
+
+export const deleteSubTask = async (req, res) => {
+    try {
+        const { subTaskId } = req.params;
+
+        const subTask = await prisma.subTask.findUnique({
+            where: { id: subTaskId }
+        });
+
+        if (!subTask) {
+            return res.status(404).json({ success: false, message: "SubTask not found." });
+        }
+
+        if (subTask.status !== "todo") {
+            return res.status(400).json({ success: false, message: "Only TODO subtasks can be deleted." });
+        }
+
+        // Hard delete or soft delete? Assuming hard delete for now since they want to "prevent deleting"
+        await prisma.subTask.delete({
+            where: { id: subTaskId }
+        });
+
+        return res.status(200).json({ success: true, message: "SubTask deleted successfully.", deletedId: subTaskId });
+    } catch (error) {
+        console.error("deleteSubTask Error:", error);
+        return res.status(500).json({ success: false, message: "Failed to delete subtask." });
+    }
+};
+
+export const deleteWorkItem = async (req, res) => {
+    try {
+        const { workItemId } = req.params;
+
+        const workItem = await prisma.workItem.findUnique({
+            where: { id: workItemId },
+            include: { subTask: true }
+        });
+
+        if (!workItem) {
+            return res.status(404).json({ success: false, message: "WorkItem not found." });
+        }
+
+        if (workItem.subTask && workItem.subTask.status === "done") {
+            return res.status(400).json({ success: false, message: "Cannot delete work items for completed subtasks." });
+        }
+
+        await prisma.workItem.delete({
+            where: { id: workItemId }
+        });
+
+        return res.status(200).json({ success: true, message: "WorkItem deleted successfully." });
+    } catch (error) {
+        console.error("deleteWorkItem Error:", error);
+        return res.status(500).json({ success: false, message: "Failed to delete work item." });
     }
 };

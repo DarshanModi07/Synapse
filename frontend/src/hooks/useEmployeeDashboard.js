@@ -6,9 +6,9 @@ export const useEmployeeDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchDashboard = async () => {
+    const fetchDashboard = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const res = await getEmployeeDashboard();
             if (res.success) {
                 setDashboardData(res.data);

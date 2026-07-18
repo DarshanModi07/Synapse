@@ -1,4 +1,5 @@
 import prisma from "../DB/db.config.js"
+import { recalculateSubTaskProgress } from "../services/taskAutomation.service.js"
 
 export const createWorkItem = async (req,res) => {
     try{
@@ -406,8 +407,9 @@ export const updateWorkItemEmployee = async (req,res) => {
         actualHours = Number(actualHours)
 
         const employeeAllowedStatus = [
+            "todo",
             "in_progress",
-            "in_review"
+            "done"
         ];
 
         if(!status || !employeeAllowedStatus.includes(status)){
@@ -525,15 +527,7 @@ const existingWorkItem = await prisma.workItem.findUnique({
             }
         })
 
-        if(status === "done"){
-                await createNotification({
-                userId: existingWorkItem.subTask.assignedById,
-                type: "workitem_in_review",
-                payload:{
-                    workItemId
-                }   
-            });
-        }
+        await recalculateSubTaskProgress(existingWorkItem.subTask.id);
 
         return res.status(200).json({
             message:"Work item updated successfully",
@@ -708,28 +702,13 @@ export const updateWorkItemTeamLead = async (req,res) => {
                 title,
                 description,
                 priority,
-                estimatedHours
+                estimatedHours,
+                status,
+                is_deleted
             }
         })
 
-        if(status === "done"){
-            await createNotification({
-                userId: existingWorkItem.subTask.assignedToId,
-                type: "workitem_approved",
-                payload:{
-                    workItemId
-                }
-            });
-        }
-        else if(status == "in_progress"){
-            await createNotification({
-                userId: existingWorkItem.subTask.assignedToId,
-                type: "workitem_approved",
-                payload:{
-                    workItemId
-                }
-            });
-        }
+        await recalculateSubTaskProgress(existingWorkItem.subTask.id);
 
         return res.status(200).json({
             message:"Work item updated successfully",

@@ -36,9 +36,9 @@ const EmployeeTasksPage = () => {
     const { subTasks } = tasksData || {};
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="space-y-8 pb-12 max-w-[1400px] mx-auto">
             <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">Assigned Work</h1>
+                <h1 className="text-[32px] font-bold text-[#F9FAFB] tracking-tight">Assigned Work</h1>
                 <p className="text-gray-400 mt-1">Complete your assigned work items to update progress automatically.</p>
             </div>
 

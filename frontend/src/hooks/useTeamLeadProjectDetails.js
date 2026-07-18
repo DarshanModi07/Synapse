@@ -55,24 +55,220 @@ export const useTeamLeadProjectDetails = (projectId) => {
 
   const clearAiSuggestions = () => setAiSuggestions(null);
 
+  const removeAiSuggestion = (title) => {
+    setAiSuggestions(prev => {
+      if (!prev || !prev.data) return prev;
+      return { ...prev, data: prev.data.filter(s => s.title !== title) };
+    });
+  };
+
   const handleCreateSubTask = async (taskId, payload) => {
-    await teamLeadProjectService.createSubTask(taskId, payload);
-    fetchDetails(); // Refresh Command Center
+    try {
+      const newSubTask = await teamLeadProjectService.createSubTask(taskId, payload);
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => {
+            if (t.id === taskId) {
+              return { ...t, subtasks: [...(t.subtasks || []), newSubTask] };
+            }
+            return t;
+          })
+        }));
+        return newData;
+      });
+      return newSubTask;
+    } catch (err) {
+      console.error("Failed to create SubTask", err);
+      throw err;
+    }
   };
   
-  const handleUpdateSubTask = async (subTaskId, payload) => {
-    await teamLeadProjectService.updateSubTask(subTaskId, payload);
-    fetchDetails();
+  const handleUpdateSubTask = async (subTaskId, updates) => {
+    try {
+      console.log("================================");
+      console.log("EDIT FLOW TRACE:");
+      console.log("selectedSubTaskId:", subTaskId);
+      console.log("allSubTasks in current task:", data?.projectTeams?.map(pt => pt.tasks).flat().map(t => t.subtasks).flat());
+      
+      const updatedSubTask = await teamLeadProjectService.updateSubTask(subTaskId, updates);
+      
+      console.log("UPDATED:", updatedSubTask);
+      console.log("================================");
+      
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => ({
+            ...t,
+            subtasks: (t.subtasks || []).map(st => st.id === subTaskId ? { ...st, ...updatedSubTask } : st)
+          }))
+        }));
+        return newData;
+      });
+      return updatedSubTask;
+    } catch (err) {
+      console.error("Failed to update SubTask", err);
+      throw err;
+    }
+  };
+
+  const handleDeleteSubTask = async (subTaskId) => {
+    try {
+      console.log("================================");
+      console.log("DELETE FLOW TRACE:");
+      console.log("selectedSubTaskId:", subTaskId);
+      
+      const response = await teamLeadProjectService.deleteSubTask(subTaskId);
+      
+      console.log("DELETED API RESPONSE:", response);
+      console.log("================================");
+      
+      // We can use response.deletedId if returned, otherwise fallback to subTaskId
+      const idToRemove = response?.deletedId || subTaskId;
+
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => ({
+            ...t,
+            subtasks: (t.subtasks || []).filter(st => st.id !== idToRemove)
+          }))
+        }));
+        return newData;
+      });
+      return true;
+    } catch (err) {
+      console.error("Failed to delete SubTask", err);
+      throw err;
+    }
+  };
+
+  const handleApproveSubTask = async (subTaskId) => {
+    try {
+      const updatedSubTask = await teamLeadProjectService.approveSubTask(subTaskId);
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => ({
+            ...t,
+            subtasks: (t.subtasks || []).map(st => st.id === subTaskId ? updatedSubTask : st)
+          }))
+        }));
+        return newData;
+      });
+      return updatedSubTask;
+    } catch (err) {
+      console.error("Failed to approve SubTask", err);
+      throw err;
+    }
+  };
+
+  const handleRejectSubTask = async (subTaskId, reviewComments) => {
+    try {
+      const updatedSubTask = await teamLeadProjectService.rejectSubTask(subTaskId, { reviewComments });
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => ({
+            ...t,
+            subtasks: (t.subtasks || []).map(st => st.id === subTaskId ? updatedSubTask : st)
+          }))
+        }));
+        return newData;
+      });
+      return updatedSubTask;
+    } catch (err) {
+      console.error("Failed to reject SubTask", err);
+      throw err;
+    }
   };
 
   const handleCreateWorkItem = async (subTaskId, payload) => {
-    await teamLeadProjectService.createWorkItem(subTaskId, payload);
-    fetchDetails();
+    try {
+      const newWorkItem = await teamLeadProjectService.createWorkItem(subTaskId, payload);
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => ({
+            ...t,
+            subtasks: (t.subtasks || []).map(st => {
+              if (st.id === subTaskId) {
+                return { ...st, workItems: [...(st.workItems || []), newWorkItem] };
+              }
+              return st;
+            })
+          }))
+        }));
+        return newData;
+      });
+      return newWorkItem;
+    } catch (err) {
+      console.error("Failed to create Work Item", err);
+      throw err;
+    }
   };
   
   const handleUpdateWorkItem = async (workItemId, payload) => {
-    await teamLeadProjectService.updateWorkItem(workItemId, payload);
-    fetchDetails();
+    try {
+      const updatedWorkItem = await teamLeadProjectService.updateWorkItem(workItemId, payload);
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => ({
+            ...t,
+            subtasks: (t.subtasks || []).map(st => ({
+              ...st,
+              workItems: (st.workItems || []).map(wi => wi.id === workItemId ? updatedWorkItem : wi)
+            }))
+          }))
+        }));
+        return newData;
+      });
+      return updatedWorkItem;
+    } catch (err) {
+      console.error("Failed to update Work Item", err);
+      throw err;
+    }
+  };
+
+  const handleDeleteWorkItem = async (workItemId) => {
+    try {
+      await teamLeadProjectService.deleteWorkItem(workItemId);
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => ({
+            ...t,
+            subtasks: (t.subtasks || []).map(st => ({
+              ...st,
+              workItems: (st.workItems || []).filter(wi => wi.id !== workItemId)
+            }))
+          }))
+        }));
+        return newData;
+      });
+      return true;
+    } catch (err) {
+      console.error("Failed to delete Work Item", err);
+      throw err;
+    }
   };
 
   return { 
@@ -85,9 +281,14 @@ export const useTeamLeadProjectDetails = (projectId) => {
     handleGenerateAISubTasks,
     handleGenerateAIWorkItems,
     clearAiSuggestions,
+    removeAiSuggestion,
     handleCreateSubTask,
     handleUpdateSubTask,
+    handleDeleteSubTask,
+    handleApproveSubTask,
+    handleRejectSubTask,
     handleCreateWorkItem,
-    handleUpdateWorkItem
+    handleUpdateWorkItem,
+    handleDeleteWorkItem
   };
 };
