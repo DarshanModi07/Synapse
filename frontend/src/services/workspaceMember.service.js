@@ -78,3 +78,18 @@ export const inviteWorkspaceMember = async (
     return response.data;
 
 };
+
+export const getPendingInvites = async () => {
+    const response = await api.get("/workspace/invites/pending");
+    return response.data;
+};
+
+export const acceptWorkspaceInvite = async (token) => {
+    const response = await api.post(`/workspace/accept/${token}`);
+    return response.data;
+};
+
+export const rejectWorkspaceInvite = async (token) => {
+    const response = await api.post(`/workspace/reject/${token}`);
+    return response.data;
+};

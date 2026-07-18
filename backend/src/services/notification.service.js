@@ -1,31 +1,23 @@
 import prisma from "../DB/db.config.js";
 import { getIO } from "../socket/socket.js";
 
-// Legacy export to not break existing code
-export const createNotification = async ({ userId, type, payload }) => {
-    const notification = await prisma.notification.create({
-        data: {
-            userId,
-            type,
-            payload
-        }
-    });
-
-    try {
-        const io = getIO();
-        io.to(userId).emit("new_notification", notification);
-        io.to(userId).emit("notification", notification); // Also emit the new event name
-    } catch (_) {
-    }
-
-    return notification;
-};
-
 /**
  * Enterprise Notification Service
  * Handles unified push notifications (Socket.io) and database persistence.
  */
 class NotificationService {
+  /**
+   * Send a single notification
+   * @param {Object} params
+   * @param {string} params.userId
+   * @param {string} params.type
+   * @param {string} params.title
+   * @param {string} params.message
+   * @param {string} params.entityType
+   * @param {string} params.entityId
+   * @param {string} params.actionUrl
+   * @param {Object} params.metadata
+   */
   async sendNotification({ userId, type, title, message, entityType, entityId, actionUrl, metadata = {} }) {
     try {
       const payload = {
@@ -46,25 +38,24 @@ class NotificationService {
         }
       });
 
-      console.log("Notification created:", notification);
-
       // Push in real-time
       try {
         const io = getIO();
-        console.log("Emitting to:", userId);
         io.to(userId).emit("notification", notification);
-        io.to(userId).emit("notification:new", notification);
       } catch (socketErr) {
-        console.error("Socket emit failed", socketErr);
+        // Socket might not be initialized during certain chron jobs, log softly
       }
 
       return notification;
     } catch (err) {
       console.error("Error creating notification:", err);
-      return null;
+      throw err;
     }
   }
 
+  /**
+   * Send a bulk notification to multiple users
+   */
   async sendBulkNotification({ userIds, type, title, message, entityType, entityId, actionUrl, metadata = {} }) {
     const promises = userIds.map(userId => 
       this.sendNotification({ userId, type, title, message, entityType, entityId, actionUrl, metadata })
@@ -73,6 +64,7 @@ class NotificationService {
   }
 
   // --- SCHEDULER METHODS ---
+
   async sendDeadlineNotifications() {
     console.log("Running Deadline Notifications Check...");
     

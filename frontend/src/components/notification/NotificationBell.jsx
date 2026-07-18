@@ -4,7 +4,7 @@ import { Bell } from "lucide-react";
 import { theme } from "@/lib/theme";
 import { useNotifications } from "@/hooks/useNotification";
 
-import { NotificationDropdown } from "./NotificationDropdown";
+import { NotificationDrawer } from "./NotificationDrawer";
 
 export const NotificationBell = () => {
   const {
@@ -13,6 +13,7 @@ export const NotificationBell = () => {
     loading,
     markRead,
     markAllRead,
+    removeNotification,
   } = useNotifications();
 
   const [open, setOpen] = useState(false);
@@ -43,10 +44,7 @@ export const NotificationBell = () => {
   }, []);
 
   return (
-    <div
-      className="relative"
-      ref={dropdownRef}
-    >
+    <>
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="relative rounded-xl p-2 transition hover:bg-white/5"
@@ -82,17 +80,15 @@ export const NotificationBell = () => {
         )}
       </button>
 
-      {open && (
-        <NotificationDropdown
-          notifications={notifications}
-          loading={loading}
-          markRead={markRead}
-          markAllRead={markAllRead}
-          closeDropdown={() =>
-            setOpen(false)
-          }
-        />
-      )}
-    </div>
+      <NotificationDrawer
+        isOpen={open}
+        closeDrawer={() => setOpen(false)}
+        notifications={notifications}
+        loading={loading}
+        markRead={markRead}
+        markAllRead={markAllRead}
+        removeNotification={removeNotification}
+      />
+    </>
   );
 };

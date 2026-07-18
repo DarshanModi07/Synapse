@@ -3,6 +3,7 @@ import { SysRole } from "@prisma/client";
 import slugify from "slugify";
 import crypto from "crypto"
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
+import { notificationService } from "../service/notification.service.js";
 
 export const createWorkSpace = async (req,res) => {
     try {
@@ -507,6 +508,11 @@ export const inviteUser = async (req,res) => {
             }
         })
 
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
 
         const alreadyMember = await prisma.workspaceMember.findFirst({
             where:{
@@ -548,6 +554,26 @@ export const inviteUser = async (req,res) => {
                 )
             }
         })
+
+        console.log("Invite created:", createUserInvite);
+
+        // Find the user if they exist in the system to send in-app notification
+        const targetUser = await prisma.user.findUnique({ where: { email } })
+        if (targetUser) {
+            try {
+                await notificationService.sendNotification({
+                    userId: targetUser.id,
+                    type: "workspace_invite",
+                    title: "Workspace Invitation",
+                    message: `${req.user.name || "A team member"} invited you to join a workspace as ${sys_role}.`,
+                    entityType: "Workspace",
+                    entityId: workspaceId,
+                    actionUrl: `/invites`
+                })
+            } catch(error) {
+                console.error("Notification failed", error);
+            }
+        }
 
         return res.status(200).json({
             message:"Invite Sent",
@@ -656,6 +682,19 @@ export const acceptInvite = async (req, res) => {
             });
         });
 
+        // Notify the inviter that their invite was accepted
+        if (invite.invitedBy) {
+            await notificationService.sendNotification({
+                userId: invite.invitedBy,
+                type: "workspace_invite_accepted",
+                title: "Invitation Accepted",
+                message: `${currentUser.name} has accepted your invitation.`,
+                entityType: "Workspace",
+                entityId: invite.workspaceId,
+                actionUrl: `/workspace/${invite.workspaceId}`
+            });
+        }
+
         return res.status(200).json({
             message: "Invite accepted successfully"
         });
@@ -762,6 +801,19 @@ export const rejectInvite = async (req, res) => {
                 }
             });
         });
+
+        // Notify the inviter that their invite was rejected
+        if (invite.invitedBy) {
+            await notificationService.sendNotification({
+                userId: invite.invitedBy,
+                type: "workspace_invite_rejected",
+                title: "Invitation Rejected",
+                message: `${currentUser.name} has rejected your invitation.`,
+                entityType: "Workspace",
+                entityId: invite.workspaceId,
+                actionUrl: `/workspace/${invite.workspaceId}`
+            });
+        }
 
         return res.status(200).json({
             message: "Invite rejected successfully"
@@ -1310,3 +1362,61 @@ export const ownerDashboard = async (req,res) => {
         });
     }
 }
+
+export const getPendingInvites = async (req, res) => {
+    try {
+        const email = req.user.email || req.user.userEmail;
+
+        let targetEmail = email;
+        if (!targetEmail) {
+            const user = await prisma.user.findUnique({
+                where: { id: req.user.userId || req.user.id },
+                select: { email: true }
+            });
+            if (!user) return res.status(404).json({ message: "User not found" });
+            targetEmail = user.email;
+        }
+
+        const pendingInvites = await prisma.workspaceInvite.findMany({
+            where: {
+                email: targetEmail,
+                status: "pending"
+            },
+            include: {
+                workspace: {
+                    select: {
+                        id: true,
+                        name: true,
+                        logo: true
+                    }
+                },
+                invitedByUser: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                    }
+                }
+            }
+        });
+
+        const formatted = pendingInvites.map(invite => ({
+            id: invite.id,
+            workspace: invite.workspace,
+            invitedBy: invite.invitedByUser,
+            role: invite.work_role,
+            sys_role: invite.sys_role,
+            status: invite.status,
+            token: invite.token,
+            createdAt: invite.createdAt
+        }));
+
+        return res.status(200).json({
+            message: "Pending invites fetched successfully",
+            data: formatted
+        });
+    } catch (err) {
+        console.error("Error fetching pending invites:", err);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};

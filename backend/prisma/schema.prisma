@@ -38,17 +38,50 @@ enum InviteStatus {
 }
 
 enum notificationType {
+  // Workspace
+  workspace_invite
+  workspace_invite_accepted
+  workspace_invite_rejected
+
+  // Project
+  project_assigned
+  project_started
+  project_due_soon
+  project_completed
+  project_cancelled
+
+  // Task
   task_assigned
+  task_due_soon
+  task_completed
+  task_in_review
+  task_approved
+  task_rejected
 
+  // SubTask
   subtask_assigned
+  subtask_due_soon
+  subtask_in_review
   subtask_completed
+  subtask_rejected
 
+  // WorkItem
   workitem_assigned
+  workitem_due_soon
   workitem_in_review
   workitem_approved
   workitem_rejected
 
-  project_completed
+  // Organization
+  manager_assigned
+  team_lead_assigned
+  added_to_team
+  removed_from_team
+
+  // System
+  deadline_reminder
+  daily_summary
+  weekly_summary
 }
 
 enum ProjectStatus {

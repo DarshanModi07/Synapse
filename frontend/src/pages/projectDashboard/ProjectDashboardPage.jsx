@@ -4,6 +4,7 @@ import { useProjectDashboard } from "@/hooks/useProjectDashboard";
 
 import ProjectHeader from "@/components/projectDashboard/ProjectHeader";
 import ProjectStatistics from "@/components/projectDashboard/ProjectStatistics";
+import { ProjectErrorBoundary } from "@/components/projectDashboard/ProjectErrorBoundary";
 import ProjectDepartments from "@/components/projectDashboard/ProjectDepartments/ProjectDepartments";
 import ProjectTeams from "@/components/projectDashboard/ProjectTeams/ProjectTeams";
 // import RecentTasks from "@/components/projectDashboard/RecentTasks";
@@ -72,35 +73,35 @@ const ProjectDashboardPage = () => {
 
         <main className="space-y-8">
 
-            <ProjectHeader
+            <ProjectErrorBoundary>
+                <ProjectHeader
+                    project={dashboard?.project || {}}
+                    refresh={refresh}
+                />
+            </ProjectErrorBoundary>
 
-                project={dashboard.project}
+            <ProjectErrorBoundary>
+                <ProjectStatistics
+                    statistics={dashboard?.statistics || dashboard || {}}
+                />
+            </ProjectErrorBoundary>
 
-                refresh={refresh}
+            <ProjectErrorBoundary>
+                <ProjectDepartments
+                    projectId={projectId}
+                    departments={dashboard?.departments || []}
+                    refresh={refresh}
+                />
+            </ProjectErrorBoundary>
 
-            />
-
-            <ProjectStatistics
-
-                statistics={dashboard.statistics}
-
-            />
-
-            <ProjectDepartments
-                projectId={projectId}
-                departments={dashboard.departments}
-                refresh={refresh}
-            />
-
-            <ProjectTeams
-
-                teams={dashboard.teams}
-
-                departments={dashboard.departments}
-
-                refresh={refresh}
-
-            />
+            <ProjectErrorBoundary>
+                <ProjectTeams
+                    teams={dashboard?.teams || []}
+                    departments={dashboard?.departments || []}
+                    projectId={projectId}
+                    refresh={refresh}
+                />
+            </ProjectErrorBoundary>
 
             {/* <RecentTasks
 

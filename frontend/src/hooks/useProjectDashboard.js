@@ -13,7 +13,12 @@ export const useProjectDashboard = (
 ) => {
 
     const [dashboard, setDashboard] =
-        useState(null);
+        useState({
+            departments: [],
+            tasks: [],
+            teams: [],
+            members: []
+        });
 
     const [loading, setLoading] =
         useState(true);
@@ -39,8 +44,10 @@ export const useProjectDashboard = (
         const response = await getProjectDashboard(projectId);
 
         console.log("API Response:", response);
+        console.log("DASHBOARD:", response?.data?.data || response?.data);
+        console.log("FULL RESPONSE:", response);
 
-        setDashboard(response.data);
+        setDashboard(response?.data?.data || response?.data || response);
 
         setError(null);
 

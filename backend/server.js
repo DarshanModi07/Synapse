@@ -3,6 +3,7 @@ import { createServer } from "http"
 import app from "./app.js"
 import { initSocket } from "./src/socket/socket.js"
 import { connectRedis } from "./src/config/redis.js";
+import { initSchedulers } from "./src/cron/notificationSchedulers.js";
 
 
 dotenv.config({
@@ -16,6 +17,7 @@ const httpServer = createServer(app)
 
 initSocket(httpServer)
 await connectRedis();
+initSchedulers();
 
 httpServer.listen(PORT, () => {
     console.log("connected to PORT : ", PORT)

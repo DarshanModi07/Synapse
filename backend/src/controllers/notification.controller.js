@@ -11,8 +11,7 @@ export const getAllNotifications = async (req,res) => {
 
         const getNotification = await prisma.notification.findMany({
             where:{
-                userId,
-                is_read:false
+                userId
             },
             skip,
             take:limit,
@@ -148,5 +147,29 @@ export const getUnreadCount = async (req,res) => {
         return res.status(500).json({
             message:"Internal Server Error"
         });
+    }
+}
+
+export const deleteNotification = async (req,res) => {
+    try {
+        const { notificationId } = req.params;
+        const userId = req.user.userId;
+
+        const getNotification = await prisma.notification.findFirst({
+            where: { id: notificationId, userId }
+        });
+
+        if (!getNotification) {
+            return res.status(404).json({ message: "Notification not found" });
+        }
+
+        await prisma.notification.delete({
+            where: { id: notificationId }
+        });
+
+        return res.status(200).json({ message: "Notification deleted" });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Error deleting notification" });
     }
 }

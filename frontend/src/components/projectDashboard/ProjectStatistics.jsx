@@ -93,35 +93,35 @@ const ProjectStatistics = ({
                 <StatCard
                     icon={Building2}
                     title="Departments"
-                    value={statistics.departments}
+                    value={statistics?.departments || 0}
                     color="#7C3AED"
                 />
 
                 <StatCard
                     icon={Users}
                     title="Teams"
-                    value={statistics.teams}
+                    value={statistics?.teams || 0}
                     color="#2563EB"
                 />
 
                 <StatCard
                     icon={CheckSquare}
                     title="Tasks"
-                    value={typeof statistics.tasks === 'object' ? (statistics.tasks?.total || 0) : (statistics.tasks || 0)}
+                    value={typeof statistics?.tasks === 'object' ? (statistics?.tasks?.total || 0) : (statistics?.tasks || 0)}
                     color="#22C55E"
                 />
 
                 <StatCard
                     icon={ListTodo}
                     title="Sub Tasks"
-                    value={statistics.subTasks}
+                    value={statistics?.subtasks || statistics?.subTasks || 0}
                     color="#F97316"
                 />
 
                 <StatCard
                     icon={Briefcase}
                     title="Work Items"
-                    value={statistics.workItems}
+                    value={statistics?.workItems || 0}
                     color="#EC4899"
                 />
 

@@ -90,24 +90,19 @@ export const useWorkspaceMembers = (
     const inviteMember = async (
         data
     ) => {
-
         try {
-
             setInviting(true);
-
-            await inviteWorkspaceMember(
-                data
-            );
-
+            await inviteWorkspaceMember(data);
             await fetchMembers();
-
-        }
-        finally {
-
+        } catch (error) {
+            if(error.response?.status === 409){
+                alert(error.response.data.message);
+                return;
+            }
+            alert(error.response?.data?.message || "Failed to invite member");
+        } finally {
             setInviting(false);
-
         }
-
     };
 
     const removeMember = async (

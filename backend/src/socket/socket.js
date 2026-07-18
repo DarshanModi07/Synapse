@@ -9,8 +9,8 @@ export const initSocket = (httpServer) => {
 
     io = new Server(httpServer, {
         cors: {
-            origin: process.env.CLIENT_URL,
-            methods: ["GET", "POST"],
+            origin: "http://localhost:5173",
+            methods: ["GET", "POST", "PUT", "DELETE"],
             credentials: true
         }
     });
