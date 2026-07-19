@@ -4,8 +4,9 @@
   "description": "",
   "main": "backend/src/server.js",
   "scripts": {
+    "dev": "nodemon server.js",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",

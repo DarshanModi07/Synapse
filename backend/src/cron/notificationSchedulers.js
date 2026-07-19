@@ -1,13 +1,8 @@
 import cron from "node-cron";
 import { notificationService } from "../service/notification.service.js";
 
-/**
- * Enterprise Schedulers
- * Registers cron jobs for automated system notifications.
- */
 export const initSchedulers = () => {
-    // 1. Every hour: Check for impending deadlines (24h, 6h, overdue)
-    // Runs at the 0th minute of every hour (e.g. 1:00, 2:00)
+
     cron.schedule("0 * * * *", async () => {
         try {
             await notificationService.sendDeadlineNotifications();
@@ -16,7 +11,6 @@ export const initSchedulers = () => {
         }
     });
 
-    // 2. Every day at 8:00 AM: Send Daily Summaries
     cron.schedule("0 8 * * *", async () => {
         try {
             await notificationService.sendDailySummary();
