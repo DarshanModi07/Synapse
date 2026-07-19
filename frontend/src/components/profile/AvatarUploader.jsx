@@ -58,10 +58,14 @@ export const AvatarUploader = () => {
 
       const response = await uploadAvatar(formData);
 
-      setProfile((prev) => ({
-        ...prev,
-        avatar: response.avatar,
-      }));
+      if (response?.message === "Avatar Updated") {
+        setProfile((prev) => ({
+          ...prev,
+          avatar: response.avatar,
+        }));
+      } else {
+        throw new Error("Failed to upload avatar");
+      }
     } catch (err) {
       setError(
         err.response?.data?.message ||

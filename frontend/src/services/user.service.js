@@ -6,7 +6,7 @@ export const getProfile = async () => {
 };
 
 export const editProfile = async (data) => {
-  const response = await api.patch(
+  const response = await api.put(
     "/users/profile",
     data
   );

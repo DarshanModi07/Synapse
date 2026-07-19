@@ -11,7 +11,7 @@ const AllWorkspacesPage = () => {
     workspaces,
     loading,
     error,
-    refetch,
+    refresh,
   } = useWorkspaces();
 
 
@@ -35,7 +35,7 @@ const AllWorkspacesPage = () => {
       />
 
       <CreateWorkspaceButton
-        refetch={refetch}
+        refetch={refresh}
       />
     </div>
   );

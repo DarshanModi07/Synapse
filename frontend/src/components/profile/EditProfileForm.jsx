@@ -55,9 +55,12 @@ export const EditProfileForm = () => {
         name: formData.name.trim(),
       });
 
-      setProfile(response.data);
-
-      setSuccess("Profile updated successfully.");
+      if (response?.message === "User Profile Fetched Successful" || response?.message === "Profile updated successfully") {
+        setProfile(response.data);
+        setSuccess("Profile updated successfully.");
+      } else {
+        throw new Error("Failed to update profile");
+      }
 
     } catch (err) {
       setError(

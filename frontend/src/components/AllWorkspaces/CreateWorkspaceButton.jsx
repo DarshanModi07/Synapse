@@ -35,6 +35,10 @@ export const CreateWorkspaceButton = ({ refetch }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loading) return;
+
+    console.log("Submitting workspace...");
+
     if (!formData.name.trim()) {
       return setError("Workspace name is required");
     }
@@ -61,18 +65,22 @@ export const CreateWorkspaceButton = ({ refetch }) => {
         data.append("logo", formData.logo);
       }
 
-      await createWorkspace(data);
+      const response = await createWorkspace(data);
 
-      await refetch();
+      if (response?.message === "Workspace created successfully") {
+        await refetch();
+        setOpen(false);
+        setFormData({
+          name: "",
+          description: "",
+          workRole: "",
+          logo: null,
+        });
+      } else {
+        throw new Error("Failed to create workspace");
+      }
 
-      setOpen(false);
 
-      setFormData({
-        name: "",
-        description: "",
-        workRole: "",
-        logo: null,
-      });
     } catch (err) {
       setError(
         err.response?.data?.message ||

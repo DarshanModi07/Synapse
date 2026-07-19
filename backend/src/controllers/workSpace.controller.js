@@ -7,6 +7,10 @@ import { notificationService } from "../service/notification.service.js";
 
 export const createWorkSpace = async (req,res) => {
     try {
+        console.log("REQUEST RECEIVED: createWorkSpace");
+        console.log(req.body);
+        console.log(req.user);
+
         let { name, workRole, description } = req.body;
 
         if(!name || typeof name !== "string" || !description || typeof description !== "string"){
