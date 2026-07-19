@@ -1,8 +1,6 @@
 import jwt from "jsonwebtoken"
 import prisma from "../DB/db.config.js"
 
-
-// * Helper Functions
 export const generateAccessToken = (userId) => {
 
     return jwt.sign(
