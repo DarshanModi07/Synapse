@@ -24,7 +24,6 @@ export const AuthProvider = ({ children }) => {
       setProfile(response.data.data);
     } catch (err) {
       setProfile(null);
-      console.log(err)
     } finally {
       setLoading(false);
     }
@@ -33,9 +32,7 @@ export const AuthProvider = ({ children }) => {
   const logoutUser = async () => {
     try {
       await logout();
-    } catch (err) {
-      console.log(err);
-    }
+    } catch (err) {}
 
     localStorage.removeItem("accessToken");
 

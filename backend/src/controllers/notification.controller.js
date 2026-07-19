@@ -34,7 +34,6 @@ export const getAllNotifications = async (req,res) => {
 
     }
     catch(err){
-        console.log(err)
         return res.status(500).json({
             message:"Internal Server Error while get all notification"
         })
@@ -82,7 +81,6 @@ export const makeNotificationRead = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Error while marking notification"
         });
@@ -116,8 +114,6 @@ export const markAllNotificationRead = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
-
         return res.status(500).json({
             message:"Internal Server Error while marking all notifications read"
         });
@@ -142,8 +138,6 @@ export const getUnreadCount = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
-
         return res.status(500).json({
             message:"Internal Server Error"
         });
@@ -169,7 +163,6 @@ export const deleteNotification = async (req,res) => {
 
         return res.status(200).json({ message: "Notification deleted" });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Error deleting notification" });
     }
 }

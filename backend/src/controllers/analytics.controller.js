@@ -48,7 +48,6 @@ export const projectAnalysis = async (req, res) => {
             data: { stats: data, analysis: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Analysis failed" });
     }
 };
@@ -65,7 +64,6 @@ export const projectHealth = async (req, res) => {
             data: { stats: data, health: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Health analysis failed" });
     }
 };
@@ -82,7 +80,6 @@ export const projectRiskAnalysis = async (req, res) => {
             data: { stats: data, risks: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Risk analysis failed" });
     }
 };
@@ -99,7 +96,6 @@ export const deadlinePrediction = async (req, res) => {
             data: { stats: data, prediction: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Deadline prediction failed" });
     }
 };
@@ -116,7 +112,6 @@ export const workloadAnalysis = async (req, res) => {
             data: { stats: data, workload: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Workload analysis failed" });
     }
 };
@@ -133,7 +128,6 @@ export const resourcePrediction = async (req, res) => {
             data: { stats: data, resources: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Resource prediction failed" });
     }
 };
@@ -150,7 +144,6 @@ export const productivityAnalysis = async (req, res) => {
             data: { stats: data, productivity: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Productivity analysis failed" });
     }
 };
@@ -167,7 +160,6 @@ export const bottleneckAnalysis = async (req, res) => {
             data: { stats: data, bottlenecks: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Bottleneck analysis failed" });
     }
 };
@@ -184,7 +176,6 @@ export const executiveSummary = async (req, res) => {
             data: { stats: data, summary: result }
         });
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Executive summary failed" });
     }
 };

@@ -97,8 +97,6 @@ export const createProject = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
-
         return res.status(500).json({
             message: "Internal Server Error while creating project"
         });
@@ -160,7 +158,6 @@ export const getProject = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while Getting a Project"
         })
@@ -475,7 +472,6 @@ export const updateProject = async (req,res) => {
         })
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error during updating Error"
         })
@@ -554,7 +550,6 @@ export const deleteProject = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while deleting a Project"
         })
@@ -714,7 +709,6 @@ export const projectProgress = async (req,res) => {
         })
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server error during fetching project progress"
         })

@@ -106,7 +106,6 @@ export const assignDepartment = async (req,res) => {
         })
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while assigning Department to Project"
         })
@@ -211,7 +210,6 @@ export const getDepartments = async (req,res) => {
         })
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error during Fetching a Departments"
         })
@@ -310,7 +308,6 @@ export const removeDepartment = async (req,res) => {
         })
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error during removing department"
         })
@@ -430,7 +427,6 @@ export const progressDepartment = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while progress department"
         })
@@ -651,8 +647,6 @@ export const managerDashboard = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
-
         return res.status(500).json({
             message:"Internal Server Error while fetching manager dashboard"
         });

@@ -96,7 +96,6 @@ export const useNotifications = () => {
     }
 
     const handleNewNotification = (notification) => {
-      console.log("Notification received:", notification);
       setNotifications((prev) => [notification, ...prev]);
       setUnreadCount((prev) => prev + 1);
     };

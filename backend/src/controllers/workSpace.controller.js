@@ -427,15 +427,11 @@ export const getWorkspace = async (req, res) => {
     }
 
     catch (err) {
-
-        console.log(err);
-
         return res.status(500).json({
 
             message: "Internal Server Error"
 
         });
-
     }
 
 };
@@ -555,8 +551,6 @@ export const inviteUser = async (req,res) => {
             }
         })
 
-        console.log("Invite created:", createUserInvite);
-
         // Find the user if they exist in the system to send in-app notification
         const targetUser = await prisma.user.findUnique({ where: { email } })
         if (targetUser) {
@@ -579,10 +573,8 @@ export const inviteUser = async (req,res) => {
             message:"Invite Sent",
             data:createUserInvite
         })
-
     } 
     catch(err){
-        console.log(err)
         return res.status(500).json({
             message:"Server Error during User Invite"
         })
@@ -700,8 +692,6 @@ export const acceptInvite = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
-
         return res.status(500).json({
             message: "Server Error during Invite Accept"
         });
@@ -820,8 +810,6 @@ export const rejectInvite = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
-
         return res.status(500).json({
             message: "Server Error during Invite Reject"
         });
@@ -958,13 +946,9 @@ export const getWorkspaceMembers = async (req, res) => {
 
     }
     catch (err) {
-
-        console.log(err);
-
         return res.status(500).json({
             message: "Internal Server Error while getting workspace members"
         });
-
     }
 };
 
@@ -1049,7 +1033,6 @@ export const removeMember = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error"
         })
@@ -1154,7 +1137,6 @@ export const changeRole = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error during change role"
         })
@@ -1355,8 +1337,6 @@ export const ownerDashboard = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
-
         return res.status(500).json({
             message:"Internal Server Error while fetching dashboard"
         });

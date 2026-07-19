@@ -101,7 +101,6 @@ const makeTeam = await prisma.team.create({
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server error during create team"
         })
@@ -171,7 +170,6 @@ export const getAllTeams = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server error during get all teams"
         })
@@ -267,29 +265,21 @@ export const updateTeam = async (req, res) => {
             updateData.deletedAt = is_deleted
                 ? new Date()
                 : null;
-        }       
-
-        console.log(department.workspaceId);
-        console.log(leaderId);
-
-const leaderMembership =
-    await prisma.workspaceMember.findUnique({
-        where: {
-            workspaceId_userId: {
-                workspaceId: department.workspaceId,
-                userId: leaderId
-            }
         }
-    });
 
-        console.log(leaderMembership);
+        const leaderMembership =
+            await prisma.workspaceMember.findUnique({
+                where: {
+                    workspaceId_userId: {
+                        workspaceId: department.workspaceId,
+                        userId: leaderId
+                    }
+                }
+            });
 
         await prisma.$transaction(async (tx) => {
 
             if (leaderId) {
-                console.log(department.workspaceId);
-                console.log(leaderId);
-
                 const leaderMembership = await tx.workspaceMember.findUnique({
                         where: {
                             workspaceId_userId: {
@@ -297,9 +287,7 @@ const leaderMembership =
                                 userId: leaderId
                             }
                         }
-                }); 
-
-                console.log(leaderMembership);
+                });
 
                 if (!leaderMembership) {
                     throw new Error("LEADER_NOT_FOUND");
@@ -360,7 +348,6 @@ const leaderMembership =
             message: "Team updated successfully",
             data: updatedTeam
         });
-
     } catch (err) {
 
         // if (err.message === "LEADER_NOT_FOUND") {
@@ -590,7 +577,6 @@ export const addTeamMember = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server error during Adding Team Member"
         })
@@ -831,7 +817,6 @@ export const removeTeamMember = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server error during removing Team Member"
         })

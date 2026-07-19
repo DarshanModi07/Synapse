@@ -151,8 +151,6 @@ const AITaskPlanningModal = ({ projectId, project, teams = [], onClose, onRefres
             return;
         }
 
-        console.log(JSON.stringify(tasksToApprove, null, 2));
-
         setSaving(true);
         setError(null);
         try {

@@ -575,8 +575,6 @@ export const getManagerAvailableLeaders = async (req, res) => {
             avatar: member.user.avatar
         }));
 
-        console.log("Available leaders:", formattedLeaders);
-
         return res.status(200).json({
             message: "Available leaders fetched successfully",
             data: formattedLeaders
@@ -621,15 +619,6 @@ export const getAllManagerTeams = async (req, res) => {
             const totalTasks = allTasks.length;
             const completedTasks = allTasks.filter(t => t.status === 'done').length;
             const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-            
-            console.log({
-                teamId: team.id,
-                teamName: team.name,
-                members: team._count.teamMembers,
-                projects: team._count.teamProjects,
-                tasks: totalTasks,
-                progress: progress
-            });
 
             return {
                 id: team.id,
@@ -706,15 +695,6 @@ export const getAllMyManagerTeams = async (req, res) => {
             const totalTasks = allTasks.length;
             const completedTasks = allTasks.filter(t => t.status === 'done').length;
             const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-            console.log({
-                teamId: team.id,
-                teamName: team.name,
-                members: team._count.teamMembers,
-                projects: team._count.teamProjects,
-                tasks: totalTasks,
-                progress: progress
-            });
 
             return {
                 id: team.id,
@@ -985,7 +965,7 @@ export const generateManagerProjectTasksAI = async (req, res) => {
         // 3. Verify Team Context & Prepare Prompt
         const allProjectTeams = project.projectDepartments.flatMap(pd => pd.projectTeams || []);
         const selectedProjectTeam = allProjectTeams.find(pt => pt.id === teamId);
-        
+
         if (!selectedProjectTeam) {
             return res.status(404).json({ message: 'Selected Team not found in this project' });
         }
@@ -1000,9 +980,9 @@ export const generateManagerProjectTasksAI = async (req, res) => {
         if (!team) {
             return res.status(404).json({ message: 'Team data could not be found' });
         }
-        
+
         const membersListForFrontend = [];
-        
+
         // Add Leader
         if (team.leader) {
             membersListForFrontend.push({
@@ -1011,7 +991,7 @@ export const generateManagerProjectTasksAI = async (req, res) => {
                 work_role: 'Leader'
             });
         }
-        
+
         // Add Members
         team.teamMembers?.forEach(tm => {
             if (tm.member && tm.member.id !== team.leader?.id) {
@@ -1023,12 +1003,12 @@ export const generateManagerProjectTasksAI = async (req, res) => {
                 });
             }
         });
-        
+
         const membersList = membersListForFrontend.map(m => `- ${m.name || 'Unknown'} (${m.work_role})`).join('\n') || 'No members assigned.';
         const activeTasksCount = selectedProjectTeam.tasks?.length || 0;
-        
+
         const activeTasks = selectedProjectTeam.tasks?.map(t => `- ${t.title || 'Unnamed Task'} (${t.status || 'unknown'})`).join('\n') || 'No active tasks.';
-        
+
         const prompt = `
 You are an expert technical project manager. 
 A project named "${project?.name || 'Unnamed Project'}" requires a comprehensive task breakdown.
@@ -1075,26 +1055,14 @@ Return ONLY valid JSON in the exact following structure without markdown blocks:
 }
 `;
 
-        console.log("=========================================");
-        console.log("AI PROMPT:");
-        console.log("=========================================");
-        console.log(prompt);
-        console.log("=========================================");
-
         // 4. Call AI Service
         const response = await generateSuggestion(prompt);
-        
-        console.log("=========================================");
-        console.log("RAW AI RESPONSE:");
-        console.log("=========================================");
-        console.log(response);
-        console.log("=========================================");
 
         let cleaned = response;
         if (typeof cleaned === 'string') {
             cleaned = cleaned.replace(/```json/g, '').replace(/```/g, '').trim();
         }
-        
+
         let plan;
         try {
             plan = JSON.parse(cleaned);
@@ -1134,7 +1102,6 @@ Return ONLY valid JSON in the exact following structure without markdown blocks:
             data: plan,
             members: membersListForFrontend
         });
-
     } catch (err) {
         console.error("========== AI TASK GENERATION ==========");
         console.error(err);
@@ -1171,8 +1138,6 @@ export const getManagerTeamMembers = async (req, res) => {
             return res.status(404).json({ message: "Team not found" });
         }
 
-        console.log(projectTeam.team.teamMembers);
-
         const members = [];
         if (projectTeam.team.leader) {
             members.push({
@@ -1198,9 +1163,7 @@ export const getManagerTeamMembers = async (req, res) => {
             }
         });
 
-        console.log("Returned Members:", members);
         return res.status(200).json(members);
-
     } catch (err) {
         console.error("========== GET TEAM MEMBERS ==========");
         console.error(err);
@@ -1212,10 +1175,7 @@ export const approveManagerProjectTasks = async (req, res) => {
     try {
         const { projectId } = req.params;
         const { tasks } = req.body;
-        
-        console.log("===== BULK TASKS PAYLOAD =====");
-        console.log(JSON.stringify(req.body, null, 2));
-        
+
         const userId = req.user.userId;
 
         // 1. Verify Project
@@ -1293,15 +1253,7 @@ export const approveManagerProjectTasks = async (req, res) => {
                     validMemberIds.push(pt.team.leaderId);
                 }
 
-                console.log("Team Members:", pt?.team?.teamMembers);
-
                 for (const st of t.subtasks) {
-                    console.log({ 
-                        teamId: teamIdForTask, 
-                        employeeId: st.assignedEmployeeId, 
-                        teamMembers: validMemberIds 
-                    });
-
                     if (!st.assignedEmployeeId) {
                         return res.status(400).json({ message: 'All subtasks must be assigned to an employee.' });
                     }
@@ -1314,8 +1266,6 @@ export const approveManagerProjectTasks = async (req, res) => {
                             validMembers: validMemberIds
                         });
                     }
-
-                    console.log("Validated Employee IDs");
 
                     const stTitle = st.estimatedHours ? `${st.title} (${st.estimatedHours} hrs)` : st.title;
                     await prisma.subTask.create({
@@ -1337,7 +1287,6 @@ export const approveManagerProjectTasks = async (req, res) => {
             message: 'Tasks created successfully',
             data: { created: createdCount }
         });
-
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'Internal Server Error during task approval' });
@@ -1345,13 +1294,9 @@ export const approveManagerProjectTasks = async (req, res) => {
 };
 
 export const getManagerWorkspaceMembers = async (req, res) => {
-    console.log("MANAGER MEMBERS ENDPOINT HIT");
     try {
         const { workspaceId } = req.params;
         const userId = req.user.userId;
-
-        console.log("Workspace:", workspaceId);
-        console.log("Manager:", userId);
 
         // 1. Find departments managed by the user
         const managedDepartments = await prisma.department.findMany({
@@ -1484,8 +1429,6 @@ export const getManagerWorkspaceMembers = async (req, res) => {
             };
         });
 
-        console.log("Members found:", formattedMembers.length);
-
         return res.status(200).json({
             message: "Members fetched successfully",
             data: formattedMembers,
@@ -1497,7 +1440,6 @@ export const getManagerWorkspaceMembers = async (req, res) => {
                 activeMembers
             }
         });
-
     } catch (error) {
         console.error("Error fetching manager members:", error);
         return res.status(500).json({ message: "Internal server error" });

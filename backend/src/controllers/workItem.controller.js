@@ -163,7 +163,6 @@ export const createWorkItem = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error happen during creating work items"
         })
@@ -296,7 +295,6 @@ export const getAllWorkItems = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error Happen During getting all work items of subtask"
         })
@@ -390,7 +388,6 @@ const existingWorkItem = await prisma.workItem.findUnique({
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error Happen During getting a work item of subtask"
         })
@@ -536,7 +533,6 @@ const existingWorkItem = await prisma.workItem.findUnique({
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error Happen During getting a work item of subtask"
         })
@@ -717,7 +713,6 @@ export const updateWorkItemTeamLead = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error Happen During getting a work item of subtask"
         })
@@ -826,7 +821,6 @@ export const deleteWorkItem = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Error happen during Deleting work item"
         })

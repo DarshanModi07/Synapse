@@ -8,7 +8,6 @@ import SettingsHeader from "@/components/owner/settings/SettingsHeader";
 import WorkspaceInfoCard from "@/components/owner/settings/WorkspaceInfoCard";
 
 const SettingsPage = () => {
-
     const { slug } = useParams();
 
     const {
@@ -97,8 +96,6 @@ const SettingsPage = () => {
 
     }
 
-    console.log(workspace);
-
     return (
 
         <main className="space-y-8">
@@ -116,7 +113,6 @@ const SettingsPage = () => {
         </main>
 
     );
-
 };
 
 export default SettingsPage;

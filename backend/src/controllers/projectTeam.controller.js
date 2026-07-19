@@ -117,8 +117,6 @@ export const assignTeam = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
-
         return res.status(500).json({
             message:
                 "Internal server error during assigning team"
@@ -218,8 +216,6 @@ export const getTeams = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
-
         return res.status(500).json({
             message:
                 "Internal server error while getting teams"
@@ -594,8 +590,6 @@ export const teamDashboard = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
-
         return res.status(500).json({
             message:"Internal Server Error while fetching dashboard"
         });

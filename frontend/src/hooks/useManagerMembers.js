@@ -8,23 +8,17 @@ export const useManagerMembers = (workspaceId) => {
     const [error, setError] = useState(null);
 
     const fetchMembers = useCallback(async () => {
-        console.log("Workspace ID:", workspaceId);
-        console.log("Loading:", loading);
-
         if (!workspaceId) {
             setLoading(false);
             return;
         }
-        
+
         setLoading(true);
         setError(null);
         try {
-            console.log("Fetching manager members...");
             const response = await getManagerWorkspaceMembers(workspaceId);
-            console.log("Response:", response);
             setMembers(response.data || []);
             setAnalytics(response.analytics || null);
-            console.log("Members Count:", response.data?.length);
         } catch (err) {
             console.error("Error fetching manager members:", err);
             setError(err?.message || "Failed to load members");

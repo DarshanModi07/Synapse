@@ -56,15 +56,12 @@ export const AvatarUploader = () => {
 
       setError("");
 
-    const response = await uploadAvatar(formData);
+      const response = await uploadAvatar(formData);
 
-      console.log("Response:", response);
-
-    setProfile((prev) => ({
-      ...prev,
-      avatar: response.avatar,
-    }));
-
+      setProfile((prev) => ({
+        ...prev,
+        avatar: response.avatar,
+      }));
     } catch (err) {
       setError(
         err.response?.data?.message ||

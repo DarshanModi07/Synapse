@@ -72,7 +72,6 @@ export const suggestDepartments = async(req,res)=>{
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message: "AI Suggestion Failed"
         });
@@ -281,7 +280,6 @@ export const suggestTasks = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
         return res.status(500).json({
             message: "AI Suggestion Failed"
         });
@@ -383,7 +381,6 @@ export const suggestSubTasks = async(req,res)=>{
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message: "AI Suggestion Failed"
         });
@@ -456,7 +453,6 @@ export const suggestWorkItems = async(req,res)=>{
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message: "AI Suggestion Failed"
         });
@@ -536,7 +532,6 @@ export const suggestReview = async(req,res)=>{
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message: "AI Suggestion Failed"
         });

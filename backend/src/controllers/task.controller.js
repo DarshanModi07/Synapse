@@ -152,7 +152,6 @@ const checkProjectTeam = await prisma.projectTeam.findUnique({
         })
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error During creating task"
         })
@@ -269,7 +268,6 @@ export const getAllTask = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server error during Getting all Task"
         })
@@ -715,7 +713,6 @@ export const deleteTask = async(req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while Deleting task"
         })

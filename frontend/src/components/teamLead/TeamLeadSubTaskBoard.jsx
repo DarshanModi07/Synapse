@@ -60,48 +60,33 @@ const TeamLeadSubTaskBoard = ({
   };
 
   const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    console.log("=== UI TRACE: EDIT SUBMIT ===");
-    console.log({
-      selectedSubTaskId: editModalData.id,
-      currentSubTask: editModalData,
-      allSubTasks: task.subtasks,
-      matchVerified: editModalData.id === task.subtasks.find(st => st.id === editModalData.id)?.id
-    });
-    
-    setIsSubmitting(true);
-    try {
-      await onUpdateSubTask(editModalData.id, editModalData);
-      showToast("SubTask updated successfully.");
-      setEditModalData(null);
-    } catch (err) {
-      const msg = err.response?.data?.message || "Failed to update SubTask.";
-      showToast(msg, "error");
-    } finally {
-      setIsSubmitting(false);
-    }
+      e.preventDefault();
+
+      setIsSubmitting(true);
+      try {
+        await onUpdateSubTask(editModalData.id, editModalData);
+        showToast("SubTask updated successfully.");
+        setEditModalData(null);
+      } catch (err) {
+        const msg = err.response?.data?.message || "Failed to update SubTask.";
+        showToast(msg, "error");
+      } finally {
+        setIsSubmitting(false);
+      }
   };
 
   const handleDeleteConfirm = async () => {
-    console.log("=== UI TRACE: DELETE CONFIRM ===");
-    console.log({
-      selectedSubTaskId: deleteModalId,
-      currentSubTask: task.subtasks.find(st => st.id === deleteModalId),
-      allSubTasks: task.subtasks,
-      matchVerified: deleteModalId === task.subtasks.find(st => st.id === deleteModalId)?.id
-    });
-
-    setIsSubmitting(true);
-    try {
-      await onDeleteSubTask(deleteModalId);
-      showToast("SubTask deleted successfully.");
-      setDeleteModalId(null);
-    } catch (err) {
-      const msg = err.response?.data?.message || "Failed to delete SubTask.";
-      showToast(msg, "error");
-    } finally {
-      setIsSubmitting(false);
-    }
+      setIsSubmitting(true);
+      try {
+        await onDeleteSubTask(deleteModalId);
+        showToast("SubTask deleted successfully.");
+        setDeleteModalId(null);
+      } catch (err) {
+        const msg = err.response?.data?.message || "Failed to delete SubTask.";
+        showToast(msg, "error");
+      } finally {
+        setIsSubmitting(false);
+      }
   };
 
   return (

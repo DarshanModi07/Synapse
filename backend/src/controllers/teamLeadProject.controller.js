@@ -9,9 +9,6 @@ import { recalculateTaskProgress } from "../services/taskAutomation.service.js";
 export const getTeamLeadProjects = async (req, res) => {
     try {
         const userId = req.user?.id || req.user?.userId;
-        
-        console.log("==================================================");
-        console.log("USER ID:", userId);
 
         const teams = await prisma.team.findMany({
             where: {
@@ -20,19 +17,9 @@ export const getTeamLeadProjects = async (req, res) => {
             }
         });
 
-        console.log(
-            "TEAMS:",
-            teams.map(t => ({
-                id: t.id,
-                name: t.name
-            }))
-        );
-        console.log("==================================================");
-
         const teamIds = teams.map(t => t.id);
 
         if (teamIds.length === 0) {
-            console.log("BREAK FOUND: TEAMS table has no records for this user.");
             return res.status(200).json({ success: true, data: [] });
         }
 
@@ -47,11 +34,7 @@ export const getTeamLeadProjects = async (req, res) => {
                 }
             });
 
-            console.log(team.name, "PROJECT TEAM RELATIONS:", relations.length);
-
-            if (relations.length === 0) {
-                console.log(`BREAK FOUND: ProjectTeam table has no records for ${team.name}.`);
-            } else {
+            if (relations.length === 0) {} else {
                 totalProjectTeamsCount += relations.length;
                 for (const relation of relations) {
                     const pd = await prisma.projectDepartment.findUnique({
@@ -60,9 +43,7 @@ export const getTeamLeadProjects = async (req, res) => {
                         }
                     });
 
-                    if (!pd) {
-                        console.log(`BREAK FOUND: ProjectDepartment missing for ProjectTeam ID ${relation.id}`);
-                    } else {
+                    if (!pd) {} else {
                         totalProjectDepartmentsCount += 1;
                         const project = await prisma.project.findUnique({
                             where: {
@@ -70,24 +51,13 @@ export const getTeamLeadProjects = async (req, res) => {
                             }
                         });
 
-                        if (!project) {
-                            console.log(`BREAK FOUND: Project missing for ProjectDepartment ID ${pd.id}`);
-                        } else {
+                        if (!project) {} else {
                             totalProjectsCount += 1;
                         }
                     }
                 }
             }
         }
-        
-        console.log("==================================================");
-        console.log({
-            teams: teams.length,
-            projectTeams: totalProjectTeamsCount,
-            projectDepartments: totalProjectDepartmentsCount,
-            projects: totalProjectsCount
-        });
-        console.log("==================================================");
 
         // Fetching exactly as before to return the payload
         const projectTeams = await prisma.projectTeam.findMany({
@@ -145,13 +115,6 @@ export const getTeamLeadProjects = async (req, res) => {
                 managerId: p.createdById,
                 teamsAssigned: p.teamsCount
             };
-        });
-
-        console.log({
-            teamsFound: teams.length,
-            totalTasks: formattedProjects.reduce((sum, p) => sum + p.totalTasks, 0),
-            totalProjectTeams: projectTeams.length,
-            totalProjects: formattedProjects.length
         });
 
         return res.status(200).json({ success: true, data: formattedProjects });
@@ -279,11 +242,6 @@ export const getTeamLeadProjectDetails = async (req, res) => {
 // ==========================================
 export const createSubTask = async (req, res) => {
     try {
-        console.log("================================");
-        console.log("TASK ID:", req.params.taskId);
-        console.log("USER:", req.user?.id || req.user?.userId);
-        console.log("BODY:", req.body);
-        
         const { taskId } = req.params;
         const { title, description, priority, assignedToId, dueDate } = req.body;
         const userId = req.user?.id || req.user?.userId;
@@ -293,8 +251,6 @@ export const createSubTask = async (req, res) => {
                 id: taskId
             }
         });
-
-        console.log("TASK:", task);
 
         try {
             const subTask = await prisma.subTask.create({
@@ -308,16 +264,12 @@ export const createSubTask = async (req, res) => {
                     dueDate: dueDate ? new Date(dueDate) : null
                 }
             });
-            console.log("SUBTASK CREATED:", subTask);
-            console.log("================================");
             return res.status(201).json({ success: true, data: subTask });
         } catch (error) {
-            console.log("PRISMA ERROR:", error.message);
             console.dir(error, { depth: null });
             throw error;
         }
     } catch (error) {
-        console.log("OUTER ERROR:", error.message);
         return res.status(500).json({ message: "Error creating subtask." });
     }
 };

@@ -34,6 +34,4 @@ export const initSchedulers = () => {
             console.error("Error in weekly summary scheduler:", error);
         }
     });
-
-    console.log("[Schedulers] Enterprise notification schedulers initialized.");
 };

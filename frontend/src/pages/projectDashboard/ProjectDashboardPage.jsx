@@ -11,9 +11,7 @@ import ProjectTeams from "@/components/projectDashboard/ProjectTeams/ProjectTeam
 // import ActivityTimeline from "@/components/projectDashboard/ActivityTimeline";
 
 const ProjectDashboardPage = () => {
-
     const { projectId } = useParams();
-    console.log("Project ID:", projectId);
 
     const {
 
@@ -118,7 +116,6 @@ const ProjectDashboardPage = () => {
         </main>
 
     );
-
 };
 
 export default ProjectDashboardPage;

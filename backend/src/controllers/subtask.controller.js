@@ -183,7 +183,6 @@ export const createSubTask = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while creating subtask"
         })
@@ -298,7 +297,6 @@ export const getAllSubTask = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while fetching all subtasks"
         })
@@ -421,8 +419,6 @@ export const getOneSubTask = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
-
         return res.status(500).json({
             message:"Internal Server Error while fetching a subtask"
         });
@@ -591,7 +587,6 @@ export const updateSubTask = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while fetching a subtask"
         });
@@ -711,7 +706,6 @@ export const deleteSubTask = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error while fetching a subtask"
         });
@@ -890,7 +884,6 @@ const checkSubTaskId = await prisma.subTask.findUnique({
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
             message:"Internal Server Error During SubtaskProgress"
         })
@@ -1048,8 +1041,6 @@ export const myDashboard = async (req,res) => {
 
     }
     catch(err){
-        console.log(err);
-
         return res.status(500).json({
             message:"Internal Server Error while fetching dashboard"
         });

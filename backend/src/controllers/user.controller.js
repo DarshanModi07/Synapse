@@ -3,11 +3,9 @@ import {uploadToCloudinary} from "../utils/uploadToCloudinary.js";
 
 export const userProfile = async (req,res) => {
     try{
-        console.log("req.user:", req.user);
         const id = req.user?.userId || req.user?.id; // fallback in case it's id instead of userId
 
         if (!id) {
-            console.log("No ID found in req.user");
             return res.status(401).json({ message: "Invalid token payload" });
         }
 
@@ -25,8 +23,6 @@ export const userProfile = async (req,res) => {
             }
         })
 
-        console.log("user:", userData);
-
         if(!userData){
             return res.status(401).json({message:"User Profile Data not found"})
         }
@@ -35,10 +31,8 @@ export const userProfile = async (req,res) => {
             message:"User Profile Fetched Successful",
             data:userData
         })
-
     }
     catch(err){
-        console.log("Profile Fetch Error:", err)
         return res.status(500).json({message:"Error while Fetching ProfileData", error: err.message})
     }
 }
@@ -77,7 +71,6 @@ export const uploadAvatar = async(req,res)=>{
 
     }
     catch(err){
-        console.log(err);
         return res.status(500).json({
                 message:"Upload Failed"
             });

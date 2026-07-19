@@ -4,10 +4,6 @@ import { buildManagerAnalyticsPrompt } from "../ai/prompts/managerAnalytics.prom
 
 export const getManagerAnalytics = async (req, res) => {
     try {
-        console.log("Analytics endpoint hit");
-        console.log(req.originalUrl);
-        console.log(req.method);
-        
         const userId = req.user.userId;
 
         // 1. Fetch managed departments
@@ -59,7 +55,7 @@ export const getManagerAnalytics = async (req, res) => {
             where: { teamId: { in: teamIds } },
             include: { projectDepartment: { include: { project: true } } }
         });
-        
+
         // 4. Extract unique projects
         const projectsMap = new Map();
         projectTeams.forEach(pt => {
@@ -69,7 +65,7 @@ export const getManagerAnalytics = async (req, res) => {
             }
         });
         const projects = Array.from(projectsMap.values());
-        
+
         // 5. Fetch Tasks assigned to those teams
         const tasks = await prisma.task.findMany({
             where: { projectTeamId: { in: projectTeams.map(pt => pt.id) }, is_deleted: false },
@@ -85,7 +81,7 @@ export const getManagerAnalytics = async (req, res) => {
         // Calculate stats
         let totalSubtasks = 0;
         let completedSubtasks = 0;
-        
+
         tasks.forEach(t => {
             t.subtasks.forEach(st => {
                 totalSubtasks++;
@@ -104,10 +100,6 @@ export const getManagerAnalytics = async (req, res) => {
         };
 
         const aiResultRaw = await generateAnalysis(buildManagerAnalyticsPrompt(dataPayload));
-        
-        console.log("AI RESULT:", aiResultRaw);
-        console.log("TYPE:", typeof aiResultRaw);
-        console.log("IS ARRAY:", Array.isArray(aiResultRaw));
 
         let aiInsights = {
             overloadedTeams: [],
@@ -145,7 +137,6 @@ export const getManagerAnalytics = async (req, res) => {
                 aiInsights
             }
         });
-
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error generating manager analytics" });

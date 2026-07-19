@@ -90,7 +90,7 @@ export const getTeamLeadDashboard = async (req, res) => {
         });
 
         const projects = Array.from(globalProjectsMap.values());
-        
+
         // Fetch tasks assigned to ALL teams
         const tasks = await prisma.task.findMany({
             where: { projectTeamId: { in: teamProjectIds }, is_deleted: false },
@@ -190,8 +190,6 @@ export const getTeamLeadDashboard = async (req, res) => {
             time: t.createdAt
         }));
 
-        console.log(`Team Lead Dashboard loaded successfully for ${totalTeamsLed} teams.`);
-
         return res.status(200).json({
             success: true,
             data: {
@@ -206,7 +204,6 @@ export const getTeamLeadDashboard = async (req, res) => {
                 recentActivity
             }
         });
-
     } catch (error) {
         console.error("Error in getTeamLeadDashboard:", error);
         return res.status(500).json({ message: "Internal server error fetching team lead dashboard." });

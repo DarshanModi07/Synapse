@@ -88,16 +88,8 @@ export const useTeamLeadProjectDetails = (projectId) => {
   
   const handleUpdateSubTask = async (subTaskId, updates) => {
     try {
-      console.log("================================");
-      console.log("EDIT FLOW TRACE:");
-      console.log("selectedSubTaskId:", subTaskId);
-      console.log("allSubTasks in current task:", data?.projectTeams?.map(pt => pt.tasks).flat().map(t => t.subtasks).flat());
-      
       const updatedSubTask = await teamLeadProjectService.updateSubTask(subTaskId, updates);
-      
-      console.log("UPDATED:", updatedSubTask);
-      console.log("================================");
-      
+
       setData(prev => {
         if (!prev) return prev;
         const newData = { ...prev };
@@ -119,15 +111,8 @@ export const useTeamLeadProjectDetails = (projectId) => {
 
   const handleDeleteSubTask = async (subTaskId) => {
     try {
-      console.log("================================");
-      console.log("DELETE FLOW TRACE:");
-      console.log("selectedSubTaskId:", subTaskId);
-      
       const response = await teamLeadProjectService.deleteSubTask(subTaskId);
-      
-      console.log("DELETED API RESPONSE:", response);
-      console.log("================================");
-      
+
       // We can use response.deletedId if returned, otherwise fallback to subTaskId
       const idToRemove = response?.deletedId || subTaskId;
 

@@ -36,7 +36,6 @@ export const createChannel = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -73,7 +72,6 @@ export const getChannels = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -112,7 +110,6 @@ export const updateChannel = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
@@ -143,7 +140,6 @@ export const deleteChannel = async (req, res) => {
         return res.status(200).json({ message: "Channel deleted" });
 
     } catch (err) {
-        console.log(err);
         return res.status(500).json({ message: "Internal server error" });
     }
 };

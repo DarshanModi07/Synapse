@@ -16,6 +16,4 @@ router.get("/members", authMiddleware, getAllTeamLeadMembers);
 router.get("/members/:memberId", authMiddleware, getTeamLeadMemberDetails);
 router.get("/analytics", authMiddleware, getTeamLeadAnalytics);
 
-console.log("Team Lead routes loaded successfully");
-
 export default router;

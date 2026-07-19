@@ -66,8 +66,6 @@ class NotificationService {
   // --- SCHEDULER METHODS ---
 
   async sendDeadlineNotifications() {
-    console.log("Running Deadline Notifications Check...");
-    
     const tomorrow = new Date();
     tomorrow.setHours(tomorrow.getHours() + 24);
     const tomorrowStart = new Date(tomorrow);
@@ -97,9 +95,8 @@ class NotificationService {
   }
 
   async sendDailySummary() {
-    console.log("Running Daily Summary Check...");
     const users = await prisma.user.findMany({ where: { isActive: true } });
-    
+
     for (const user of users) {
       const activeCount = await prisma.subTask.count({
         where: { assignedToId: user.id, status: { in: ['todo', 'in_progress', 'in_review'] } }
@@ -120,9 +117,8 @@ class NotificationService {
   }
 
   async sendWeeklySummary() {
-    console.log("Running Weekly Summary Check...");
     const users = await prisma.user.findMany({ where: { isActive: true } });
-    
+
     const lastWeek = new Date();
     lastWeek.setDate(lastWeek.getDate() - 7);
 

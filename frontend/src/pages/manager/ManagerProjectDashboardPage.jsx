@@ -47,7 +47,6 @@ const ManagerProjectDashboardPage = () => {
     const handleTaskCreate = async (data) => {
         try {
             await createTask(data.projectTeamId, data);
-            console.log("Task created successfully");
             refresh();
         } catch (err) {
             console.error(err);
@@ -58,7 +57,6 @@ const ManagerProjectDashboardPage = () => {
     const handleTaskEdit = async (taskId, data) => {
         try {
             await updateTask(taskId, data);
-            console.log("Task updated successfully");
             refresh();
         } catch (err) {
             console.error(err);
@@ -69,7 +67,6 @@ const ManagerProjectDashboardPage = () => {
     const handleTaskDelete = async (taskId) => {
         try {
             await deleteTask(taskId);
-            console.log("Task deleted successfully");
             refresh();
         } catch (err) {
             console.error(err);

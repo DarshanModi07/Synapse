@@ -152,155 +152,134 @@ const ProjectsPage = () => {
     };
 
         return (
+            <main
 
-        <main
+                className="min-h-[calc(100vh-130px)] rounded-3xl p-8"
 
-            className="min-h-[calc(100vh-130px)] rounded-3xl p-8"
+                style={{
 
-            style={{
+                    background: "rgba(13,13,18,.55)",
 
-                background: "rgba(13,13,18,.55)",
+                    border:
+                        "1px solid rgba(167,139,250,.10)",
 
-                border:
-                    "1px solid rgba(167,139,250,.10)",
-
-                backdropFilter: "blur(24px)"
-
-            }}
-
-        >
-
-            {/* Header */}
-
-            <div className="mb-8">
-
-                <h1 className="text-4xl font-bold text-white">
-
-                    Projects
-
-                </h1>
-
-                <p className="mt-2 text-zinc-400">
-
-                    Manage projects, assign departments, teams and track progress.
-
-                </p>
-
-            </div>
-
-            {/* Toolbar */}
-
-            <ProjectToolbar
-
-                search={search}
-
-                setSearch={setSearch}
-
-                onCreate={() =>
-                    setCreateOpen(true)
-                }
-
-                onAI={() => {
-
-                    console.log(
-                        "AI Project Suggestion"
-                    );
+                    backdropFilter: "blur(24px)"
 
                 }}
 
-            />
+            >
+                {/* Header */}
+                <div className="mb-8">
 
-            {/* Grid */}
+                    <h1 className="text-4xl font-bold text-white">
 
-            <ProjectGrid
+                        Projects
 
-                loading={loading}
+                    </h1>
 
-                projects={filteredProjects}
+                    <p className="mt-2 text-zinc-400">
 
-                onEdit={(project) => {
+                        Manage projects, assign departments, teams and track progress.
 
-                    setSelectedProject(project);
+                    </p>
 
-                    setEditOpen(true);
+                </div>
+                {/* Toolbar */}
+                <ProjectToolbar
 
-                }}
+                    search={search}
 
-                onDelete={(project) => {
+                    setSearch={setSearch}
 
-                    setSelectedProject(project);
+                    onCreate={() =>
+                        setCreateOpen(true)
+                    }
 
-                    setDeleteOpen(true);
+                    onAI={() => {}}
 
-                }}
+                />
+                {/* Grid */}
+                <ProjectGrid
 
-            />
+                    loading={loading}
 
-                        {/* Create Project */}
+                    projects={filteredProjects}
 
-            <CreateProjectModal
+                    onEdit={(project) => {
 
-                open={createOpen}
+                        setSelectedProject(project);
 
-                loading={creating}
+                        setEditOpen(true);
 
-                workspaceId={workspace?.id}
+                    }}
 
-                onClose={() =>
-                    setCreateOpen(false)
-                }
+                    onDelete={(project) => {
 
-                onCreate={handleCreate}
+                        setSelectedProject(project);
 
-            />
+                        setDeleteOpen(true);
 
-            {/* Edit Project */}
+                    }}
 
-            <EditProjectModal
+                />
+                {/* Create Project */}
+                <CreateProjectModal
 
-                open={editOpen}
+                    open={createOpen}
 
-                loading={updating}
+                    loading={creating}
 
-                project={selectedProject}
+                    workspaceId={workspace?.id}
 
-                onClose={() => {
+                    onClose={() =>
+                        setCreateOpen(false)
+                    }
 
-                    setEditOpen(false);
+                    onCreate={handleCreate}
 
-                    setSelectedProject(null);
+                />
+                {/* Edit Project */}
+                <EditProjectModal
 
-                }}
+                    open={editOpen}
 
-                onSave={handleUpdate}
+                    loading={updating}
 
-            />
+                    project={selectedProject}
 
-            {/* Delete Project */}
+                    onClose={() => {
 
-            <DeleteProjectDialog
+                        setEditOpen(false);
 
-                open={deleteOpen}
+                        setSelectedProject(null);
 
-                loading={deleting}
+                    }}
 
-                project={selectedProject}
+                    onSave={handleUpdate}
 
-                onClose={() => {
+                />
+                {/* Delete Project */}
+                <DeleteProjectDialog
 
-                    setDeleteOpen(false);
+                    open={deleteOpen}
 
-                    setSelectedProject(null);
+                    loading={deleting}
 
-                }}
+                    project={selectedProject}
 
-                onDelete={handleDelete}
+                    onClose={() => {
 
-            />
+                        setDeleteOpen(false);
 
-        </main>
+                        setSelectedProject(null);
 
-    );
+                    }}
+
+                    onDelete={handleDelete}
+
+                />
+            </main>
+        );
 
 };
 

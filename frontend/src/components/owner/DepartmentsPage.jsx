@@ -89,9 +89,6 @@ setSuggestions(
     async (items) => {
 
       try {
-
-        console.log(items);
-
         /*
         await Promise.all(
 
@@ -108,7 +105,6 @@ setSuggestions(
         */
 
         setAiOpen(false);
-
       }
       catch (err) {
 
@@ -119,7 +115,6 @@ setSuggestions(
     };
 
   return (
-
     <main
       className="min-h-[calc(100vh-130px)] rounded-3xl p-8"
       style={{
@@ -129,9 +124,7 @@ setSuggestions(
         backdropFilter: "blur(24px)",
       }}
     >
-
       <DepartmentHeader />
-
       <DepartmentToolbar
         search={search}
         setSearch={setSearch}
@@ -140,7 +133,6 @@ setSuggestions(
           setCreateOpen(true)
         }
       />
-
       <DepartmentGrid
         loading={loading}
         departments={filteredDepartments}
@@ -149,23 +141,19 @@ setSuggestions(
             `/workspace/${slug}/departments/${department.id}`
           )
         }
-        onEdit={(department) =>
-          console.log(department)
+        onEdit={department => 
         }
-        onDelete={(department) =>
-          console.log(department)
+        onDelete={department => 
         }
       />
-
-<CreateDepartmentModal
-    open={createOpen}
-    loading={creating}
-        onClose={() =>
-          setCreateOpen(false)
-        }
-        onCreate={handleCreateDepartment}
-      />
-
+      <CreateDepartmentModal
+          open={createOpen}
+          loading={creating}
+              onClose={() =>
+                setCreateOpen(false)
+              }
+              onCreate={handleCreateDepartment}
+            />
       <AISuggestionModal
         open={aiOpen}
         loading={aiLoading}
@@ -176,9 +164,7 @@ setSuggestions(
         onGenerate={handleAISuggestion}
         onCreate={handleCreateAISuggestions}
       />
-
     </main>
-
   );
 
 };

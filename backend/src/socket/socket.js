@@ -46,9 +46,6 @@ export const initSocket = (httpServer) => {
     });
 
     io.on("connection", (socket) => {
-
-        console.log(`connected: ${socket.user.userId}`);
-
         // each user joins their own private room for notifications
         socket.join(socket.user.userId);
 
@@ -174,7 +171,6 @@ export const initSocket = (httpServer) => {
                 io.to(channelId).emit("new_message", payload);
 
             } catch (err) {
-                console.log(err);
                 socket.emit("error", { message: "Failed to send message" });
             }
         });
@@ -227,7 +223,6 @@ export const initSocket = (httpServer) => {
                 io.to(message.channelId).emit("message_edited", payload);
 
             } catch (err) {
-                console.log(err);
                 socket.emit("error", { message: "Failed to edit message" });
             }
         });
@@ -271,7 +266,6 @@ export const initSocket = (httpServer) => {
                 });
 
             } catch (err) {
-                console.log(err);
                 socket.emit("error", { message: "Failed to delete message" });
             }
         });
@@ -332,7 +326,6 @@ export const initSocket = (httpServer) => {
                 }
 
             } catch (err) {
-                console.log(err);
                 socket.emit("error", { message: "Failed to toggle reaction" });
             }
         });
@@ -353,9 +346,7 @@ export const initSocket = (httpServer) => {
             });
         });
 
-        socket.on("disconnect", () => {
-            console.log(`disconnected: ${socket.user.userId}`);
-        });
+        socket.on("disconnect", () => {});
     });
 
     return io;
