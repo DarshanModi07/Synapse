@@ -51,9 +51,13 @@ export const uploadAvatar = async(req,res)=>{
                 });
         }
 
-        const result = await uploadToCloudinary(
-                req.file.buffer
-            );
+        let result = null;
+        try {
+            result = await uploadToCloudinary(req.file.buffer);
+        } catch (uploadError) {
+            console.error("Cloudinary upload failed:", uploadError);
+            return res.status(502).json({ message: "Image upload service is currently unavailable. Please try again later." });
+        }
 
         const user = await prisma.user.update({
                 where:{

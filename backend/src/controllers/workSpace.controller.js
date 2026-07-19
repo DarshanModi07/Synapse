@@ -30,14 +30,17 @@ export const createWorkSpace = async (req,res) => {
         let logo = null;
 
         if(req.file){
+            try {
+                const uploadedLogo =
+                    await uploadToCloudinary(
+                        req.file.buffer,
+                        "workspace-logos"
+                    );
 
-            const uploadedLogo =
-                await uploadToCloudinary(
-                    req.file.buffer,
-                    "workspace-logos"
-                );
-
-            logo = uploadedLogo.secure_url;
+                logo = uploadedLogo.secure_url;
+            } catch (uploadError) {
+                console.error("Cloudinary upload failed, proceeding without logo:", uploadError);
+            }
         }
 
         const slug = slugify(name,{
