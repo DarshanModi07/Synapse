@@ -1,392 +1,315 @@
-<div align="center">
-  <img src="./frontend/public/favicon.ico" alt="Synapse Logo" width="120" />
+# Synapse Architecture Documentation
 
-  <h1>Synapse</h1>
-  <p><strong>AI-Powered Workspace, Project, and Team Management Platform</strong></p>
+**Version:** 1.0.0
+**License:** MIT
 
-  <!-- Badges -->
-  <p>
-    <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version" />
-    <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="Build" />
-    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" />
-    <img src="https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB" alt="React" />
-    <img src="https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white" alt="Node" />
-    <img src="https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  </p>
-</div>
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat&logo=prisma&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=flat&logo=socket.io&logoColor=white)
 
----
+## 1. Executive Summary
 
-## 📖 Project Overview
+Synapse is an AI-powered Workspace and Project Management platform architected for strict hierarchical ownership and distributed team collaboration. The system implements a robust event-driven communication layer and intelligent task orchestration logic to streamline business workflows. This documentation outlines the system design, network boundaries, and deployment architecture for the production environment.
 
-**Synapse** is an enterprise-grade project management ecosystem designed to streamline hierarchical organizational workflows. By enforcing a strict four-tier role architecture (Owner, Manager, Team Lead, Employee), Synapse mirrors real-world corporate structures, ensuring that task delegation, progress tracking, and approvals follow a robust chain of command.
+## 2. Platform Hierarchy
 
-Built with a modern tech stack, the platform leverages **Socket.IO** for instantaneous real-time updates and integrates the **Gemini AI API** to automate tedious administrative tasks. From generating subtasks to providing predictive productivity analytics, the AI engine acts as a co-pilot for management, drastically reducing overhead.
-
-Whether scaling a startup or managing a large department, Synapse provides unparalleled visibility into team velocity, bottlenecks, and cross-departmental collaboration, all encapsulated in a beautiful, responsive user interface.
-
----
-
-## ✨ Feature Matrix
-
-| Module | Status | Description |
-| :--- | :---: | :--- |
-| **Workspace Management** | 🟢 Complete | Multi-workspace support with isolated data domains. |
-| **Role-Based Access (RBAC)** | 🟢 Complete | Strict 4-tier hierarchy enforcing distinct permissions. |
-| **Task Delegation** | 🟢 Complete | Multi-level cascade (Project → Task → SubTask → WorkItem). |
-| **Real-Time Notifications** | 🟢 Complete | WebSocket-driven live alerts and workflow triggers. |
-| **AI Work Breakdown** | 🟢 Complete | Automated generation of SubTasks and WorkItems via Gemini. |
-| **Analytics & Insights** | 🟢 Complete | AI-driven productivity insights and predictive bottlenecks. |
-
----
-
-## 🏛️ Architecture
-
-<details>
-<summary><strong>System Architecture</strong></summary>
+The platform implements a multi-tenant hierarchy designed to segregate access and operational boundaries across organizational units.
 
 ```mermaid
 graph TD
-    Client["Client (React + Vite)"]
-    API["API Gateway (Express.js)"]
-    DB[(PostgreSQL)]
-    Cache[(Redis)]
-    AI["AI Engine (Gemini API)"]
-    Storage["Media Storage (Cloudinary)"]
-
-    Client <-->|HTTPS / REST| API
-    Client <-->|WSS / Socket.IO| API
-    API <-->|Prisma ORM| DB
-    API <-->|Pub/Sub & Cache| Cache
-    API <-->|REST| AI
-    API <-->|SDK| Storage
+    A[Owner] --> B[Workspace]
+    B --> C[Managers]
+    C --> D[Departments]
+    D --> E[Teams]
+    E --> F[Team Leads]
+    F --> G[Employees]
 ```
-</details>
 
-<details>
-<summary><strong>Role Hierarchy</strong></summary>
+## 3. End-to-End Business Workflow
+
+The core business logic dictates the lifecycle of workspace initialization, resource allocation, and task execution. 
 
 ```mermaid
 graph TD
-    O["👑 Owner"] --> M["👔 Manager"]
-    M --> TL["🎯 Team Lead"]
-    TL --> E["👨‍💻 Employee"]
-
-    classDef owner fill:#4f46e5,color:#fff,stroke:#312e81;
-    classDef manager fill:#0891b2,color:#fff,stroke:#164e63;
-    classDef lead fill:#059669,color:#fff,stroke:#064e3b;
-    classDef employee fill:#475569,color:#fff,stroke:#0f172a;
-
-    class O owner;
-    class M manager;
-    class TL lead;
-    class E employee;
+    A[Owner] --> B[Create Workspace]
+    B --> C[Add Manager]
+    C --> D[Create Department]
+    D --> E[Create Team]
+    E --> F[Assign Team Lead]
+    F --> G[Create Project]
+    G --> H[Create Task]
+    H --> I[Generate SubTasks]
+    I --> J[Generate WorkItems]
+    J --> K[Employee Completes WorkItems]
+    K --> L[SubTask under Review]
+    L --> M[Team Lead Approves]
+    M --> N[Task Completed]
+    N --> O[Notifications Sent]
+    O --> P[Analytics Updated]
 ```
-</details>
 
-<details>
-<summary><strong>AI & Real-Time Flow</strong></summary>
+## 4. Authentication Architecture
+
+The Authentication Layer utilizes a dual-token mechanism (JWT) paired with cryptographic verification for initial identity negotiation.
+
+### Authentication Flow
 
 ```mermaid
-sequenceDiagram
-    participant U as User
-    participant A as API Server
-    participant R as Redis (Socket)
-    participant G as Gemini AI
-
-    U->>A: Request AI Subtasks (Task Context)
-    A->>G: Prompt + Context Analysis
-    G-->>A: Structured JSON Breakdown
-    A->>A: Save to Database
-    A->>R: Emit 'NEW_SUBTASKS' Event
-    R-->>U: Live UI Update via Socket
+graph TD
+    A[User Login] --> B[Validate Credentials]
+    B --> C[SHA-256 Password Verification]
+    C --> D[Generate Access Token]
+    C --> E[Generate Refresh Token]
+    E --> F[Store Refresh Token]
+    F --> G[HTTP Only Cookie]
+    G --> H[Return User Session]
 ```
-</details>
 
----
-
-## 🔄 Complete Application Workflow
+### Access Token Flow
 
 ```mermaid
-stateDiagram-v2
-    [*] --> WorkspaceCreated: Owner creates Workspace
-    WorkspaceCreated --> ManagersAdded: Adds Managers
-    ManagersAdded --> DepartmentCreated: Managers create Departments
-    DepartmentCreated --> TeamsAssigned: Managers assign Teams
-    TeamsAssigned --> ProjectsCreated: Managers create Projects
-    ProjectsCreated --> LeadReceives: Team Leads receive Projects
-    LeadReceives --> SubTasksCreated: Team Leads create SubTasks
-    SubTasksCreated --> WorkItemsCreated: Team Leads create WorkItems
-    WorkItemsCreated --> ItemsCompleted: Employees complete WorkItems
-    ItemsCompleted --> InReview: SubTask marked 'In Review'
-    InReview --> Approved: Team Lead approves
-    Approved --> ProgressUpdated: Project Progress updates
-    ProgressUpdated --> NotificationsTriggered: Notifications fire
-    NotificationsTriggered --> AnalyticsGenerated: AI Analytics generated
-    AnalyticsGenerated --> [*]
+graph TD
+    A[Request] --> B[Verify JWT]
+    B --> C{Valid?}
+    C -->|Yes| D[Continue]
+    C -->|No| E[Return 401]
 ```
 
----
+### Refresh Token Flow
 
-## 🗄️ Database ER Diagram
+Session Management handles seamless token rotation to minimize access interruption.
+
+```mermaid
+graph TD
+    A[Access Token Expired] --> B[Frontend Calls Refresh Endpoint]
+    B --> C[Verify Refresh Token]
+    C --> D[Verify Session]
+    D --> E[Generate New Access Token]
+    E --> F[Update Cookie]
+    F --> G[Continue Session]
+```
+
+## 5. Caching Strategy
+
+The system utilizes Redis as an in-memory data store to minimize relational database saturation during high-frequency read operations.
+
+### Redis Cache Flow
+
+```mermaid
+graph TD
+    A[Client Request] --> B[Redis Lookup]
+    B --> C{Cache Hit?}
+    C -->|Yes| D[Return Data]
+    C -->|No| E[Prisma Query]
+    E --> F[PostgreSQL]
+    F --> G[Cache Result]
+    G --> H[Return Response]
+```
+
+## 6. Event-Driven Communication
+
+Event propagation is localized to connected clients through a centralized WebSocket interface.
+
+### Notification Architecture
+
+```mermaid
+graph TD
+    A[User Action] --> B[Notification Service]
+    B --> C[Redis Queue]
+    C --> D[Socket.IO]
+    D --> E[Connected Users]
+```
+
+### Socket.IO Workflow
+
+```mermaid
+graph TD
+    A[Client Connects] --> B[Authenticate]
+    B --> C[Join User Room]
+    C --> D[Join Workspace Room]
+    D --> E[Listen for Events]
+    E --> F[Receive Live Updates]
+```
+
+## 7. AI Suggestion Workflow
+
+The Service Layer integrates with the Gemini API to orchestrate intelligent decomposition of complex project definitions.
+
+```mermaid
+graph TD
+    A[Task Created] --> B[Gemini API]
+    B --> C[Generate SubTasks]
+    C --> D[Generate WorkItems]
+    D --> E[Team Lead Reviews]
+    E --> F[Accept / Reject]
+    F --> G[Persist to Database]
+```
+
+## 8. Request Lifecycle
+
+The API request lifecycle enforces strict boundary separation across middleware and service layers.
+
+```mermaid
+graph TD
+    A[Browser] --> B[Axios]
+    B --> C[Middleware]
+    C --> D[Controller]
+    D --> E[Service]
+    E --> F[Prisma]
+    F --> G[PostgreSQL]
+    G --> H[Response]
+```
+
+## 9. Database Architecture
+
+The persistence layer guarantees ACID compliance and referential integrity.
+
+### Database ER Diagram
 
 ```mermaid
 erDiagram
-    USER ||--o{ WORKSPACE : "owns"
-    USER ||--o{ NOTIFICATION : "receives"
-    WORKSPACE ||--o{ DEPARTMENT : "contains"
-    DEPARTMENT ||--o{ TEAM : "has"
-    TEAM ||--o{ PROJECT : "assigned"
-    PROJECT ||--o{ TASK : "contains"
-    TASK ||--o{ SUBTASK : "broken down into"
-    SUBTASK ||--o{ WORKITEM : "delegated as"
+    User ||--o{ Workspace : "owns"
+    User ||--o{ Notification : "receives"
+    Workspace ||--o{ Department : "contains"
+    Department ||--o{ Team : "allocates"
+    Team ||--o{ Project : "assigned"
+    Project ||--o{ Task : "divided into"
+    Task ||--o{ SubTask : "decomposed into"
+    SubTask ||--o{ WorkItem : "broken down into"
 
-    WORKSPACE {
-        uuid id PK
-        string name
-        string slug
+    User {
+        uuid id
     }
-    PROJECT {
-        uuid id PK
-        string title
-        string status
-        date deadline
+    Workspace {
+        uuid id
     }
-    SUBTASK {
-        uuid id PK
-        string status
-        uuid teamLeadId FK
+    Department {
+        uuid id
     }
-    WORKITEM {
-        uuid id PK
-        string status
-        uuid employeeId FK
+    Team {
+        uuid id
+    }
+    Project {
+        uuid id
+    }
+    Task {
+        uuid id
+    }
+    SubTask {
+        uuid id
+    }
+    WorkItem {
+        uuid id
+    }
+    Notification {
+        uuid id
     }
 ```
 
----
+## 10. Production Deployment
 
-## 📁 Folder Structure
+The infrastructure leverages a distributed set of managed platforms for high availability and horizontal scalability.
+
+### Deployment Architecture
+
+```mermaid
+graph TD
+    A[Vercel] --> B[Railway]
+    B --> C[PostgreSQL]
+    B --> D[Redis]
+    B --> E[Cloudinary]
+    B --> F[Gemini]
+```
+
+## 11. Specifications and Requirements
+
+### Tech Stack
+
+| Domain | Technology |
+| --- | --- |
+| Frontend | React, Vite |
+| UI Framework | Tailwind CSS |
+| Backend API | Node.js, Express.js |
+| Database | PostgreSQL |
+| ORM | Prisma |
+| Caching & Pub/Sub | Redis |
+| Real-Time Engine | Socket.IO |
+| AI Integration | Gemini API |
+| Media Storage | Cloudinary |
+
+### Feature Matrix
+
+| Feature | Subsystem | Status |
+| --- | --- | --- |
+| JWT Authentication | Security Layer | Production Ready |
+| Role-Based Access Control | Authorization Layer | Production Ready |
+| Telemetry & Broadcasting | Event-Driven Communication | Production Ready |
+| AI Auto-Generation | Service Layer | Production Ready |
+| Distributed Object Storage | Asset Delivery | Production Ready |
+
+### Role Permissions
+
+| Role | Scope | Permissions |
+| --- | --- | --- |
+| Owner | Workspace | Full Workspace Configuration, Global Privileges |
+| Manager | Department | Manage Projects, Allocate Teams |
+| Team Lead | Project | Manage SubTasks, Review WorkItems |
+| Employee | WorkItem | Execute WorkItems, Update Status |
+
+### Environment Variables
+
+| Variable | Requirement | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | Required | Relational database connection string. |
+| `ACCESS_TOKEN_SECRET` | Required | Cryptographic secret for JWT signing. |
+| `REFRESH_TOKEN_SECRET` | Required | Cryptographic secret for session rotation. |
+| `REDIS_URL` | Optional | Cache endpoint configuration. |
+| `GEMINI_API_KEY` | Required | Access token for AI orchestration layer. |
+| `CLOUDINARY_URL` | Required | Connection string for media persistence. |
+
+### API Overview
+
+| Module | Protocol | Pattern | Responsibility |
+| --- | --- | --- | --- |
+| Auth | REST | `/api/auth/*` | Session Management |
+| Users | REST | `/api/users/*` | Identity Configuration |
+| Workspaces | REST | `/api/workspace/*` | Resource Boundary Management |
+| Projects | REST | `/api/project/*` | Scope Allocation |
+| Sockets | WSS | `/socket.io/*` | Event Telemetry |
+
+### Deployment Checklist
+
+| Phase | Task | Status |
+| --- | --- | --- |
+| Security | Configure Cross-Origin Resource Sharing (CORS). | Pending |
+| Security | Disable verbose error reporting on public endpoints. | Pending |
+| Infrastructure | Apply Prisma schema migrations to production RDS. | Pending |
+| Infrastructure | Initialize Upstash Redis instance bounds. | Pending |
+| Telemetry | Implement application logging aggregation. | Pending |
+
+## 12. Folder Structure
 
 ```text
 Synapse/
 ├── backend/
 │   ├── src/
-│   │   ├── config/        # Redis, Cloudinary, DB config
-│   │   ├── controllers/   # Request handlers
-│   │   ├── cron/          # Scheduled notification jobs
-│   │   ├── middlewares/   # Auth, Upload, Error handling
-│   │   ├── routes/        # Express route definitions
-│   │   ├── service/       # Business logic & AI wrappers
-│   │   ├── socket/        # Socket.IO event handlers
-│   │   └── utils/         # Helpers & constants
-│   ├── prisma/            # Schema & migrations
-│   └── server.js          # Entry point
+│   ├── controllers/
+│   ├── routes/
+│   ├── middleware/
+│   ├── services/
+│   ├── prisma/
+│   └── sockets/
 ├── frontend/
-│   ├── src/
-│   │   ├── api/           # Axios interceptors
-│   │   ├── components/    # Reusable React components
-│   │   ├── context/       # React Context (Auth, Socket)
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── pages/         # Route views
-│   │   └── services/      # API abstractions
-│   └── vite.config.js
+│   ├── components/
+│   ├── hooks/
+│   ├── pages/
+│   ├── context/
+│   ├── services/
+│   └── utils/
 └── README.md
 ```
-
----
-
-## 🛠️ Tech Stack
-
-| Category | Technology |
-| :--- | :--- |
-| **Frontend** | React, Vite, Tailwind CSS, React Router |
-| **Backend** | Node.js, Express.js |
-| **Database** | PostgreSQL, Prisma ORM |
-| **Real-Time** | Socket.IO, Redis |
-| **AI Engine** | Google Gemini API |
-| **Storage** | Cloudinary (Images/Avatars/Logos) |
-| **Auth** | JWT (HttpOnly Cookies, Access/Refresh flow) |
-
----
-
-## 📸 Screenshots
-
-| Login & Authentication | Dashboard & Analytics |
-| :---: | :---: |
-| ![Login](/docs/screenshots/login.png) | ![Dashboard](/docs/screenshots/dashboard.png) |
-| **Workspace Management** | **Project Board** |
-| ![Workspace](/docs/screenshots/workspace.png) | ![Projects](/docs/screenshots/projects.png) |
-| **Team Lead View** | **Employee View** |
-| ![Team Lead](/docs/screenshots/team-lead.png) | ![Employee](/docs/screenshots/employee.png) |
-
-*(Note: Add screenshot files to `/docs/screenshots/`)*
-
----
-
-## 🚀 Installation & Setup
-
-<details>
-<summary><strong>1. Clone the Repository</strong></summary>
-
-```bash
-git clone https://github.com/yourusername/Synapse.git
-cd Synapse
-```
-</details>
-
-<details>
-<summary><strong>2. Backend Setup</strong></summary>
-
-```bash
-cd backend
-npm install
-
-# Apply database migrations
-npx prisma generate
-npx prisma db push
-```
-</details>
-
-<details>
-<summary><strong>3. Frontend Setup</strong></summary>
-
-```bash
-cd ../frontend
-npm install
-```
-</details>
-
-<details>
-<summary><strong>4. Running Locally</strong></summary>
-
-Start Redis locally or via Docker:
-```bash
-docker run -d -p 6379:6379 redis
-```
-
-Start Backend (Terminal 1):
-```bash
-cd backend
-npm run dev
-```
-
-Start Frontend (Terminal 2):
-```bash
-cd frontend
-npm run dev
-```
-</details>
-
----
-
-## ⚙️ Environment Variables
-
-Create a `.env` file in the `/backend` directory:
-
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/synapse"
-
-# Authentication
-ACCESS_TOKEN_SECRET="your_access_secret_key"
-REFRESH_TOKEN_SECRET="your_refresh_secret_key"
-
-# Server
-PORT=8080
-
-# Cloudinary (Media Storage)
-CLOUDINARY_CLOUD_NAME="your_cloud_name"
-CLOUDINARY_API_KEY="your_api_key"
-CLOUDINARY_API_SECRET="your_api_secret"
-
-# AI Integration
-OPEN_ROUTER_API_KEY="your_gemini_or_openrouter_key"
-
-# Security
-ENCRYPTION_KEY="your_256bit_encryption_key"
-```
-
----
-
-## 🔌 API Reference
-
-<details>
-<summary><strong>Authentication APIs</strong></summary>
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Register a new user |
-| `POST` | `/api/auth/login` | Authenticate user & issue tokens |
-| `POST` | `/api/auth/refresh-token`| Rotate JWT access token |
-| `POST` | `/api/auth/logout` | Invalidate session |
-</details>
-
-<details>
-<summary><strong>Workspace & Core APIs</strong></summary>
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/workspace/create` | Create a new isolated workspace |
-| `GET` | `/api/project/list` | Retrieve workspace projects |
-| `PUT`  | `/api/users/profile` | Update user profile |
-| `POST` | `/api/ai/subtasks` | Generate subtasks via Gemini API |
-| `PATCH`| `/api/notification/read` | Mark notifications as read |
-</details>
-
----
-
-## ⚡ Real-Time Features
-
-Synapse utilizes a robust **Socket.IO** and **Redis** architecture to deliver an instantaneous experience:
-- **Live Notifications**: Event-driven alerts push immediately to the relevant user's client when a task status changes or a comment is added.
-- **Live Updates**: Collaborative views update in real-time. If a Team Lead approves a Work Item, the Employee's dashboard reflects the change without refreshing.
-- **Presence System**: Real-time user online/offline status tracking across workspaces.
-
----
-
-## 🧠 AI Features
-
-By integrating the **Gemini API**, Synapse eliminates administrative bottlenecks:
-- **AI Subtask Generation**: Automatically breakdown complex Projects into actionable SubTasks based on historical velocity and project scope.
-- **AI Work Item Generation**: Granular conversion of SubTasks into specific Employee WorkItems.
-- **AI Analytics**: Predictive insights identifying which projects are at risk of missing deadlines based on current completion rates.
-- **Productivity Insights**: Sentiment and throughput analysis at the department level.
-
----
-
-## ☁️ Deployment Architecture
-
-Synapse is designed for scalable cloud deployment:
-
-- **Frontend**: [Vercel](https://vercel.com/) (Serverless edge caching)
-- **Backend**: [Railway](https://railway.app/) / Render (Dockerized Node.js containers)
-- **Database**: Managed PostgreSQL (e.g., Supabase / Neon)
-- **Cache / PubSub**: [Upstash](https://upstash.com/) (Serverless Redis)
-- **Media**: [Cloudinary](https://cloudinary.com/) (CDN-optimized asset delivery)
-
----
-
-## 🗺️ Future Roadmap
-
-- [ ] **Mobile App**: React Native port for iOS & Android.
-- [ ] **Calendar Integration**: Two-way sync with Google Calendar & Outlook.
-- [ ] **Video Meetings**: Built-in WebRTC huddle rooms for Teams.
-- [ ] **AI Assistant**: Conversational chat interface for querying project statuses.
-
----
-
-## 👨‍💻 Contributors
-
-- **Darshan Modi** - *Lead Engineer & Architect*
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**. See the `LICENSE` file for details.
-
----
-<div align="center">
-  <sub>Built with ❤️ by Darshan Modi</sub>
-</div>
