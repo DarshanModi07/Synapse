@@ -1,11 +1,13 @@
 import axios from "axios";
 
 const api = axios.create({
+  
     baseURL: import.meta.env.VITE_API_BASE_URL,
     withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
+  console.log(import.meta.env.VITE_API_BASE_URL);
   const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -34,13 +36,13 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshResponse = await axios.post(
-          "http://localhost:8080/api/auth/refresh-token",
-          {},
-          {
-            withCredentials: true,
-          }
-        );
+          const refreshResponse = await axios.post(
+            `${import.meta.env.VITE_API_BASE_URL}/auth/refresh-token`,
+            {},
+            {
+              withCredentials: true,
+            }
+          );
 
         const newAccessToken =
           refreshResponse.data.accessToken;
