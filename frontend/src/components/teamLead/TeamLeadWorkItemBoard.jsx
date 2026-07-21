@@ -4,6 +4,7 @@ import { Sparkles, Plus, Loader2, CheckCircle, Clock, Pencil, Trash } from 'luci
 const TeamLeadWorkItemBoard = ({ 
   subTask, 
   onCreateWorkItem, 
+  onBulkCreateWorkItems,
   onUpdateWorkItem,
   onDeleteWorkItem,
   onGenerateAI,
@@ -14,6 +15,7 @@ const TeamLeadWorkItemBoard = ({
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', estimatedHours: '' });
+  const [selectedSuggestions, setSelectedSuggestions] = useState(new Set());
 
   if (!subTask) return null;
 
@@ -24,18 +26,22 @@ const TeamLeadWorkItemBoard = ({
     setFormData({ title: '', description: '', estimatedHours: '' });
   };
 
-  const handleApproveAI = async (suggestion) => {
+  const toggleSuggestion = (title) => {
+    const next = new Set(selectedSuggestions);
+    if (next.has(title)) next.delete(title);
+    else next.add(title);
+    setSelectedSuggestions(next);
+  };
+
+  const handleBulkApproveAI = async () => {
     try {
-      await onCreateWorkItem(subTask.id, {
-        title: suggestion.title,
-        description: suggestion.description,
-        estimatedHours: suggestion.estimatedHours
-      });
-      if (removeAiSuggestion) {
-        removeAiSuggestion(suggestion.title);
-      }
+      if (selectedSuggestions.size === 0) return;
+      const itemsToCreate = (aiSuggestions?.data || []).filter(sg => selectedSuggestions.has(sg.title));
+      await onBulkCreateWorkItems(subTask.id, itemsToCreate);
+      clearAiSuggestions();
+      setSelectedSuggestions(new Set());
     } catch (err) {
-      console.error(err);
+      console.error("Bulk create error:", err);
     }
   };
 
@@ -82,25 +88,41 @@ const TeamLeadWorkItemBoard = ({
             <button onClick={clearAiSuggestions} className="text-[12px] text-[#6B7280] hover:text-[#F9FAFB]">Dismiss</button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {(aiSuggestions?.data || []).map((sg, idx) => (
-              <div key={idx} className="p-4 bg-[#13111C] rounded-[8px] border border-[#2D2B45] hover:border-blue-500/30 transition-all flex flex-col justify-between">
-                <div>
-                  <h4 className="text-[13px] font-medium text-[#F9FAFB] mb-1">{sg.title}</h4>
-                  <p className="text-[12px] text-[#6B7280] mb-3 line-clamp-2">{sg.description}</p>
+            {(aiSuggestions?.data || []).map((sg, idx) => {
+              const isSelected = selectedSuggestions.has(sg.title);
+              return (
+                <div 
+                  key={idx} 
+                  onClick={() => toggleSuggestion(sg.title)}
+                  className={`p-4 rounded-[8px] border transition-all flex flex-col justify-between cursor-pointer ${isSelected ? 'bg-[#1a1825] border-blue-500/50' : 'bg-[#13111C] border-[#2D2B45] hover:border-blue-500/30'}`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="text-[13px] font-medium text-[#F9FAFB] pr-2">{sg.title}</h4>
+                      <div className={`flex-shrink-0 w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-[#6B7280]'}`}>
+                        {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
+                      </div>
+                    </div>
+                    <p className="text-[12px] text-[#6B7280] mb-3 line-clamp-2">{sg.description}</p>
+                  </div>
+                  <div className="flex items-center justify-between mt-auto border-t border-[#2D2B45] pt-3">
+                    <span className="text-[11px] text-[#6B7280] flex items-center gap-1 font-medium">
+                      <Clock className="w-3 h-3" /> {sg.estimatedHours}h
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between mt-auto border-t border-[#2D2B45] pt-3">
-                  <span className="text-[11px] text-[#6B7280] flex items-center gap-1 font-medium">
-                    <Clock className="w-3 h-3" /> {sg.estimatedHours}h
-                  </span>
-                  <button 
-                    onClick={() => handleApproveAI(sg)}
-                    className="text-[12px] bg-[#08070F] hover:bg-[#1a1825] text-[#F9FAFB] border border-[#2D2B45] px-3 py-1.5 rounded-[6px] transition-colors font-medium flex items-center gap-1 hover:border-emerald-500/30"
-                  >
-                    <CheckCircle className="w-3 h-3 text-emerald-400" /> Approve
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+          
+          <div className="flex justify-end pt-2">
+            <button 
+              onClick={handleBulkApproveAI}
+              disabled={selectedSuggestions.size === 0}
+              className="text-[13px] bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-[6px] transition-colors font-medium flex items-center gap-2"
+            >
+              <CheckCircle className="w-4 h-4" /> Create Selected Work Items
+            </button>
           </div>
         </div>
       )}
@@ -151,13 +173,16 @@ const TeamLeadWorkItemBoard = ({
                       {(subTask.workItems || []).map((wi, idx) => (
                           <tr key={wi.id} className="hover:bg-[#1a1825] transition-colors bg-[#13111C] group">
                               <td className="p-4 text-center">
-                                  <div className="flex justify-center w-full focus:outline-none">
+                                  <button 
+                                      onClick={() => onUpdateWorkItem(wi.id, { status: wi.status === 'done' ? 'in_progress' : 'done' })}
+                                      className="flex justify-center w-full focus:outline-none hover:opacity-80 transition-opacity"
+                                  >
                                       {wi.status === 'done' ? (
                                           <CheckCircle className="w-4 h-4 text-emerald-500" />
                                       ) : (
-                                          <div className="w-4 h-4 rounded-[4px] border border-[#6B7280]" />
+                                          <div className="w-4 h-4 rounded-[4px] border border-[#6B7280] hover:border-emerald-500 transition-colors" />
                                       )}
-                                  </div>
+                                  </button>
                               </td>
                               <td className="p-4">
                                   <h4 className={`text-[13px] font-medium transition-colors ${wi.status === 'done' ? 'text-[#6B7280] line-through' : 'text-[#F9FAFB] group-hover:text-blue-400'}`}>

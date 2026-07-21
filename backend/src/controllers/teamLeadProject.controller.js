@@ -2,6 +2,7 @@ import prisma from "../DB/db.config.js";
 import { generateSuggestion } from "../ai/ai.service.js";
 import { createNotification } from "../service/notification.service.js";
 import { recalculateTaskProgress } from "../services/taskAutomation.service.js";
+import { getIO } from "../socket/socket.js";
 
 // ==========================================
 // 1. GET ALL PROJECTS (Cross-Team Aggregation)
@@ -336,10 +337,107 @@ export const createWorkItem = async (req, res) => {
     }
 };
 
+export const createBulkWorkItems = async (req, res) => {
+    try {
+        const { subTaskId } = req.params;
+        const { workItems } = req.body;
+        const userId = req.user?.id || req.user?.userId;
+
+        if (!workItems || !Array.isArray(workItems) || workItems.length === 0) {
+            return res.status(400).json({ message: "No work items provided" });
+        }
+
+        const subtask = await prisma.subTask.findUnique({
+            where: { id: subTaskId },
+            include: {
+                task: {
+                    include: {
+                        projectTeam: {
+                            include: { team: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!subtask) {
+            return res.status(404).json({ message: "SubTask not found." });
+        }
+
+        const isAssignee = subtask.assignedToId === userId;
+        const isTeamLead = subtask.task.projectTeam.team.leaderId === userId;
+
+        if (!isAssignee && !isTeamLead) {
+            return res.status(403).json({ message: "You are not authorized to add work items to this subtask." });
+        }
+
+        const workItemsData = workItems.map(wi => ({
+            title: wi.title,
+            description: wi.description || null,
+            subTaskId,
+            estimatedHours: wi.estimatedHours ? parseInt(wi.estimatedHours) : null
+        }));
+
+        // Execute sequentially/transactionally to return all created records
+        const createdWorkItems = await prisma.$transaction(
+            workItemsData.map(data => prisma.workItem.create({ data }))
+        );
+
+        // Update SubTask progress
+        const allWorkItems = await prisma.workItem.findMany({
+            where: { subTaskId: subtask.id }
+        });
+
+        const totalItems = allWorkItems.length;
+        const completedItems = allWorkItems.filter(wi => wi.status === 'done').length;
+        const newProgress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+        await prisma.subTask.update({
+            where: { id: subtask.id },
+            data: { progress: newProgress }
+        });
+
+        return res.status(201).json({ success: true, data: createdWorkItems });
+    } catch (error) {
+        console.error("Bulk create work items error:", error);
+        return res.status(500).json({ message: "Error bulk creating work items." });
+    }
+};
+
 export const updateWorkItem = async (req, res) => {
     try {
         const { workItemId } = req.params;
         const updates = req.body;
+        const userId = req.user?.id || req.user?.userId;
+
+        const existingWorkItem = await prisma.workItem.findUnique({
+            where: { id: workItemId },
+            include: {
+                subTask: {
+                    include: {
+                        task: {
+                            include: {
+                                projectTeam: {
+                                    include: { team: true }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!existingWorkItem) {
+            return res.status(404).json({ message: "WorkItem not found." });
+        }
+
+        const subtask = existingWorkItem.subTask;
+        const isAssignee = subtask.assignedToId === userId;
+        const isTeamLead = subtask.task.projectTeam.team.leaderId === userId;
+
+        if (!isAssignee && !isTeamLead) {
+            return res.status(403).json({ message: "You are not authorized to update this work item." });
+        }
 
         if (updates.status === 'done' && !updates.completedAt) {
             updates.completedAt = new Date();
@@ -349,8 +447,51 @@ export const updateWorkItem = async (req, res) => {
             where: { id: workItemId },
             data: updates
         });
+
+        // Update SubTask progress
+        const allWorkItems = await prisma.workItem.findMany({
+            where: { subTaskId: subtask.id }
+        });
+
+        const totalItems = allWorkItems.length;
+        const completedItems = allWorkItems.filter(wi => wi.status === 'done').length;
+        const newProgress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+        const subtaskUpdateData = { progress: newProgress };
+        let shouldNotifyManager = false;
+
+        if (totalItems > 0 && totalItems === completedItems && subtask.status !== 'done') {
+            subtaskUpdateData.status = 'in_review';
+            shouldNotifyManager = true;
+        }
+
+        await prisma.subTask.update({
+            where: { id: subtask.id },
+            data: subtaskUpdateData
+        });
+
+        const io = getIO();
+        
+        if (updates.status === 'done' && io) {
+            io.emit("WORKITEM_COMPLETED", {
+                workItemId,
+                subtaskId: subtask.id,
+                completedBy: userId
+            });
+        }
+
+        if (shouldNotifyManager) {
+            await createNotification({
+                userId: subtask.assignedById,
+                title: "Subtask Ready for Review",
+                message: `Subtask '${subtask.title}' is ready for review.`,
+                type: "subtask_in_review"
+            });
+        }
+
         return res.status(200).json({ success: true, data: workItem });
     } catch (error) {
+        console.error("Update work item error:", error);
         return res.status(500).json({ message: "Error updating work item." });
     }
 };
@@ -398,7 +539,23 @@ export const generateSubTasksAI = async (req, res) => {
 export const generateWorkItemsAI = async (req, res) => {
     try {
         const { subTaskId } = req.params;
-        const subTask = await prisma.subTask.findUnique({ where: { id: subTaskId } });
+        const subTask = await prisma.subTask.findUnique({ 
+            where: { id: subTaskId },
+            include: { task: { include: { projectTeam: { include: { team: true } } } } }
+        });
+
+        if (!subTask) {
+            return res.status(404).json({ message: "SubTask not found." });
+        }
+
+        const userId = req.user.userId;
+        const isAssignee = subTask.assignedToId === userId;
+        const isTeamLead = subTask.task.projectTeam.team.leaderId === userId;
+        const isManager = subTask.task.managerId === userId; // Add manager support just in case
+
+        if (!isAssignee && !isTeamLead && !isManager) {
+            return res.status(403).json({ message: "You are not authorized to generate AI work items for this subtask." });
+        }
 
         const prompt = `
         Break down the following subtask into tiny executable work items.

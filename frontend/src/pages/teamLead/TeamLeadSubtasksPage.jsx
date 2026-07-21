@@ -19,6 +19,17 @@ const TeamLeadSubtasksPage = () => {
   
   const [selectedSubtask, setSelectedSubtask] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState(null);
+
+  const clearAiSuggestions = () => setAiSuggestions(null);
+  
+  const removeAiSuggestion = (title) => {
+    setAiSuggestions(prev => {
+      if (!prev || !prev.data) return prev;
+      return { ...prev, data: prev.data.filter(s => s.title !== title) };
+    });
+  };
 
   const showToast = (message, type = 'success') => {
     setToastMessage({ message, type });
@@ -60,22 +71,127 @@ const TeamLeadSubtasksPage = () => {
   const handleCreateWorkItem = async (subTaskId, workItemData) => {
     try {
       const newWorkItem = await teamLeadProjectService.createWorkItem(subTaskId, workItemData);
-      setSelectedSubtask(prev => prev ? {
-        ...prev,
-        workItemsCount: prev.workItemsCount + 1
-      } : prev);
+      
+      setSelectedSubtask(prev => {
+        if (!prev) return prev;
+        const newWorkItems = [...(prev.workItems || []), newWorkItem];
+        const total = newWorkItems.length;
+        const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+        const progress = total > 0 ? Math.round((completed / total) * 100) : prev.progress;
+        return {
+          ...prev,
+          workItemsCount: prev.workItemsCount + 1,
+          workItems: newWorkItems,
+          progress
+        };
+      });
+
+      setData(prev => {
+        if (!prev || !prev.subtasks) return prev;
+        return {
+          ...prev,
+          subtasks: prev.subtasks.map(st => {
+            if (st.id === subTaskId) {
+              const newWorkItems = [...(st.workItems || []), newWorkItem];
+              const total = newWorkItems.length;
+              const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+              const progress = total > 0 ? Math.round((completed / total) * 100) : st.progress;
+              return {
+                ...st,
+                workItemsCount: st.workItemsCount + 1,
+                workItems: newWorkItems,
+                progress
+              };
+            }
+            return st;
+          })
+        };
+      });
+
       showToast('Work item created successfully');
-      fetchData(); // Refresh to update progress correctly
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to create work item', 'error');
     }
   };
 
+  const handleBulkCreateWorkItems = async (subTaskId, workItemsData) => {
+    try {
+      const createdWorkItems = await teamLeadProjectService.createBulkWorkItems(subTaskId, { workItems: workItemsData });
+      
+      setSelectedSubtask(prev => {
+        if (!prev) return prev;
+        const newWorkItems = [...(prev.workItems || []), ...createdWorkItems];
+        const total = newWorkItems.length;
+        const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+        const progress = total > 0 ? Math.round((completed / total) * 100) : prev.progress;
+        return {
+          ...prev,
+          workItemsCount: prev.workItemsCount + createdWorkItems.length,
+          workItems: newWorkItems,
+          progress
+        };
+      });
+
+      setData(prev => {
+        if (!prev || !prev.subtasks) return prev;
+        return {
+          ...prev,
+          subtasks: prev.subtasks.map(st => {
+            if (st.id === subTaskId) {
+              const newWorkItems = [...(st.workItems || []), ...createdWorkItems];
+              const total = newWorkItems.length;
+              const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+              const progress = total > 0 ? Math.round((completed / total) * 100) : st.progress;
+              return {
+                ...st,
+                workItemsCount: st.workItemsCount + createdWorkItems.length,
+                workItems: newWorkItems,
+                progress
+              };
+            }
+            return st;
+          })
+        };
+      });
+
+      showToast(`${createdWorkItems.length} work items created successfully`);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to bulk create work items', 'error');
+    }
+  };
+
   const handleUpdateWorkItem = async (workItemId, updates) => {
     try {
-      await teamLeadProjectService.updateWorkItem(workItemId, updates);
+      const updatedWorkItem = await teamLeadProjectService.updateWorkItem(workItemId, updates);
+      
+      setSelectedSubtask(prev => {
+        if (!prev) return prev;
+        const newWorkItems = (prev.workItems || []).map(wi => wi.id === workItemId ? updatedWorkItem : wi);
+        const total = newWorkItems.length;
+        const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+        const progress = total > 0 ? Math.round((completed / total) * 100) : prev.progress;
+        const status = (total > 0 && total === completed && prev.status !== 'done') ? 'in_review' : prev.status;
+        return { ...prev, workItems: newWorkItems, progress, status };
+      });
+
+      setData(prev => {
+        if (!prev || !prev.subtasks) return prev;
+        return {
+          ...prev,
+          subtasks: prev.subtasks.map(st => {
+            const hasItem = (st.workItems || []).some(wi => wi.id === workItemId);
+            if (!hasItem) return st;
+            const newWorkItems = (st.workItems || []).map(wi => wi.id === workItemId ? updatedWorkItem : wi);
+            const total = newWorkItems.length;
+            const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : st.progress;
+            const status = (total > 0 && total === completed && st.status !== 'done') ? 'in_review' : st.status;
+            return { ...st, workItems: newWorkItems, progress, status };
+          })
+        };
+      });
+
       showToast('Work item updated');
-      fetchData(); // Refresh to update progress correctly
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to update work item', 'error');
     }
@@ -84,12 +200,43 @@ const TeamLeadSubtasksPage = () => {
   const handleDeleteWorkItem = async (workItemId) => {
     try {
       await teamLeadProjectService.deleteWorkItem(workItemId);
-      setSelectedSubtask(prev => prev ? {
-        ...prev,
-        workItemsCount: Math.max(0, prev.workItemsCount - 1)
-      } : prev);
+      
+      setSelectedSubtask(prev => {
+        if (!prev) return prev;
+        const newWorkItems = (prev.workItems || []).filter(wi => wi.id !== workItemId);
+        const total = newWorkItems.length;
+        const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+        return {
+          ...prev,
+          workItemsCount: Math.max(0, prev.workItemsCount - 1),
+          workItems: newWorkItems,
+          progress
+        };
+      });
+
+      setData(prev => {
+        if (!prev || !prev.subtasks) return prev;
+        return {
+          ...prev,
+          subtasks: prev.subtasks.map(st => {
+            const hasWorkItem = (st.workItems || []).some(wi => wi.id === workItemId);
+            if (!hasWorkItem) return st;
+            const newWorkItems = (st.workItems || []).filter(wi => wi.id !== workItemId);
+            const total = newWorkItems.length;
+            const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+            return {
+              ...st,
+              workItemsCount: Math.max(0, st.workItemsCount - 1),
+              workItems: newWorkItems,
+              progress
+            };
+          })
+        };
+      });
+
       showToast('Work item deleted');
-      fetchData(); // Refresh to update progress correctly
     } catch (err) {
       showToast(err.response?.data?.message || 'Failed to delete work item', 'error');
     }
@@ -189,16 +336,25 @@ const TeamLeadSubtasksPage = () => {
               <TeamLeadWorkItemBoard 
                 subTask={selectedSubtask}
                 onCreateWorkItem={handleCreateWorkItem}
+                onBulkCreateWorkItems={handleBulkCreateWorkItems}
                 onUpdateWorkItem={handleUpdateWorkItem}
                 onDeleteWorkItem={handleDeleteWorkItem}
                 onGenerateAI={async (subTaskId) => {
                   try {
-                    showToast("AI Generation triggered (simulated for now)");
+                    setAiLoading(true);
+                    const res = await teamLeadProjectService.generateWorkItemsAI(subTaskId);
+                    setAiSuggestions({ type: 'workitems', subTaskId, data: res.workItems });
+                    showToast("AI Generation successful");
                   } catch(err) {
                     showToast("Failed to generate work items", "error");
+                  } finally {
+                    setAiLoading(false);
                   }
                 }}
-                aiLoading={false}
+                aiLoading={aiLoading}
+                aiSuggestions={aiSuggestions}
+                clearAiSuggestions={clearAiSuggestions}
+                removeAiSuggestion={removeAiSuggestion}
               />
             </div>
           </div>

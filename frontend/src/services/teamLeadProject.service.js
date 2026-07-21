@@ -32,6 +32,10 @@ const teamLeadProjectService = {
     const response = await api.post(`/team-lead/projects/subtask/${subTaskId}/workitems`, data);
     return response.data.data;
   },
+  createBulkWorkItems: async (subTaskId, data) => {
+    const response = await api.post(`/team-lead/projects/subtask/${subTaskId}/workitems/bulk`, data);
+    return response.data.data;
+  },
   updateWorkItem: async (workItemId, data) => {
     const response = await api.patch(`/team-lead/projects/workitem/${workItemId}`, data);
     return response.data.data;

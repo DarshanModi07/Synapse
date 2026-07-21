@@ -12,7 +12,8 @@ import {
     approveSubTask,
     rejectSubTask,
     deleteSubTask,
-    deleteWorkItem
+    deleteWorkItem,
+    createBulkWorkItems
 } from "../controllers/teamLeadProject.controller.js";
 
 const router = Router();
@@ -32,6 +33,7 @@ router.post("/subtask/:subTaskId/reject", authMiddleware, rejectSubTask);
 
 // Work Items
 router.post("/subtask/:subTaskId/workitems", authMiddleware, createWorkItem);
+router.post("/subtask/:subTaskId/workitems/bulk", authMiddleware, createBulkWorkItems);
 router.patch("/workitem/:workItemId", authMiddleware, updateWorkItem);
 router.delete("/workitem/:workItemId", authMiddleware, deleteWorkItem);
 
