@@ -134,26 +134,51 @@ const EmployeeAnalyticsPage = () => {
                                     <Zap className="w-5 h-5 text-purple-400" /> Personal AI Insights
                                 </h2>
                                 
-                                {analyticsData.aiInsights?.insights?.length > 0 ? (
-                                    <div className="space-y-4 relative z-10">
-                                        {analyticsData.aiInsights.insights.map((insight, idx) => (
+                                {analyticsData.aiInsights?.summary && (
+                                    <div className="mb-5 pb-4 border-b border-[#2D2B45] relative z-10 flex justify-between items-start gap-4">
+                                        <p className="text-sm text-gray-300 font-medium italic">"{analyticsData.aiInsights.summary}"</p>
+                                        {analyticsData.aiInsights.performanceScore > 0 && (
+                                            <div className="flex-shrink-0 bg-purple-500/20 border border-purple-500/30 text-purple-400 px-3 py-1 rounded-lg text-sm font-bold">
+                                                {analyticsData.aiInsights.performanceScore}/10
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                {analyticsData.aiInsights?.strengths?.length > 0 ? (
+                                    <div className="space-y-3 relative z-10 mb-6">
+                                        <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Strengths</h3>
+                                        {analyticsData.aiInsights.strengths.map((strength, idx) => (
                                             <div key={idx} className="flex gap-3">
-                                                <Target className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                                                <p className="text-sm text-gray-300 leading-relaxed">{insight}</p>
+                                                <Target className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                                                <p className="text-sm text-gray-300 leading-relaxed">{strength}</p>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-gray-500 text-sm">Analytics will appear after you begin completing work.</p>
+                                    !analyticsData.aiInsights?.summary && <p className="text-gray-500 text-sm">Analytics will appear after you begin completing work.</p>
                                 )}
 
-                                {analyticsData.aiInsights?.areasForImprovement?.length > 0 && (
-                                     <div className="mt-6 pt-5 border-t border-[#2D2B45] relative z-10">
-                                         <h3 className="text-xs font-semibold uppercase tracking-wider text-orange-400 mb-3">Areas for Improvement</h3>
+                                {analyticsData.aiInsights?.risks?.length > 0 && (
+                                     <div className="mb-6 pt-2 relative z-10">
+                                         <h3 className="text-xs font-semibold uppercase tracking-wider text-orange-400 mb-3">Risks</h3>
                                          <ul className="space-y-2">
-                                             {analyticsData.aiInsights.areasForImprovement.map((area, idx) => (
+                                             {analyticsData.aiInsights.risks.map((risk, idx) => (
                                                  <li key={idx} className="text-sm text-gray-400 flex items-center gap-2">
-                                                     <span className="w-1.5 h-1.5 rounded-full bg-orange-400" /> {area}
+                                                     <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0" /> {risk}
+                                                 </li>
+                                             ))}
+                                         </ul>
+                                     </div>
+                                )}
+
+                                {analyticsData.aiInsights?.recommendations?.length > 0 && (
+                                     <div className="pt-5 border-t border-[#2D2B45] relative z-10">
+                                         <h3 className="text-xs font-semibold uppercase tracking-wider text-purple-400 mb-3">Recommendations</h3>
+                                         <ul className="space-y-2">
+                                             {analyticsData.aiInsights.recommendations.map((rec, idx) => (
+                                                 <li key={idx} className="text-sm text-gray-400 flex items-center gap-2">
+                                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-400 flex-shrink-0" /> {rec}
                                                  </li>
                                              ))}
                                          </ul>

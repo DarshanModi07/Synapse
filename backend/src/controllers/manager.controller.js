@@ -958,7 +958,7 @@ export const generateManagerProjectTasksAI = async (req, res) => {
             pd => pd.department.managerId === userId && !pd.department.is_deleted
         );
 
-        if (managerDepartments.length === 0) {
+        if (workspaceMember.sys_role !== 'owner' && managerDepartments.length === 0) {
             return res.status(403).json({ message: 'You do not have permission to manage this project' });
         }
 
@@ -970,7 +970,7 @@ export const generateManagerProjectTasksAI = async (req, res) => {
             return res.status(404).json({ message: 'Selected Team not found in this project' });
         }
 
-        if (!managerDepartments.some(md => md.departmentId === selectedProjectTeam.team?.departmentId)) {
+        if (workspaceMember.sys_role !== 'owner' && !managerDepartments.some(md => md.departmentId === selectedProjectTeam.team?.departmentId)) {
             return res.status(403).json({ message: 'You do not have permission to manage the selected team for this project' });
         }
 
@@ -1173,6 +1173,9 @@ export const getManagerTeamMembers = async (req, res) => {
 
 export const approveManagerProjectTasks = async (req, res) => {
     try {
+        console.log("PROJECT ID:", req.params.projectId);
+        console.log("REQUEST BODY:", JSON.stringify(req.body, null, 2));
+
         const { projectId } = req.params;
         const { tasks } = req.body;
 
@@ -1204,19 +1207,32 @@ export const approveManagerProjectTasks = async (req, res) => {
             return res.status(404).json({ message: 'Project not found' });
         }
 
+        const workspaceMember = await prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId: project.workspaceId,
+                    userId: userId
+                }
+            }
+        });
+
+        if (!workspaceMember) {
+            return res.status(403).json({ message: 'User is not a member of this workspace' });
+        }
+
         // 2. Verify Manager Ownership
         const managerDepartments = project.projectDepartments.filter(
             pd => pd.department.managerId === userId && !pd.department.is_deleted
         );
 
-        if (managerDepartments.length === 0) {
+        if (workspaceMember.sys_role !== 'owner' && managerDepartments.length === 0) {
             return res.status(403).json({ message: 'You do not have permission to manage this project' });
         }
 
         // 3. Flatten & Validate assigned teams
         const allProjectTeams = project.projectDepartments.flatMap(pd => pd.projectTeams || []);
         const allowedProjectTeamIds = allProjectTeams
-            .filter(pt => managerDepartments.some(md => md.departmentId === pt.team?.departmentId))
+            .filter(pt => workspaceMember.sys_role === 'owner' || managerDepartments.some(md => md.departmentId === pt.team?.departmentId))
             .map(pt => pt.id);
 
         let createdCount = 0;
@@ -1239,7 +1255,7 @@ export const approveManagerProjectTasks = async (req, res) => {
                     dueDate: project.dueDate,
                     projectTeam: { connect: { id: teamIdForTask } },
                     createdBy: { connect: { id: userId } },
-                    priority: t.priority || 'medium',
+                    priority: t.priority ? t.priority.toLowerCase() : 'medium',
                     status: 'todo'
                 }
             });
@@ -1271,7 +1287,7 @@ export const approveManagerProjectTasks = async (req, res) => {
                     await prisma.subTask.create({
                         data: {
                             title: stTitle,
-                            priority: st.priority || 'medium',
+                            priority: st.priority ? st.priority.toLowerCase() : 'medium',
                             dueDate: project.dueDate,
                             task: { connect: { id: newTask.id } },
                             assignedBy: { connect: { id: userId } },
@@ -1288,8 +1304,14 @@ export const approveManagerProjectTasks = async (req, res) => {
             data: { created: createdCount }
         });
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'Internal Server Error during task approval' });
+        console.error("BULK TASK FAILURE");
+        console.error(err.message);
+        console.error(err.stack);
+        return res.status(500).json({ 
+            success: false,
+            message: err.message,
+            stack: err.stack
+        });
     }
 };
 

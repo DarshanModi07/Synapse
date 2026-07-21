@@ -6,10 +6,11 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export const RecentProjects = ({ projects }) => {
   const navigate = useNavigate();
+  const { slug } = useParams();
 
   if (!projects || projects.length === 0) {
     return (
@@ -85,10 +86,8 @@ export const RecentProjects = ({ projects }) => {
         {projects.map((project) => (
           <div
             key={project.id}
-            className="flex items-center justify-between rounded-2xl px-5 py-5 transition-all duration-300 hover:bg-white/[0.03]"
-            style={{
-              border: "1px solid rgba(255,255,255,.05)",
-            }}
+            onClick={() => navigate(`/workspace/${slug}/projects/${project.id}`)}
+            className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/5 px-5 py-5 transition-all duration-300 hover:scale-[1.01] hover:border-purple-500/30 hover:bg-white/5 hover:shadow-[0_8px_30px_rgba(168,85,247,0.12)]"
           >
             {/* Left */}
 
@@ -130,15 +129,14 @@ export const RecentProjects = ({ projects }) => {
                   color: getStatusColor(project.status),
                 }}
               >
-                {project.status}
+                {project.status?.replace("_", " ")}
               </span>
 
               <button
-                onClick={() =>
-                  navigate(
-                    `/workspace/project/${project.id}`
-                  )
-                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/workspace/${slug}/projects/${project.id}`);
+                }}
                 className="transition hover:scale-110"
                 style={{
                   color: theme.primary,

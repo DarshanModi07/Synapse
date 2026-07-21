@@ -1,6 +1,7 @@
 import prisma from "../DB/db.config.js";
 import { generateAnalysis } from "../ai/ai.service.js";
 import { buildEmployeeAnalyticsPrompt } from "../ai/prompts/employeeAnalytics.prompt.js";
+import { getRedis } from "../config/redis.js";
 
 // DASHBOARD
 export const getEmployeeDashboard = async (req, res) => {
@@ -437,6 +438,11 @@ export const getEmployeeAnalytics = async (req, res) => {
             }
         });
         
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true }
+        });
+
         const tasksMap = new Map();
         const workItems = [];
         subTasks.forEach(st => {
@@ -463,35 +469,65 @@ export const getEmployeeAnalytics = async (req, res) => {
             { day: 'Fri', completed: Math.round(Math.random() * 5) + 4 },
         ];
 
-        // Prepare data for AI
-        const aiDataPayload = {
-            totalAssigned: totalItems,
-            totalCompleted,
-            completionRate,
-            overdue: [
-                ...tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done'),
-                ...subTasks.filter(st => st.dueDate && new Date(st.dueDate) < new Date() && st.status !== 'done')
-            ].length,
-            averageCompletionTime: "2.3 Days" // Mock logic for simplicity
-        };
-
-        const aiResultRaw = await generateAnalysis(buildEmployeeAnalyticsPrompt(aiDataPayload));
-        
         let aiInsights = {
-            insights: [],
+            summary: "Insufficient data available for meaningful analysis.",
             strengths: [],
-            areasForImprovement: []
+            risks: [],
+            recommendations: [],
+            timeManagement: [],
+            performanceScore: 0
         };
 
-        try {
-            if (typeof aiResultRaw === 'string') {
-                const cleaned = aiResultRaw.replace(/```json/g, '').replace(/```/g, '').trim();
-                aiInsights = { ...aiInsights, ...JSON.parse(cleaned) };
-            } else if (aiResultRaw && typeof aiResultRaw === 'object') {
-                aiInsights = { ...aiInsights, ...aiResultRaw };
+        if (totalItems > 0) {
+            const redis = getRedis();
+            const cacheKey = `employee-ai-analysis:${userId}`;
+            
+            let cachedData = null;
+            if (redis) {
+                try {
+                    const cached = await redis.get(cacheKey);
+                    if (cached) {
+                        cachedData = JSON.parse(cached);
+                        aiInsights = cachedData;
+                    }
+                } catch (e) {
+                    console.error("Redis Cache Error", e);
+                }
             }
-        } catch (e) {
-            console.error("AI parse error", e);
+
+            if (!cachedData) {
+                const aiDataPayload = {
+                    employeeName: user?.name || "Employee",
+                    completedWorkItems: workItemsCompleted,
+                    pendingWorkItems: workItems.filter(wi => wi.status !== 'done').length,
+                    activeSubtasks: subTasks.filter(st => st.status !== 'done').length,
+                    completionRate,
+                    overdue: [
+                        ...tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done'),
+                        ...subTasks.filter(st => st.dueDate && new Date(st.dueDate) < new Date() && st.status !== 'done')
+                    ].length,
+                    averageCompletionTime: "2.3 days"
+                };
+
+                const aiResultRaw = await generateAnalysis(buildEmployeeAnalyticsPrompt(aiDataPayload));
+
+                try {
+                    let parsed = {};
+                    if (typeof aiResultRaw === 'string') {
+                        const cleaned = aiResultRaw.replace(/```json/g, '').replace(/```/g, '').trim();
+                        parsed = JSON.parse(cleaned);
+                    } else if (aiResultRaw && typeof aiResultRaw === 'object') {
+                        parsed = aiResultRaw;
+                    }
+                    aiInsights = { ...aiInsights, ...parsed };
+
+                    if (redis) {
+                        await redis.set(cacheKey, JSON.stringify(aiInsights), "EX", 900);
+                    }
+                } catch (e) {
+                    console.error("AI parse error", e);
+                }
+            }
         }
 
         return res.status(200).json({
