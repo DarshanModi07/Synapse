@@ -49,26 +49,38 @@ option {
     );
 }
 
-.premium-scrollbar {
+.scrollbar-synapse {
     scrollbar-width: thin;
-    scrollbar-color: #8B5CF6 transparent;
+    scrollbar-color:
+        #8B5CF6
+        rgba(255,255,255,0.05);
 }
 
-.premium-scrollbar::-webkit-scrollbar {
+.scrollbar-synapse::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
 }
 
-.premium-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.premium-scrollbar::-webkit-scrollbar-thumb {
-    background: #8B5CF6;
+.scrollbar-synapse::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.04);
     border-radius: 999px;
 }
 
-.premium-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #A78BFA;
+.scrollbar-synapse::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        180deg,
+        #8B5CF6,
+        #7C3AED
+    );
+    border-radius: 999px;
+}
+
+.scrollbar-synapse::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        180deg,
+        #A855F7,
+        #8B5CF6
+    );
 }
 
 @keyframes shimmer {

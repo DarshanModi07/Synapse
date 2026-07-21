@@ -331,7 +331,7 @@ const TeamLeadSubtasksPage = () => {
       {/* Modal for Work Items */}
       {selectedSubtask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto premium-scrollbar rounded-2xl border border-white/10 bg-[#0A0A0A] shadow-2xl">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-synapse rounded-2xl border border-white/10 bg-[#0A0A0A] shadow-2xl">
             <button
               onClick={() => setSelectedSubtask(null)}
               className="absolute right-4 top-4 z-10 rounded-full p-2 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"

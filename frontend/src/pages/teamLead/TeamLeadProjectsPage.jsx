@@ -64,7 +64,7 @@ const TeamLeadProjectsPage = () => {
             <Link 
               to={`/workspace/${slug}/team-lead/projects/${project.id}`} 
               key={project.id}
-              className="group block p-6 rounded-[14px] bg-[#13111C] border border-[#2D2B45] transition-all hover:bg-[#1a1825] hover:border-purple-500/30 shadow-sm relative overflow-hidden"
+              className="group block p-6 rounded-[14px] bg-[#13111C] border border-[#2D2B45] transition-all hover:bg-[#1a1825] hover:border-purple-500/30 hover:scale-[1.01] hover:shadow-lg shadow-sm relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                 <FolderKanban className="w-24 h-24 text-purple-400 -rotate-12 translate-x-6 -translate-y-4" />

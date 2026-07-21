@@ -181,7 +181,7 @@ const TeamLeadWorkItemBoard = ({
             No Work Items logged. Create one manually or use AI.
           </div>
         ) : (
-          <div className="border border-[#2D2B45] rounded-[10px] overflow-hidden shadow-sm">
+          <div className="border border-[#2D2B45] rounded-[10px] overflow-x-auto scrollbar-synapse shadow-sm">
               <table className="w-full text-left">
                   <thead>
                       <tr className="bg-[#08070F] border-b border-[#2D2B45]">

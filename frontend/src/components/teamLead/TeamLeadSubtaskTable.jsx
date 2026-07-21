@@ -31,7 +31,7 @@ const getPriorityConfig = (priority) => {
 
 const TeamLeadSubtaskTable = ({ subtasks, onSubtaskClick }) => {
   return (
-    <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "rgba(255,255,255,0.05)", background: theme.card }}>
+    <div className="overflow-x-auto scrollbar-synapse rounded-2xl border" style={{ borderColor: "rgba(255,255,255,0.05)", background: theme.card }}>
       <table className="w-full whitespace-nowrap text-left text-sm">
         <thead className="border-b bg-black/20 text-gray-400" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
           <tr>

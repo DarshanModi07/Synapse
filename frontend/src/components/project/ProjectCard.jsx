@@ -44,20 +44,13 @@ const ProjectCard = ({
     return (
 
         <div
-
-            className="rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1"
-
+            onClick={() => navigate(`/workspace/${slug}${rolePrefix}/projects/${project.id}`)}
+            className="rounded-3xl p-6 cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:border-purple-500/40 hover:shadow-lg"
             style={{
-
                 background: "rgba(13,13,18,.55)",
-
-                border:
-                    "1px solid rgba(167,139,250,.10)",
-
+                border: "1px solid rgba(167,139,250,.10)",
                 backdropFilter: "blur(24px)"
-
             }}
-
         >
 
             <div className="flex items-start justify-between">
@@ -290,9 +283,10 @@ const ProjectCard = ({
 
                 <button
 
-                    onClick={() =>
-                        onEdit(project)
-                    }
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(project);
+                    }}
 
                     className="flex-1 rounded-xl py-3 transition"
 
@@ -320,9 +314,10 @@ const ProjectCard = ({
 
                 <button
 
-                    onClick={() =>
-                        onDelete(project)
-                    }
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(project);
+                    }}
 
                     className="flex-1 rounded-xl py-3 transition"
 
