@@ -4,7 +4,7 @@ import prisma from "../DB/db.config.js"
 
 export const createProject = async (req, res) => {
     try {
-        let { workspaceId, name, description, startDate, dueDate } = req.body;
+        let { workspaceId, name, description, startDate, dueDate, status } = req.body;
 
         name = name?.trim();
         description = description?.trim();
@@ -87,7 +87,8 @@ export const createProject = async (req, res) => {
                 workspaceId,
                 createdById: currentUserId,
                 startDate: start,
-                dueDate: due
+                dueDate: due,
+                status: status || 'planning'
             }
         });
 

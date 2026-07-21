@@ -75,7 +75,7 @@ const ProjectCard = ({
 
                     <div
 
-                        className="mt-3 inline-flex rounded-full px-3 py-1 text-xs font-medium"
+                        className="mt-3 inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize"
 
                         style={{
 
@@ -93,7 +93,7 @@ const ProjectCard = ({
 
                     >
 
-                        {project.status}
+                        {project.status?.replace("_", " ")}
 
                     </div>
 
