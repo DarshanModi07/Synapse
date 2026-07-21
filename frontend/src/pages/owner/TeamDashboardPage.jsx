@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 import { useTeamDashboard } from "@/hooks/useTeamDashboard";
 
@@ -13,6 +14,7 @@ import { theme } from "@/lib/theme";
 const TeamDashboardPage = () => {
 
   const { teamId } = useParams();
+  const { workspace } = useWorkspace();
 
   const {
 
@@ -84,11 +86,11 @@ const TeamDashboardPage = () => {
       />
 
       <TeamMembers
-
         members={dashboard.members}
-
+        teamId={teamId}
+        workspaceId={workspace?.id}
+        canAddMembers={true}
         refresh={refresh}
-
       />
 
       {/* <TeamTasks

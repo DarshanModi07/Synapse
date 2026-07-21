@@ -1,17 +1,55 @@
+import { useState } from "react";
 import {
   Crown,
   User,
   Mail,
   CalendarDays,
+  Plus
 } from "lucide-react";
 
 import { theme } from "@/lib/theme";
+import AddTeamMembersModal from "../team/AddTeamMembersModal";
+import { useWorkspaceMembers } from "@/hooks/useWorkspaceMembers";
+import { addTeamMembers } from "@/services/team.service";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 const TeamMembers = ({
   members = [],
+  teamId,
+  workspaceId,
+  canAddMembers,
+  refresh
 }) => {
+  const [showAddMembers, setShowAddMembers] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  
+  const { members: workspaceMembers } = useWorkspaceMembers(workspaceId);
+
+  const handleAddMembers = async (memberIds) => {
+    try {
+      setSubmitting(true);
+      await addTeamMembers(teamId, memberIds);
+      // Removed undefined showNotification
+      setShowAddMembers(false);
+      if (refresh) refresh();
+    } catch (error) {
+      console.error(error.response?.data?.message || "Failed to add members");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
+    <ErrorBoundary>
+    <>
+      <AddTeamMembersModal
+        open={showAddMembers}
+        workspaceMembers={workspaceMembers}
+        teamMembers={members}
+        loading={submitting}
+        onClose={() => setShowAddMembers(false)}
+        onAdd={handleAddMembers}
+      />
 
     <div
       className="rounded-3xl p-8"
@@ -49,21 +87,37 @@ const TeamMembers = ({
 
         </div>
 
-        <div
-          className="rounded-xl px-4 py-2"
-          style={{
-            background: "rgba(124,58,237,.12)",
-            color: theme.primaryLight,
-          }}
-        >
-          {members.length} Members
+        <div className="flex items-center gap-4">
+          <div
+            className="rounded-xl px-4 py-2"
+            style={{
+              background: "rgba(124,58,237,.12)",
+              color: theme.primaryLight,
+            }}
+          >
+            {(members || []).length} Members
+          </div>
+
+          {canAddMembers && (
+            <button
+              onClick={() => setShowAddMembers(true)}
+              className="flex items-center gap-2 rounded-xl px-4 py-2 font-semibold transition-all hover:opacity-90"
+              style={{
+                background: theme.primary,
+                color: "#fff",
+              }}
+            >
+              <Plus size={18} />
+              Add Members
+            </button>
+          )}
         </div>
 
       </div>
 
       {
 
-        members.length === 0 ? (
+        (members || []).length === 0 ? (
 
           <div
             className="py-16 text-center"
@@ -82,7 +136,7 @@ const TeamMembers = ({
 
             {
 
-              members.map((member) => (
+              (members || []).map((member) => (
 
                 <div
 
@@ -243,6 +297,8 @@ const TeamMembers = ({
 
     </div>
 
+    </>
+    </ErrorBoundary>
   );
 
 };

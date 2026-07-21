@@ -42,6 +42,7 @@ import TeamLeadProjectDetailsPage from "@/pages/teamLead/TeamLeadProjectDetailsP
 import TeamLeadMembersPage from "@/pages/teamLead/TeamLeadMembersPage";
 import TeamLeadMemberDetailsPage from "@/pages/teamLead/TeamLeadMemberDetailsPage";
 import TeamLeadAnalyticsPage from "@/pages/teamLead/TeamLeadAnalyticsPage";
+import TeamLeadSubtasksPage from "@/pages/teamLead/TeamLeadSubtasksPage";
 
 import EmployeeDashboardPage from "@/pages/employee/EmployeeDashboardPage";
 import EmployeeTasksPage from "@/pages/employee/EmployeeTasksPage";
@@ -225,6 +226,7 @@ const AppRoutes = () => {
           <Route path="members" element={<TeamLeadMembersPage />} />
           <Route path="members/:memberId" element={<TeamLeadMemberDetailsPage />} />
           <Route path="analytics" element={<TeamLeadAnalyticsPage />} />
+          <Route path="subtasks" element={<TeamLeadSubtasksPage />} />
         </Route>
 
         {/* Employee Layout */}

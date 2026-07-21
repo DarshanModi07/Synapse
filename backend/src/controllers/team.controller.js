@@ -1,4 +1,5 @@
 import prisma from "../DB/db.config.js"
+import { teamService } from "../service/team.service.js";
 
 export const createTeam = async (req,res) => {
     try{
@@ -1301,5 +1302,26 @@ export const getAvailableLeaders = async (req, res) => {
             message: "Internal Server Error while fetching leaders"
         });
 
+    }
+};
+
+export const addTeamMembers = async (req, res) => {
+    try {
+        const result = await teamService.addMembers(
+            req.params.teamId,
+            req.body.memberIds,
+            req.user
+        );
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error("addTeamMembers Error:", err);
+        if (err.message === "TEAM_NOT_FOUND") return res.status(404).json({ message: "Team not found." });
+        if (err.message === "UNAUTHORIZED" || err.message === "UNAUTHORIZED_TO_ADD_MEMBERS") return res.status(403).json({ message: "You are not authorized to add members to this team." });
+        if (err.message === "INVALID_WORKSPACE_MEMBER") return res.status(400).json({ message: "One or more users do not belong to this workspace." });
+        if (err.message === "MEMBERS_ALREADY_IN_TEAM") return res.status(409).json({ message: "One or more users are already members of this team." });
+        
+        return res.status(400).json({
+            message: err.message || "Internal Server Error"
+        });
     }
 };

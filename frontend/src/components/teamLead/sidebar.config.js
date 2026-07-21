@@ -19,6 +19,11 @@ export const teamLeadConfig = [
         icon: UserRound,
         path: "members",
       },
+      {
+        label: "Subtasks",
+        icon: FolderKanban,
+        path: "subtasks",
+      },
     ],
   },
   {

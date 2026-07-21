@@ -172,3 +172,21 @@ export const removeTeamMember = async (
 
   return response.data;
 };
+
+/*
+|--------------------------------------------------------------------------
+| Add Team Members (Bulk)
+|--------------------------------------------------------------------------
+*/
+
+export const addTeamMembers = async (
+  teamId,
+  memberIds
+) => {
+  const response = await api.post(
+    `/team/${teamId}/members`,
+    { memberIds }
+  );
+
+  return response.data;
+};

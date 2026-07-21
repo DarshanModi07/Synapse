@@ -17,6 +17,10 @@ const teamLeadService = {
     const response = await api.get("/team-lead/analytics");
     return response.data.data;
   },
+  getMySubtasks: async () => {
+    const response = await api.get("/team-lead/subtasks");
+    return response.data;
+  },
 };
 
 export default teamLeadService;
