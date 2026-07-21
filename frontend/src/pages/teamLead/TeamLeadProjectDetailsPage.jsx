@@ -36,6 +36,7 @@ const TeamLeadProjectDetailsPage = () => {
     handleRejectSubTask,
     handleDeleteSubTask,
     handleCreateWorkItem,
+    handleBulkCreateWorkItems,
     handleUpdateWorkItem,
     handleDeleteWorkItem
   } = useTeamLeadProjectDetails(projectId);
@@ -206,6 +207,7 @@ const TeamLeadProjectDetailsPage = () => {
           <TeamLeadWorkItemBoard 
             subTask={currentSubTask}
             onCreateWorkItem={handleCreateWorkItem}
+            onBulkCreateWorkItems={handleBulkCreateWorkItems}
             onUpdateWorkItem={handleUpdateWorkItem}
             onDeleteWorkItem={handleDeleteWorkItem}
             onGenerateAI={handleGenerateAIWorkItems}

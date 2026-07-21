@@ -205,6 +205,33 @@ export const useTeamLeadProjectDetails = (projectId) => {
       throw err;
     }
   };
+
+  const handleBulkCreateWorkItems = async (subTaskId, payload) => {
+    try {
+      const createdWorkItems = await teamLeadProjectService.createBulkWorkItems(subTaskId, { workItems: payload });
+      setData(prev => {
+        if (!prev) return prev;
+        const newData = { ...prev };
+        newData.projectTeams = (newData.projectTeams || []).map(pt => ({
+          ...pt,
+          tasks: (pt.tasks || []).map(t => ({
+            ...t,
+            subtasks: (t.subtasks || []).map(st => {
+              if (st.id === subTaskId) {
+                return { ...st, workItems: [...(st.workItems || []), ...createdWorkItems] };
+              }
+              return st;
+            })
+          }))
+        }));
+        return newData;
+      });
+      return createdWorkItems;
+    } catch (err) {
+      console.error("Failed to bulk create WorkItems", err);
+      throw err;
+    }
+  };
   
   const handleUpdateWorkItem = async (workItemId, payload) => {
     try {
@@ -273,6 +300,7 @@ export const useTeamLeadProjectDetails = (projectId) => {
     handleApproveSubTask,
     handleRejectSubTask,
     handleCreateWorkItem,
+    handleBulkCreateWorkItems,
     handleUpdateWorkItem,
     handleDeleteWorkItem
   };
