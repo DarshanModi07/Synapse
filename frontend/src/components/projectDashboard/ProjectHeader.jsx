@@ -3,9 +3,7 @@ import {
     FolderKanban,
     User,
     Building2,
-    Pencil,
-    Trash2,
-    Clock3
+    Trash2
 } from "lucide-react";
 
 import { theme } from "@/lib/theme";
@@ -91,45 +89,7 @@ const ProjectHeader = ({ project }) => {
 
                 </div>
 
-                <div className="flex gap-3 self-start">
 
-                    <button
-                        className="rounded-xl px-5 py-3 transition hover:scale-[1.03]"
-                        style={{
-                            background: "rgba(255,255,255,.05)",
-                            border: "1px solid rgba(255,255,255,.08)",
-                            color: theme.text
-                        }}
-                    >
-                        <Pencil size={18} />
-
-                    </button>
-
-                    <button
-                        className="rounded-xl px-5 py-3 transition hover:scale-[1.03]"
-                        style={{
-                            background: "rgba(251,191,36,.10)",
-                            border: "1px solid rgba(251,191,36,.20)",
-                            color: "#FACC15"
-                        }}
-                    >
-                        <Clock3 size={18} />
-
-                    </button>
-
-                    <button
-                        className="rounded-xl px-5 py-3 transition hover:scale-[1.03]"
-                        style={{
-                            background: "rgba(239,68,68,.10)",
-                            border: "1px solid rgba(239,68,68,.20)",
-                            color: "#EF4444"
-                        }}
-                    >
-                        <Trash2 size={18} />
-
-                    </button>
-
-                </div>
 
             </div>
 
