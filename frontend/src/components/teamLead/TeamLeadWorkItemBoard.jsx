@@ -16,6 +16,10 @@ const TeamLeadWorkItemBoard = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', estimatedHours: '' });
   const [selectedSuggestions, setSelectedSuggestions] = useState(new Set());
+  
+  // Edit State
+  const [editingItem, setEditingItem] = useState(null);
+  const [editFormData, setEditFormData] = useState({ title: '', description: '', estimatedHours: '' });
 
   if (!subTask) return null;
 
@@ -24,6 +28,25 @@ const TeamLeadWorkItemBoard = ({
     onCreateWorkItem(subTask.id, formData);
     setShowAddForm(false);
     setFormData({ title: '', description: '', estimatedHours: '' });
+  };
+
+  const openEdit = (wi) => {
+    setEditingItem(wi.id);
+    setEditFormData({ 
+      title: wi.title, 
+      description: wi.description || '', 
+      estimatedHours: wi.estimatedHours || '' 
+    });
+  };
+
+  const handleSaveEdit = (e) => {
+    e.preventDefault();
+    onUpdateWorkItem(editingItem, {
+      title: editFormData.title,
+      description: editFormData.description,
+      estimatedHours: editFormData.estimatedHours
+    });
+    setEditingItem(null);
   };
 
   const toggleSuggestion = (title) => {
@@ -171,8 +194,9 @@ const TeamLeadWorkItemBoard = ({
                   </thead>
                   <tbody className="divide-y divide-[#2D2B45]">
                       {(subTask.workItems || []).map((wi, idx) => (
-                          <tr key={wi.id} className="hover:bg-[#1a1825] transition-colors bg-[#13111C] group">
-                              <td className="p-4 text-center">
+                          <React.Fragment key={wi.id}>
+                              <tr className="hover:bg-[#1a1825] transition-colors bg-[#13111C] group">
+                                  <td className="p-4 text-center">
                                   <button 
                                       onClick={() => onUpdateWorkItem(wi.id, { status: wi.status === 'done' ? 'in_progress' : 'done' })}
                                       className="flex justify-center w-full focus:outline-none hover:opacity-80 transition-opacity"
@@ -199,7 +223,11 @@ const TeamLeadWorkItemBoard = ({
                               <td className="p-4 text-right">
                                   {subTask.status !== 'done' && (
                                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <button className="p-1.5 text-[#6B7280] hover:text-blue-400 hover:bg-blue-400/10 rounded-[6px] transition-colors" title="Edit">
+                                          <button 
+                                              onClick={() => openEdit(wi)}
+                                              className="p-1.5 text-[#6B7280] hover:text-blue-400 hover:bg-blue-400/10 rounded-[6px] transition-colors" 
+                                              title="Edit"
+                                          >
                                               <Pencil className="w-4 h-4" />
                                           </button>
                                           <button onClick={() => onDeleteWorkItem(wi.id)} className="p-1.5 text-[#6B7280] hover:text-red-400 hover:bg-red-400/10 rounded-[6px] transition-colors" title="Delete">
@@ -209,6 +237,38 @@ const TeamLeadWorkItemBoard = ({
                                   )}
                               </td>
                           </tr>
+                          
+                          {/* Edit Form Row */}
+                          {editingItem === wi.id && (
+                            <tr>
+                              <td colSpan="5" className="p-4 bg-[#08070F] border-b border-[#2D2B45]">
+                                <form onSubmit={handleSaveEdit} className="space-y-4 max-w-2xl">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input 
+                                      required type="text" placeholder="Work Item Title" 
+                                      value={editFormData.title} onChange={e => setEditFormData({...editFormData, title: e.target.value})}
+                                      className="bg-[#13111C] border border-[#2D2B45] rounded-[6px] px-3 py-2 text-[13px] text-[#F9FAFB] focus:outline-none focus:border-blue-500/50"
+                                    />
+                                    <input 
+                                      type="number" placeholder="Estimated Hours" 
+                                      value={editFormData.estimatedHours} onChange={e => setEditFormData({...editFormData, estimatedHours: e.target.value})}
+                                      className="bg-[#13111C] border border-[#2D2B45] rounded-[6px] px-3 py-2 text-[13px] text-[#F9FAFB] focus:outline-none focus:border-blue-500/50"
+                                    />
+                                  </div>
+                                  <textarea 
+                                    placeholder="Description..." 
+                                    value={editFormData.description} onChange={e => setEditFormData({...editFormData, description: e.target.value})}
+                                    className="w-full bg-[#13111C] border border-[#2D2B45] rounded-[6px] px-3 py-2 text-[13px] text-[#F9FAFB] focus:outline-none focus:border-blue-500/50 h-24 resize-none"
+                                  />
+                                  <div className="flex justify-end gap-3">
+                                    <button type="button" onClick={() => setEditingItem(null)} className="px-4 py-2 text-[13px] font-medium text-[#6B7280] hover:text-[#F9FAFB]">Cancel</button>
+                                    <button type="submit" className="px-4 py-2 text-[13px] font-medium bg-blue-500 hover:bg-blue-600 text-white rounded-[6px] transition-colors">Save Changes</button>
+                                  </div>
+                                </form>
+                              </td>
+                            </tr>
+                          )}
+                          </React.Fragment>
                       ))}
                   </tbody>
               </table>

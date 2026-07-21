@@ -161,38 +161,65 @@ const TeamLeadSubtasksPage = () => {
   };
 
   const handleUpdateWorkItem = async (workItemId, updates) => {
-    try {
-      const updatedWorkItem = await teamLeadProjectService.updateWorkItem(workItemId, updates);
+    // 1. Snapshot previous state for rollback
+    const prevSelectedSubtask = selectedSubtask;
+    const prevData = data;
+
+    let optimisticWorkItem = null;
+
+    // 2. Optimistic Update
+    setSelectedSubtask(prev => {
+      if (!prev) return prev;
+      const newWorkItems = (prev.workItems || []).map(wi => {
+        if (wi.id === workItemId) {
+          optimisticWorkItem = { ...wi, ...updates };
+          return optimisticWorkItem;
+        }
+        return wi;
+      });
+      const total = newWorkItems.length;
+      const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+      const progress = total > 0 ? Math.round((completed / total) * 100) : prev.progress;
       
-      setSelectedSubtask(prev => {
-        if (!prev) return prev;
-        const newWorkItems = (prev.workItems || []).map(wi => wi.id === workItemId ? updatedWorkItem : wi);
-        const total = newWorkItems.length;
-        const completed = newWorkItems.filter(wi => wi.status === 'done').length;
-        const progress = total > 0 ? Math.round((completed / total) * 100) : prev.progress;
-        const status = (total > 0 && total === completed && prev.status !== 'done') ? 'in_review' : prev.status;
-        return { ...prev, workItems: newWorkItems, progress, status };
-      });
+      let status = prev.status;
+      if (progress === 100 && prev.status !== 'done') status = 'in_review';
+      else if (progress > 0 && progress < 100 && prev.status === 'todo') status = 'in_progress';
+      
+      return { ...prev, workItems: newWorkItems, progress, status };
+    });
 
-      setData(prev => {
-        if (!prev || !prev.subtasks) return prev;
-        return {
-          ...prev,
-          subtasks: prev.subtasks.map(st => {
-            const hasItem = (st.workItems || []).some(wi => wi.id === workItemId);
-            if (!hasItem) return st;
-            const newWorkItems = (st.workItems || []).map(wi => wi.id === workItemId ? updatedWorkItem : wi);
-            const total = newWorkItems.length;
-            const completed = newWorkItems.filter(wi => wi.status === 'done').length;
-            const progress = total > 0 ? Math.round((completed / total) * 100) : st.progress;
-            const status = (total > 0 && total === completed && st.status !== 'done') ? 'in_review' : st.status;
-            return { ...st, workItems: newWorkItems, progress, status };
-          })
-        };
-      });
+    setData(prev => {
+      if (!prev || !prev.subtasks) return prev;
+      return {
+        ...prev,
+        subtasks: prev.subtasks.map(st => {
+          const hasItem = (st.workItems || []).some(wi => wi.id === workItemId);
+          if (!hasItem) return st;
+          
+          const newWorkItems = (st.workItems || []).map(wi => 
+            wi.id === workItemId ? (optimisticWorkItem || { ...wi, ...updates }) : wi
+          );
+          const total = newWorkItems.length;
+          const completed = newWorkItems.filter(wi => wi.status === 'done').length;
+          const progress = total > 0 ? Math.round((completed / total) * 100) : st.progress;
+          
+          let status = st.status;
+          if (progress === 100 && st.status !== 'done') status = 'in_review';
+          else if (progress > 0 && progress < 100 && st.status === 'todo') status = 'in_progress';
+          
+          return { ...st, workItems: newWorkItems, progress, status };
+        })
+      };
+    });
 
+    // 3. API Call
+    try {
+      await teamLeadProjectService.updateWorkItem(workItemId, updates);
       showToast('Work item updated');
     } catch (err) {
+      // 4. Rollback on error
+      setSelectedSubtask(prevSelectedSubtask);
+      setData(prevData);
       showToast(err.response?.data?.message || 'Failed to update work item', 'error');
     }
   };
@@ -304,7 +331,7 @@ const TeamLeadSubtasksPage = () => {
       {/* Modal for Work Items */}
       {selectedSubtask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0A0A0A] shadow-2xl">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto premium-scrollbar rounded-2xl border border-white/10 bg-[#0A0A0A] shadow-2xl">
             <button
               onClick={() => setSelectedSubtask(null)}
               className="absolute right-4 top-4 z-10 rounded-full p-2 text-gray-400 hover:bg-white/10 hover:text-white transition-colors"

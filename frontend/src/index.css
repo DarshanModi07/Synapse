@@ -49,6 +49,28 @@ option {
     );
 }
 
+.premium-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #8B5CF6 transparent;
+}
+
+.premium-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb {
+    background: #8B5CF6;
+    border-radius: 999px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #A78BFA;
+}
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);

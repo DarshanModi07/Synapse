@@ -72,6 +72,7 @@ export const getTeamLeadSubtasks = async (req, res) => {
                 project: subtask.task?.projectTeam?.projectDepartment?.project || null,
                 task: subtask.task || null,
                 assignedBy: subtask.assignedBy,
+                workItems: subtask.workItems,
                 workItemsCount: subtask.workItems.length,
                 completedWorkItemsCount: subtask.workItems.filter(wi => wi.status === "done").length,
             };

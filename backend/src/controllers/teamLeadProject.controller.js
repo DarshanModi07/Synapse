@@ -154,7 +154,7 @@ export const getTeamLeadProjectDetails = async (req, res) => {
                             include: {
                                 assignedTo: { select: { name: true, avatar: true } },
                                 assignedBy: { select: { name: true } },
-                                workItems: { where: { completedAt: null } } // Fetch active work items to derive progress if needed
+                                workItems: { where: { is_deleted: false } }
                             }
                         }
                     }
