@@ -4,13 +4,16 @@ import {
   User,
   Mail,
   CalendarDays,
-  Plus
+  Plus,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 
 import { theme } from "@/lib/theme";
 import AddTeamMembersModal from "../team/AddTeamMembersModal";
+import RemoveMemberDialog from "./RemoveMemberDialog";
 import { useWorkspaceMembers } from "@/hooks/useWorkspaceMembers";
-import { addTeamMembers } from "@/services/team.service";
+import { addTeamMembers, removeTeamMember } from "@/services/team.service";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 const TeamMembers = ({
@@ -18,12 +21,38 @@ const TeamMembers = ({
   teamId,
   workspaceId,
   canAddMembers,
-  refresh
+  refresh,
+  canRemoveMembers
 }) => {
   const [showAddMembers, setShowAddMembers] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
   const { members: workspaceMembers } = useWorkspaceMembers(workspaceId);
+
+  const [memberToRemove, setMemberToRemove] = useState(null);
+  const [removing, setRemoving] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToastMessage({ message, type });
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+    try {
+      setRemoving(true);
+      await removeTeamMember(teamId, memberToRemove.id);
+      showToast("Team member removed successfully");
+      setMemberToRemove(null);
+      if (refresh) refresh();
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to remove team member", 'error');
+    } finally {
+      setRemoving(false);
+    }
+  };
+
 
   const handleAddMembers = async (memberIds) => {
     try {
@@ -42,6 +71,22 @@ const TeamMembers = ({
   return (
     <ErrorBoundary>
     <>
+      {toastMessage && (
+        <div className={`fixed top-4 right-4 px-4 py-3 rounded-[8px] shadow-lg border flex items-center gap-2 z-[100] animate-in fade-in slide-in-from-top-4 ${toastMessage.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+          {toastMessage.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          <span className="text-[13px] font-medium">{toastMessage.message}</span>
+        </div>
+      )}
+
+      <RemoveMemberDialog
+        open={!!memberToRemove}
+        member={memberToRemove}
+        teamName="this team"
+        loading={removing}
+        onClose={() => setMemberToRemove(null)}
+        onConfirm={handleRemoveMember}
+      />
+
       <AddTeamMembersModal
         open={showAddMembers}
         workspaceMembers={workspaceMembers}
@@ -216,7 +261,8 @@ const TeamMembers = ({
 
                   {/* Right */}
 
-                  <div className="text-right">
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
 
                     <div
                       className="flex items-center justify-end gap-2"
@@ -281,6 +327,17 @@ const TeamMembers = ({
 
                     </div>
 
+                  </div>
+
+                    {canRemoveMembers && (
+                      <button
+                        onClick={() => setMemberToRemove(member)}
+                        className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all hover:bg-red-500/10 hover:text-red-500 border border-transparent hover:border-red-500/20"
+                        style={{ color: theme.secondary }}
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
 
                 </div>

@@ -112,6 +112,113 @@ class TeamService {
             }
         };
     }
+
+    async removeMember(teamId, memberId, userContext) {
+        // 1. Fetch Team & Department Context
+        const team = await prisma.team.findUnique({
+            where: { id: teamId },
+            include: { department: true }
+        });
+
+        if (!team || team.is_deleted) {
+            throw new Error("TEAM_NOT_FOUND");
+        }
+
+        const workspaceId = team.department.workspaceId;
+
+        // 2. RBAC Validation for Requester
+        const requesterMembership = await prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId,
+                    userId: userContext.userId
+                }
+            }
+        });
+
+        if (!requesterMembership) {
+            throw new Error("UNAUTHORIZED");
+        }
+
+        const isOwner = requesterMembership.sys_role === "owner";
+        const isManager = requesterMembership.sys_role === "manager" && team.department.managerId === userContext.userId;
+
+        if (!isOwner && !isManager) {
+            throw new Error("UNAUTHORIZED_TO_REMOVE_MEMBERS");
+        }
+
+        // 3. Validate Target User
+        const targetMembership = await prisma.workspaceMember.findUnique({
+            where: {
+                workspaceId_userId: {
+                    workspaceId,
+                    userId: memberId
+                }
+            },
+            include: { user: true }
+        });
+
+        if (!targetMembership) {
+            throw new Error("TARGET_NOT_FOUND");
+        }
+
+        if (targetMembership.sys_role === "owner" || targetMembership.sys_role === "manager") {
+            throw new Error("CANNOT_REMOVE_LEADERS");
+        }
+
+        // 4. Verify Membership
+        const existingMember = await prisma.teamMember.findUnique({
+            where: {
+                teamId_memberId: {
+                    teamId,
+                    memberId
+                }
+            }
+        });
+
+        if (!existingMember) {
+            throw new Error("MEMBER_NOT_IN_TEAM");
+        }
+
+        // 5. Remove Member
+        await prisma.teamMember.delete({
+            where: {
+                teamId_memberId: {
+                    teamId,
+                    memberId
+                }
+            }
+        });
+
+        // 6. Fire Notifications & Sockets
+        try {
+            await notificationService.sendNotification({
+                userId: memberId,
+                workspaceId,
+                type: "removed_from_team",
+                title: "Removed from Team",
+                message: `You have been removed from Team ${team.name}.`,
+                entityType: "Team",
+                entityId: teamId,
+                actionUrl: `/employee/dashboard`
+            });
+
+            const io = getIO();
+            if (io) {
+                io.to(teamId).emit("TEAM_MEMBER_REMOVED", {
+                    teamId,
+                    userId: memberId,
+                    removedBy: userContext.userId
+                });
+            }
+        } catch (error) {
+            console.error("Failed to emit socket or notification for team member removal:", error);
+        }
+
+        return {
+            message: "Team member removed successfully"
+        };
+    }
 }
 
 export const teamService = new TeamService();

@@ -90,6 +90,7 @@ const TeamDashboardPage = () => {
         teamId={teamId}
         workspaceId={workspace?.id}
         canAddMembers={true}
+        canRemoveMembers={true}
         refresh={refresh}
       />
 

@@ -706,123 +706,31 @@ export const getTeamMembers = async (req, res) => {
     }
 };
 
-export const removeTeamMember = async (req,res) => {
-    try{
-        const { teamId } = req.params
-        const { memberId } = req.body
-
-        if(!teamId || !memberId){
-            return res.status(400).json({
-                message:"credential needed"
-            })
-        }
-
+export const removeTeamMember = async (req, res) => {
+    try {
+        const { teamId, userId } = req.params;
         const currentUserId = req.user.userId;
 
-        const team = await prisma.team.findUnique({
-            where: {
-                id: teamId
-            }
-        });
-
-        if (!team || team.is_deleted) {
-            return res.status(404).json({
-                message: "Team not found"
+        if (!teamId || !userId) {
+            return res.status(400).json({
+                message: "Team ID and User ID are required"
             });
         }
 
-        const department = await prisma.department.findUnique({
-            where: {
-                id: team.departmentId
-            }
-        });
+        const result = await teamService.removeMember(teamId, userId, { userId: currentUserId });
 
-        if (!department) {
-            return res.status(404).json({
-                message: "Department not found"
-            });
-        }
-
-        const currentUser = await prisma.workspaceMember.findUnique({
-            where: {
-                workspaceId_userId: {
-                    workspaceId: department.workspaceId,
-                    userId: currentUserId
-                }
-            }
-        });
-
-        if (!currentUser) {
-            return res.status(403).json({
-                message: "You are not a member of this workspace"
-            });
-        }
-
-        if (currentUser.sys_role !== "owner" && currentUser.sys_role !== "manager") {
-            return res.status(403).json({
-                message: "Only Owner and Manager can remove teamMembers"
-            });
-        }
-
-        const checkTargetUser = await prisma.workspaceMember.findUnique({
-            where:{
-                workspaceId_userId:{
-                    workspaceId:department.workspaceId,
-                    userId:memberId
-                }
-            }
-        })
+        return res.status(200).json(result);
+    } catch (err) {
+        console.error("Error in removeTeamMember:", err);
         
+        const status = err.message === "UNAUTHORIZED" || err.message === "UNAUTHORIZED_TO_REMOVE_MEMBERS" || err.message === "CANNOT_REMOVE_LEADERS" ? 403 : 
+                       err.message === "TEAM_NOT_FOUND" || err.message === "TARGET_NOT_FOUND" || err.message === "MEMBER_NOT_IN_TEAM" ? 404 : 500;
 
-        if(!checkTargetUser){
-            return res.status(404).json({
-                message:"Target Member not found"
-            })
-        }
-
-        const existingMember = await prisma.teamMember.findUnique({
-            where: {
-                teamId_memberId: {
-                    teamId,
-                    memberId
-                }
-            }
+        return res.status(status).json({
+            message: err.message || "Internal Server error while removing team member"
         });
-
-        if (!existingMember) {
-            return res.status(404).json({
-                message: "Member not  exists in this team"
-            });
-        }
-
-
-        if(checkTargetUser.sys_role === "manager" || checkTargetUser.sys_role === "owner"){
-            return res.status(403).json({
-                message:"Target User can not be TeamLead or Owner or Manager"
-            })
-        }
-
-        const removeTeamMember = await prisma.teamMember.delete({
-            where:{
-                teamId_memberId:{
-                    teamId,
-                    memberId
-                }
-            }
-        })
-
-        return res.status(201).json({
-            message:"Team member removed successfully",
-            teamMember:removeTeamMember
-        })
-
     }
-    catch(err){
-        return res.status(500).json({
-            message:"Internal Server error during removing Team Member"
-        })
-    }
-}
+};
 
 export const getWorkspaceTeams = async (req, res) => {
     try {
