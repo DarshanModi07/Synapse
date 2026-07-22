@@ -196,7 +196,7 @@ const ManagerAITeamSuggestionModal = ({
 
           <>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
 
               <div>
 
@@ -220,7 +220,7 @@ const ManagerAITeamSuggestionModal = ({
 
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex w-full gap-3 sm:w-auto">
 
                 <button
 
@@ -232,7 +232,7 @@ const ManagerAITeamSuggestionModal = ({
                     )
                   }
 
-                  className="rounded-xl px-4 py-2 text-sm transition"
+                  className="flex-1 rounded-xl px-4 py-2 text-sm transition sm:flex-none"
 
                   style={{
                     background:
@@ -375,7 +375,7 @@ const ManagerAITeamSuggestionModal = ({
         {!generating &&
           suggestions.length > 0 && (
 
-            <div className="mt-8 flex items-center justify-between">
+            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
 
               <div>
 
@@ -390,7 +390,7 @@ const ManagerAITeamSuggestionModal = ({
 
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex w-full gap-4 sm:w-auto">
 
                 <button
 
@@ -398,7 +398,7 @@ const ManagerAITeamSuggestionModal = ({
 
                   disabled={creating}
 
-                  className="rounded-xl px-6 py-3 transition-all duration-300 hover:scale-[1.02]"
+                  className="flex-1 rounded-xl px-6 py-3 transition-all duration-300 hover:scale-[1.02] sm:flex-none"
 
                   style={{
                     background:
@@ -461,7 +461,7 @@ const ManagerAITeamSuggestionModal = ({
 
                   }}
 
-                  className="rounded-xl px-8 py-3 transition-all duration-300 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex-1 rounded-xl px-8 py-3 transition-all duration-300 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
 
                   style={{
                     background:

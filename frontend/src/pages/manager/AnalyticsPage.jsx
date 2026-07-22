@@ -122,7 +122,7 @@ const ManagerAnalyticsPage = () => {
                         backdropFilter: "blur(20px)"
                     }}
                 >
-                    <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-6">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-purple-500/10 rounded-2xl">
                                 <Activity className="w-6 h-6 text-purple-400" />

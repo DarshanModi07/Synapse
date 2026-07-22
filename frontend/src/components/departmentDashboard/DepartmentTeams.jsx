@@ -25,7 +25,7 @@ const DepartmentTeams = ({ teams, basePath, onViewAll }) => {
 
       {/* Heading */}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2
             className="text-3xl font-bold"
@@ -46,17 +46,19 @@ const DepartmentTeams = ({ teams, basePath, onViewAll }) => {
           </p>
         </div>
         {onViewAll && (
-          <button
-            onClick={onViewAll}
-            className="rounded-xl px-4 py-2 font-medium transition-all hover:opacity-80"
-            style={{
-              background: "rgba(124,58,237,.15)",
-              color: theme.primaryLight,
-              border: "1px solid rgba(124,58,237,.3)",
-            }}
-          >
-            View All Teams
-          </button>
+          <div className="flex w-full sm:w-auto">
+            <button
+              onClick={onViewAll}
+              className="flex-1 rounded-xl px-4 py-2 font-medium transition-all hover:opacity-80 sm:flex-none"
+              style={{
+                background: "rgba(124,58,237,.15)",
+                color: theme.primaryLight,
+                border: "1px solid rgba(124,58,237,.3)",
+              }}
+            >
+              View All Teams
+            </button>
+          </div>
         )}
       </div>
 

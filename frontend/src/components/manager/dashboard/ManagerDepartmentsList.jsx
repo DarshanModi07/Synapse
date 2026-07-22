@@ -36,7 +36,7 @@ export const ManagerDepartmentsList = ({ departments, workspaceSlug }) => {
     >
       {/* Header */}
 
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2
             className="text-xl font-semibold"
@@ -64,7 +64,7 @@ export const ManagerDepartmentsList = ({ departments, workspaceSlug }) => {
         {departments.map((dept) => (
           <div
             key={dept.id}
-            className="flex items-center justify-between rounded-2xl px-5 py-5 transition-all duration-300 hover:bg-white/[0.03]"
+            className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl px-5 py-5 transition-all duration-300 hover:bg-white/[0.03]"
             style={{
               border: "1px solid rgba(255,255,255,.05)",
             }}
@@ -98,7 +98,7 @@ export const ManagerDepartmentsList = ({ departments, workspaceSlug }) => {
 
             {/* Right */}
 
-            <div className="flex items-center gap-5">
+            <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-5">
               <span
                 className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
                 style={{
