@@ -12,6 +12,9 @@ export const createNotification = async ({ userId, type, payload }) => {
     });
 
     try {
+        console.log("CREATED NOTIFICATION");
+        console.log("EMITTING TO:", userId);
+        console.log("EVENT:", "NEW_NOTIFICATION");
         const io = getIO();
         io.to(userId).emit("new_notification", notification);
         io.to(userId).emit("notification", notification); // Also emit the new event name
@@ -26,7 +29,7 @@ export const createNotification = async ({ userId, type, payload }) => {
  * Handles unified push notifications (Socket.io) and database persistence.
  */
 class NotificationService {
-  async sendNotification({ userId, type, title, message, entityType, entityId, actionUrl, metadata = {} }) {
+  async sendNotification({ userId, type, title, message, entityType, entityId, actionUrl, metadata = {}, invitation }) {
     try {
       const payload = {
         title,
@@ -49,8 +52,10 @@ class NotificationService {
       // Push in real-time
       try {
         const io = getIO();
-        io.to(userId).emit("notification", notification);
-        io.to(userId).emit("notification:new", notification);
+        const emitPayload = invitation ? { notification, invitation } : notification;
+        io.to(userId).emit("notification", emitPayload);
+        io.to(userId).emit("notification:new", emitPayload);
+        io.to(userId).emit("new_notification", emitPayload);
       } catch (socketErr) {
         console.error("Socket emit failed", socketErr);
       }

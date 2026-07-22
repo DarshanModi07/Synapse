@@ -569,7 +569,8 @@ export const inviteUser = async (req,res) => {
                     message: `${req.user.name || "A team member"} invited you to join a workspace as ${sys_role}.`,
                     entityType: "Workspace",
                     entityId: workspaceId,
-                    actionUrl: `/invites`
+                    actionUrl: `/invites`,
+                    invitation: createUserInvite
                 })
             } catch(error) {
                 console.error("Notification failed", error);
@@ -779,24 +780,13 @@ export const rejectInvite = async (req, res) => {
             });
         }
 
-        await prisma.$transaction(async (tx) => {
-            await tx.workspaceMember.create({
-                data: {
-                    sys_role: invite.sys_role,
-                    work_role: invite.work_role,
-                    userId: currentUser.id,
-                    workspaceId: invite.workspaceId
-                }
-            });
-
-            await tx.workspaceInvite.update({
-                where: {
-                    token
-                },
-                data: {
-                    status: "rejected"
-                }
-            });
+        await prisma.workspaceInvite.update({
+            where: {
+                token
+            },
+            data: {
+                status: "rejected"
+            }
         });
 
         // Notify the inviter that their invite was rejected

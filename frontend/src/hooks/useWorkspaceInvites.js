@@ -31,6 +31,17 @@ export const useWorkspaceInvites = () => {
         fetchInvites();
     }, [fetchInvites]);
 
+    // Listen to real-time events from the NotificationContext
+    useEffect(() => {
+        const handleNewInvite = (event) => {
+            const newInvite = event.detail;
+            setInvites(prev => [newInvite, ...prev]);
+        };
+
+        window.addEventListener('new_workspace_invite', handleNewInvite);
+        return () => window.removeEventListener('new_workspace_invite', handleNewInvite);
+    }, []);
+
     const accept = async (token) => {
         try {
             await acceptWorkspaceInvite(token);

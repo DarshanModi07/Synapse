@@ -6,15 +6,18 @@ import App from "./App.jsx";
 import "./index.css";
 
 import { AuthProvider } from "@/context/AuthContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <WorkspaceProvider>
-          <App />
-        </WorkspaceProvider>
+        <NotificationProvider>
+          <WorkspaceProvider>
+            <App />
+          </WorkspaceProvider>
+        </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>

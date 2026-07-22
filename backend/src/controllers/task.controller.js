@@ -138,11 +138,11 @@ const checkProjectTeam = await prisma.projectTeam.findUnique({
         })
 
         await createNotification({
-            userId:checkProjectTeam.team.leaderId,
-            type:"task_assigned",
+            userId: employeeId,
+            type: "task_assigned",
             payload:{
-                taskId:addTask.id,
-                title:addTask.title
+                taskId: addTask.id,
+                title: addTask.title
             }
         })
 

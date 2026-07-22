@@ -2,6 +2,7 @@ import { getProjectDashboardData } from "../service/projectDashboard.service.js"
 import prisma from '../DB/db.config.js';
 import { buildTeamPrompt } from "../ai/prompts/team.prompt.js";
 import { generateSuggestion } from "../ai/ai.service.js";
+import { createNotification } from "../service/notification.service.js";
 
 export const getMyDepartments = async (req, res) => {
     try {
@@ -1284,7 +1285,7 @@ export const approveManagerProjectTasks = async (req, res) => {
                     }
 
                     const stTitle = st.estimatedHours ? `${st.title} (${st.estimatedHours} hrs)` : st.title;
-                    await prisma.subTask.create({
+                    const newSubtask = await prisma.subTask.create({
                         data: {
                             title: stTitle,
                             priority: st.priority ? st.priority.toLowerCase() : 'medium',
@@ -1295,6 +1296,17 @@ export const approveManagerProjectTasks = async (req, res) => {
                             status: 'todo'
                         }
                     });
+
+                    if (st.assignedEmployeeId) {
+                        await createNotification({
+                            userId: st.assignedEmployeeId,
+                            type: "task_assigned",
+                            payload: {
+                                taskId: newTask.id,
+                                title: stTitle
+                            }
+                        });
+                    }
                 }
             }
         }

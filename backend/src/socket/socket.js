@@ -46,8 +46,10 @@ export const initSocket = (httpServer) => {
     });
 
     io.on("connection", (socket) => {
+        console.log("CONNECTED:", socket.id);
         // each user joins their own private room for notifications
         socket.join(socket.user.userId);
+        console.log("JOINED ROOM:", socket.user.userId);
 
         // join a channel room
         socket.on("join_channel", async ({ channelId }) => {
