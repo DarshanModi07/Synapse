@@ -10,20 +10,22 @@ import { useNavigate } from "react-router-dom";
 import {
   Building2,
   ChevronRight,
+  Menu,
 } from "lucide-react";
 
-export const OwnerNavbar = () => {
+export const OwnerNavbar = ({ onToggleSidebar }) => {
   const { profile } = useAuth();
   const { workspace } = useWorkspace();
 
   const navigate = useNavigate();
 
   return (
-    <nav className="sticky top-5 z-50 px-8">
+    <nav className="sticky top-0 md:top-5 z-40 md:px-8">
       <div
-        className="mx-auto flex h-[76px] max-w-[1800px] items-center justify-between rounded-3xl px-8"
+        className="mx-auto flex h-[70px] md:h-[76px] max-w-[1800px] items-center justify-between rounded-none md:rounded-3xl px-4 md:px-8"
         style={{
-          background: "rgba(13,13,18,.58)",
+          background: "rgba(13,13,18,.85)",
+          borderBottom: "1px solid rgba(167,139,250,.10)",
           border: "1px solid rgba(167,139,250,.10)",
           backdropFilter: "blur(28px)",
           WebkitBackdropFilter: "blur(28px)",
@@ -33,9 +35,16 @@ export const OwnerNavbar = () => {
       >
         {/* LEFT */}
 
-        <div className="flex items-center gap-7">
-          {/* Logo */}
+        <div className="flex items-center gap-3 md:gap-7">
+          {/* Mobile Hamburger */}
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 -ml-2 text-gray-400 hover:text-white md:hidden"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
 
+          {/* Logo */}
           <button
             onClick={() =>
               navigate(`/workspace/${workspace?.slug}`)
@@ -43,7 +52,7 @@ export const OwnerNavbar = () => {
             className="transition-all duration-300 hover:scale-[1.02] hover:opacity-90"
           >
             <h1
-              className="text-[40px]"
+              className="text-[32px] md:text-[40px]"
               style={{
                 fontFamily: "ciguatera",
                 color: theme.text,
@@ -56,9 +65,10 @@ export const OwnerNavbar = () => {
           {/* Divider */}
 
           <div
-            className="h-10 w-px"
+            className="hidden md:block h-10 w-px"
             style={{
-              background: "rgba(255,255,255,.08)",
+              background:
+                "linear-gradient(to bottom, transparent, rgba(167,139,250,.2), transparent)",
             }}
           />
 
@@ -66,7 +76,7 @@ export const OwnerNavbar = () => {
 
           <button
             onClick={() => navigate("/workspace")}
-            className="group flex items-center gap-4 rounded-2xl px-5 py-3 transition-all duration-300 hover:scale-[1.02]"
+            className="hidden md:flex group items-center gap-4 rounded-2xl px-5 py-3 transition-all duration-300 hover:scale-[1.02]"
             style={{
               background: "rgba(255,255,255,.025)",
               border: "1px solid rgba(255,255,255,.05)",

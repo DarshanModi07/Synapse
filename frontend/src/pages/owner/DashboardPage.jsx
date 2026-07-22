@@ -43,15 +43,15 @@ const DashboardPage = () => {
         overview={overview}
       />
 
-      <div className="grid grid-cols-12 gap-7">
+      <div className="grid grid-cols-1 2xl:grid-cols-12 gap-7">
 
-        <div className="col-span-8">
+        <div className="2xl:col-span-8">
           <RecentProjects
             projects={recentProjects}
           />
         </div>
 
-        <div className="col-span-4">
+        <div className="2xl:col-span-4">
           <ProgressCard
             progress={progress}
           />

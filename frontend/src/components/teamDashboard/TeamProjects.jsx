@@ -44,7 +44,7 @@ const TeamProjects = ({
 
       {/* Header */}
 
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
 
@@ -68,14 +68,16 @@ const TeamProjects = ({
 
         </div>
 
-        <div
-          className="rounded-xl px-4 py-2"
-          style={{
-            background: "rgba(124,58,237,.12)",
-            color: theme.primaryLight,
-          }}
-        >
-          {projects.length} Projects
+        <div className="flex w-full sm:w-auto">
+          <div
+            className="flex-1 rounded-xl px-4 py-2 text-center sm:flex-none sm:text-left"
+            style={{
+              background: "rgba(124,58,237,.12)",
+              color: theme.primaryLight,
+            }}
+          >
+            {projects.length} Projects
+          </div>
         </div>
 
       </div>

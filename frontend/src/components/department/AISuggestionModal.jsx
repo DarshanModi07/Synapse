@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
   Sparkles,
@@ -76,7 +77,7 @@ const AISuggestionModal = ({
         item.name.trim()
     );
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div
         className="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-3xl"
@@ -258,7 +259,8 @@ const AISuggestionModal = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

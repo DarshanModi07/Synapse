@@ -108,7 +108,7 @@ const TeamMembers = ({
 
       {/* Header */}
 
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
 
@@ -132,9 +132,9 @@ const TeamMembers = ({
 
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex w-full items-center gap-4 sm:w-auto">
           <div
-            className="rounded-xl px-4 py-2"
+            className="rounded-xl px-4 py-2 text-center flex-1 sm:flex-none sm:text-left"
             style={{
               background: "rgba(124,58,237,.12)",
               color: theme.primaryLight,
@@ -146,7 +146,7 @@ const TeamMembers = ({
           {canAddMembers && (
             <button
               onClick={() => setShowAddMembers(true)}
-              className="flex items-center gap-2 rounded-xl px-4 py-2 font-semibold transition-all hover:opacity-90"
+              className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl px-4 py-2 font-semibold transition-all hover:opacity-90"
               style={{
                 background: theme.primary,
                 color: "#fff",
@@ -187,7 +187,7 @@ const TeamMembers = ({
 
                   key={member.id}
 
-                  className="flex items-center justify-between rounded-2xl p-5 transition-all duration-300 hover:bg-white/5"
+                  className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl p-5 transition-all duration-300 hover:bg-white/5"
 
                   style={{
                     border:
@@ -215,7 +215,7 @@ const TeamMembers = ({
                         :
 
                         <div
-                          className="flex h-14 w-14 items-center justify-center rounded-full"
+                          className="flex h-14 w-14 items-center justify-center rounded-full shrink-0"
                           style={{
                             background:
                               "rgba(124,58,237,.18)",
@@ -231,10 +231,10 @@ const TeamMembers = ({
 
                     }
 
-                    <div>
+                    <div className="min-w-0">
 
                       <h3
-                        className="text-lg font-semibold"
+                        className="text-lg font-semibold truncate"
                         style={{
                           color: theme.text,
                         }}
@@ -243,15 +243,15 @@ const TeamMembers = ({
                       </h3>
 
                       <div
-                        className="mt-2 flex items-center gap-2"
+                        className="mt-2 flex flex-wrap items-center gap-2"
                         style={{
                           color: theme.secondary,
                         }}
                       >
 
-                        <Mail size={15} />
+                        <Mail size={15} className="shrink-0" />
 
-                        {member.email}
+                        <span className="truncate">{member.email}</span>
 
                       </div>
 
@@ -261,8 +261,8 @@ const TeamMembers = ({
 
                   {/* Right */}
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
+                  <div className="flex w-full items-center justify-between sm:w-auto sm:justify-end gap-6">
+                    <div className="text-left sm:text-right">
 
                     <div
                       className="flex items-center justify-end gap-2"

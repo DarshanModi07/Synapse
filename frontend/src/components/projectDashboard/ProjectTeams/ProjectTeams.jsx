@@ -125,7 +125,7 @@ const ProjectTeams = ({
 
                 {/* Header */}
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
 
@@ -143,19 +143,19 @@ const ProjectTeams = ({
 
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex w-full gap-3 sm:w-auto">
                         <button
                             onClick={() =>
                                 setAssignOpen(true)
                             }
-                            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium transition hover:bg-violet-500"
+                            className="flex-1 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium transition hover:bg-violet-500 sm:flex-none"
                         >
                             Assign Team
                         </button>
                         
                         <button
                             onClick={() => setAiModalOpen(true)}
-                            className="flex items-center gap-2 rounded-xl bg-purple-600/10 px-4 py-2 text-sm font-medium text-purple-400 hover:bg-purple-600/20 transition"
+                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-purple-600/10 px-4 py-2 text-sm font-medium text-purple-400 transition hover:bg-purple-600/20 sm:flex-none"
                         >
                             <Sparkles size={16} />
                             AI Task Planner

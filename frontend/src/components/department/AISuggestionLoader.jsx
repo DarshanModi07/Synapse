@@ -1,8 +1,9 @@
 import { Sparkles } from "lucide-react";
 import { theme } from "@/lib/theme";
+import { createPortal } from "react-dom";
 
 const AISuggestionLoader = () => {
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 backdrop-blur-md">
       <div
         className="w-full max-w-3xl rounded-3xl p-8"
@@ -67,7 +68,8 @@ const AISuggestionLoader = () => {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

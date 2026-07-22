@@ -7,14 +7,20 @@ export const Sidebar = ({
   active = "Dashboard",
   config,
   basePath,
+  isOpen,
+  onClose,
 }) => {
   const sections = config || sidebarConfig[role] || [];
 
   return (
     <aside
-      className="sticky top-[100px] h-[calc(100vh-120px)] w-[320px] overflow-hidden rounded-3xl"
+      className={`
+        fixed inset-y-0 left-0 z-50 h-screen w-[280px] transform transition-transform duration-300 ease-in-out
+        md:sticky md:top-[100px] md:h-[calc(100vh-120px)] md:w-[320px] md:translate-x-0 md:rounded-3xl
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+      `}
       style={{
-        background: "rgba(13,13,18,.58)",
+        background: "rgba(13,13,18,.95)",
         border: "1px solid rgba(167,139,250,.10)",
         backdropFilter: "blur(28px)",
         WebkitBackdropFilter: "blur(28px)",

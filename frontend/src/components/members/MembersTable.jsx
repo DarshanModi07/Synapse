@@ -73,7 +73,7 @@ const MembersTable = ({
 
             <div
 
-                className="overflow-hidden rounded-3xl"
+                className="overflow-x-auto rounded-3xl"
 
                 style={{
 

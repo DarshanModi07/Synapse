@@ -34,7 +34,7 @@ const MembersHeader = ({
                 }}
             >
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
 
@@ -62,21 +62,23 @@ const MembersHeader = ({
 
                     </div>
 
-                    <button
+                    <div className="flex w-full sm:w-auto">
+                        <button
 
-                        onClick={() =>
-                            setOpen(true)
-                        }
+                            onClick={() =>
+                                setOpen(true)
+                            }
 
-                        className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-white transition hover:bg-violet-500"
+                            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-white transition hover:bg-violet-500 sm:flex-none"
 
-                    >
+                        >
 
-                        <UserPlus size={18} />
+                            <UserPlus size={18} />
 
-                        Invite Member
+                            Invite Member
 
-                    </button>
+                        </button>
+                    </div>
 
                 </div>
 
