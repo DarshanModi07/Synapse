@@ -542,9 +542,8 @@ export const getEmployeeAnalytics = async (req, res) => {
                     teamAverageCompletionRate: 72 // Injecting mock data for the AI to use in Team Comparison
                 };
 
-                const aiResultRaw = await generateAnalysis(buildEmployeeAnalyticsPrompt(aiDataPayload));
-
                 try {
+                    const aiResultRaw = await generateAnalysis(buildEmployeeAnalyticsPrompt(aiDataPayload));
                     let parsed = {};
                     if (typeof aiResultRaw === 'string') {
                         const cleaned = aiResultRaw.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -558,7 +557,7 @@ export const getEmployeeAnalytics = async (req, res) => {
                         await redis.set(cacheKey, JSON.stringify(aiInsights), "EX", 900);
                     }
                 } catch (e) {
-                    console.error("AI parse error", e);
+                    console.error("AI Analysis failed, proceeding with default insights:", e.message);
                 }
             }
         }

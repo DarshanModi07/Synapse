@@ -22,9 +22,9 @@ const EmployeeSubTaskBoard = ({ subTasks, updateStatus }) => {
                     No active assignments.
                 </div>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
+                <div className="overflow-x-auto overflow-y-auto max-h-[450px] custom-scrollbar">
+                    <table className="w-full text-left border-collapse relative">
+                        <thead className="sticky top-0 z-10 shadow-sm">
                             <tr className="border-b border-[#2D2B45] bg-[#08070F]">
                                 <th className="p-3 text-[12px] font-semibold text-[#6B7280] w-8"></th>
                                 <th className="p-3 text-[12px] font-semibold text-[#6B7280]">Title</th>

@@ -35,7 +35,7 @@ const EmployeeDeadlineWidget = ({ deadlines }) => {
 
     return (
         <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div>
                     <h2 className="text-[14px] font-bold text-[#F9FAFB]">Upcoming Deadlines</h2>
                     <p className="text-[12px] text-[#6B7280]">Your immediate tasks sorted by urgency</p>

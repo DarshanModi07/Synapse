@@ -9,11 +9,11 @@ const EmployeePriorityAlerts = ({ priorityAlerts }) => {
     if (high.length === 0 && medium.length === 0 && low.length === 0) {
         return (
             <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 className="text-[14px] font-bold text-[#F9FAFB]">Priority Alerts</h2>
-                        <p className="text-[12px] text-[#6B7280]">Important notifications</p>
-                    </div>
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <div>
+                    <h2 className="text-[14px] font-bold text-[#F9FAFB]">Priority Alerts</h2>
+                    <p className="text-[12px] text-[#6B7280]">Important notifications</p>
+                </div>
                     <div className="p-2 bg-red-500/10 rounded-full">
                         <AlertTriangle size={18} className="text-red-400" />
                     </div>
@@ -49,7 +49,7 @@ const EmployeePriorityAlerts = ({ priorityAlerts }) => {
 
     return (
         <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div>
                     <h2 className="text-[14px] font-bold text-[#F9FAFB]">Priority Alerts</h2>
                     <p className="text-[12px] text-[#6B7280]">Important notifications</p>

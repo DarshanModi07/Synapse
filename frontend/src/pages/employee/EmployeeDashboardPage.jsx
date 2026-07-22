@@ -100,7 +100,6 @@ const EmployeeDashboardPage = () => {
                 <div className="lg:col-span-4 space-y-6">
                     <EmployeeProductivityCard productivity={dashboardData.productivity} />
                     <EmployeeTeamBreakdown teams={dashboardData.teamBreakdown} />
-                    <EmployeeAIInsights aiInsights={dashboardData.aiInsights} />
                     <EmployeeActivityTimeline activity={dashboardData.activity} />
                     <EmployeeProgressOverview progressOverview={dashboardData.progressOverview} />
                 </div>

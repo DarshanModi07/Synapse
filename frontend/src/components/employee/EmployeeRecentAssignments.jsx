@@ -5,7 +5,7 @@ import { ListTodo } from 'lucide-react';
 const EmployeeRecentAssignments = ({ assignments }) => {
     return (
         <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div>
                     <h2 className="text-[14px] font-bold text-[#F9FAFB]">Recent Assignments</h2>
                     <p className="text-[12px] text-[#6B7280]">Fresh work added to your queue</p>
@@ -20,7 +20,7 @@ const EmployeeRecentAssignments = ({ assignments }) => {
                     No recent assignments.
                 </div>
             ) : (
-                <div className="border border-[#2D2B45] rounded-[10px] overflow-hidden">
+                <div className="border border-[#2D2B45] rounded-[10px] overflow-hidden max-h-[300px] overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left">
                         <tbody className="divide-y divide-[#2D2B45]">
                             {assignments.map((st, idx) => (
