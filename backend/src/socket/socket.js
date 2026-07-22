@@ -7,13 +7,16 @@ let io;
 
 export const initSocket = (httpServer) => {
 
-    io = new Server(httpServer, {
+    io = new Server(server, {
         cors: {
-            origin: "http://localhost:5173",
-            methods: ["GET", "POST", "PUT", "DELETE"],
-            credentials: true
-        }
-    });
+            origin: [
+            "http://localhost:5173",
+            "https://synapse-enterprise.vercel.app"
+            ],
+            methods: ["GET", "POST"],
+            credentials: true,
+        },
+        });
 
     io.use(async (socket, next) => {
         try {
