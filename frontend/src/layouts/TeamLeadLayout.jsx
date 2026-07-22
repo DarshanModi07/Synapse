@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, useLocation, useParams } from "react-router-dom";
 
 import { OwnerNavbar } from "@/components/owner/OwnerNavbar";
@@ -8,6 +9,7 @@ import { teamLeadConfig } from "@/components/teamLead/sidebar.config";
 const TeamLeadLayout = () => {
   const location = useLocation();
   const { slug } = useParams();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   let active = "Dashboard";
   if (location.pathname.includes("/projects")) active = "Projects";
@@ -22,20 +24,31 @@ const TeamLeadLayout = () => {
         color: theme.text,
       }}
     >
-      <OwnerNavbar />
+      <OwnerNavbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
       {/* Main Layout */}
-      <div className="mx-auto mt-10 flex max-w-[1850px] items-start gap-8 px-10">
+      <div className="mx-auto mt-6 md:mt-10 flex max-w-[1850px] items-start gap-8 px-4 md:px-10">
+        
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
         <Sidebar
           role="teamLead"
           active={active}
           config={teamLeadConfig}
           basePath={`/workspace/${slug}/team-lead`}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
         {/* Page Content */}
-        <main className="min-h-[calc(100vh-150px)] flex-1 min-w-0">
+        <main className="min-h-[calc(100vh-150px)] w-full flex-1 min-w-0">
           <Outlet />
         </main>
       </div>

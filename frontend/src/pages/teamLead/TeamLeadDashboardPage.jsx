@@ -92,7 +92,7 @@ const TeamLeadDashboardPage = () => {
           
           {/* SECTION 7: Task Analytics (WITH CHART) */}
           <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                   <div>
                       <h2 className="text-[14px] font-bold text-[#F9FAFB]">Global Task Analytics</h2>
                       <p className="text-[12px] text-[#6B7280]">Overall progress across all teams</p>
@@ -129,7 +129,7 @@ const TeamLeadDashboardPage = () => {
 
           {/* SECTION 4: Recent Tasks */}
           <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm hover:border-purple-500/30 transition-colors overflow-hidden">
-              <div className="p-5 border-b border-[#2D2B45] flex justify-between items-center">
+              <div className="p-5 border-b border-[#2D2B45] flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                       <h2 className="text-[14px] font-bold text-[#F9FAFB]">Global Recent Tasks</h2>
                       <p className="text-[12px] text-[#6B7280]">Latest tasks assigned across all teams</p>
@@ -167,7 +167,7 @@ const TeamLeadDashboardPage = () => {
 
           {/* SECTION 5: Team Members */}
           <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm hover:border-purple-500/30 transition-colors overflow-hidden">
-              <div className="p-5 border-b border-[#2D2B45] flex justify-between items-center">
+              <div className="p-5 border-b border-[#2D2B45] flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                       <h2 className="text-[14px] font-bold text-[#F9FAFB]">Members Directory</h2>
                       <p className="text-[12px] text-[#6B7280]">All team members under your leadership</p>
@@ -216,7 +216,7 @@ const TeamLeadDashboardPage = () => {
           
           {/* SECTION 3: Team Overview */}
           <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                   <div>
                       <h2 className="text-[14px] font-bold text-[#F9FAFB]">Team Overview</h2>
                       <p className="text-[12px] text-[#6B7280]">Members and tasks per team</p>
@@ -253,7 +253,7 @@ const TeamLeadDashboardPage = () => {
 
           {/* SECTION 8: Upcoming Deadlines */}
           <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                   <div>
                       <h2 className="text-[14px] font-bold text-[#F9FAFB]">Global Deadlines</h2>
                       <p className="text-[12px] text-[#6B7280]">Approaching due dates</p>
@@ -290,7 +290,7 @@ const TeamLeadDashboardPage = () => {
 
           {/* SECTION 6: Project Portfolio */}
           <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                   <div>
                       <h2 className="text-[14px] font-bold text-[#F9FAFB]">Project Portfolio</h2>
                       <p className="text-[12px] text-[#6B7280]">Your active projects</p>
@@ -330,7 +330,7 @@ const TeamLeadDashboardPage = () => {
 
           {/* SECTION 9: Recent Activity */}
           <div className="bg-[#13111C] border border-[#2D2B45] rounded-[14px] shadow-sm p-5 hover:border-purple-500/30 transition-colors">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                   <div>
                       <h2 className="text-[14px] font-bold text-[#F9FAFB]">Global Activity</h2>
                       <p className="text-[12px] text-[#6B7280]">Latest updates</p>

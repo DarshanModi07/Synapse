@@ -125,7 +125,12 @@ export const getTeamLeadAnalytics = async (req, res) => {
         };
 
         // Fetch AI Insights
-        const aiResultRaw = await generateAnalysis(buildTeamLeadAnalyticsPrompt(aiDataPayload));
+        let aiResultRaw = null;
+        try {
+            aiResultRaw = await generateAnalysis(buildTeamLeadAnalyticsPrompt(aiDataPayload));
+        } catch (aiError) {
+            console.error("AI Insights failed, proceeding without AI:", aiError.message);
+        }
         
         let aiInsights = {
             overloadedTeams: [],

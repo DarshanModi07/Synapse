@@ -72,27 +72,27 @@ const TeamLeadWorkItemBoard = ({
     <div className="bg-[#13111C] p-6 rounded-[14px] shadow-sm border border-[#2D2B45] space-y-6">
       
       {/* Header */}
-      <div className="flex justify-between items-start border-b border-[#2D2B45] pb-4">
-        <div>
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#2D2B45] pb-4">
+        <div className="w-full sm:w-auto">
           <h2 className="text-[18px] font-semibold text-[#F9FAFB] flex items-center gap-2">
             Work Items for "{subTask.title}"
           </h2>
           <p className="text-[13px] text-[#6B7280] mt-1">Granular hour estimation and micro-tracking.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full sm:w-auto items-center gap-3">
           {subTask.status !== 'done' && (
             <>
               <button 
                 onClick={() => onGenerateAI(subTask.id)}
                 disabled={aiLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-[#08070F] hover:bg-blue-500/10 text-blue-400 rounded-[8px] border border-[#2D2B45] hover:border-blue-500/50 transition-all font-medium text-[13px] disabled:opacity-50"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2 bg-[#08070F] hover:bg-blue-500/10 text-blue-400 rounded-[8px] border border-[#2D2B45] hover:border-blue-500/50 transition-all font-medium text-[13px] disabled:opacity-50"
               >
                 {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 Generate with AI
               </button>
               <button 
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#08070F] hover:bg-[#1a1825] text-[#F9FAFB] rounded-[8px] border border-[#2D2B45] transition-all font-medium text-[13px]"
+                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2 bg-[#08070F] hover:bg-[#1a1825] text-[#F9FAFB] rounded-[8px] border border-[#2D2B45] transition-all font-medium text-[13px]"
               >
                 <Plus className="w-4 h-4" /> Add Manual
               </button>

@@ -85,7 +85,7 @@ const TeamLeadProjectDetailsPage = () => {
       </Link>
 
       {/* Project Header */}
-      <div className="bg-[#13111C] p-6 rounded-[14px] shadow-sm border border-[#2D2B45] flex justify-between items-center">
+      <div className="bg-[#13111C] p-6 rounded-[14px] shadow-sm border border-[#2D2B45] flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-[24px] font-bold text-[#F9FAFB] mb-1 flex items-center gap-3">
             <Target className="w-6 h-6 text-[#6B7280]" />
@@ -95,7 +95,7 @@ const TeamLeadProjectDetailsPage = () => {
             {overview.description || "No description provided."}
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-left sm:text-right">
           <span className="text-[11px] text-[#6B7280] uppercase tracking-wider block mb-1 font-medium">Progress</span>
           <span className="text-[28px] font-bold text-emerald-400">{overview.progress}%</span>
         </div>
