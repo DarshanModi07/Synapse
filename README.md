@@ -1,315 +1,322 @@
-# Synapse Architecture Documentation
+Create a world-class GitHub README for my flagship project "Synapse".
 
-**Version:** 1.0.0
-**License:** MIT
+Synapse is an AI-powered Enterprise Workspace & Project Management platform built as a large-scale, production-oriented system.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
-![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat&logo=prisma&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
-![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=flat&logo=socket.io&logoColor=white)
+The README should feel like it belongs to a Senior Software Engineer or a Staff Engineer's GitHub repository.
 
-## 1. Executive Summary
+DO NOT make it look like a college project.
 
-Synapse is an AI-powered Workspace and Project Management platform architected for strict hierarchical ownership and distributed team collaboration. The system implements a robust event-driven communication layer and intelligent task orchestration logic to streamline business workflows. This documentation outlines the system design, network boundaries, and deployment architecture for the production environment.
+DO NOT overuse emojis.
 
-## 2. Platform Hierarchy
+DO NOT create 20+ flowcharts.
 
-The platform implements a multi-tenant hierarchy designed to segregate access and operational boundaries across organizational units.
+DO NOT create excessive tables.
 
-```mermaid
-graph TD
-    A[Owner] --> B[Workspace]
-    B --> C[Managers]
-    C --> D[Departments]
-    D --> E[Teams]
-    E --> F[Team Leads]
-    F --> G[Employees]
-```
+DO NOT add screenshots, logos, banners, GIFs, or accordions.
 
-## 3. End-to-End Business Workflow
+The README should be elegant, minimal, and engineering-focused.
 
-The core business logic dictates the lifecycle of workspace initialization, resource allocation, and task execution. 
+The audience is:
 
-```mermaid
-graph TD
-    A[Owner] --> B[Create Workspace]
-    B --> C[Add Manager]
-    C --> D[Create Department]
-    D --> E[Create Team]
-    E --> F[Assign Team Lead]
-    F --> G[Create Project]
-    G --> H[Create Task]
-    H --> I[Generate SubTasks]
-    I --> J[Generate WorkItems]
-    J --> K[Employee Completes WorkItems]
-    K --> L[SubTask under Review]
-    L --> M[Team Lead Approves]
-    M --> N[Task Completed]
-    N --> O[Notifications Sent]
-    O --> P[Analytics Updated]
-```
+- Recruiters
+- Software Engineers
+- Hiring Managers
+- System Design Interviewers
+- Open Source Contributors
 
-## 4. Authentication Architecture
+--------------------------------------------------
 
-The Authentication Layer utilizes a dual-token mechanism (JWT) paired with cryptographic verification for initial identity negotiation.
+README STRUCTURE
 
-### Authentication Flow
+1. Project Title
 
-```mermaid
-graph TD
-    A[User Login] --> B[Validate Credentials]
-    B --> C[SHA-256 Password Verification]
-    C --> D[Generate Access Token]
-    C --> E[Generate Refresh Token]
-    E --> F[Store Refresh Token]
-    F --> G[HTTP Only Cookie]
-    G --> H[Return User Session]
-```
+# Synapse
 
-### Access Token Flow
+One-line description:
 
-```mermaid
-graph TD
-    A[Request] --> B[Verify JWT]
-    B --> C{Valid?}
-    C -->|Yes| D[Continue]
-    C -->|No| E[Return 401]
-```
+"AI-powered Enterprise Workspace & Project Management Platform designed for hierarchical organizations, real-time collaboration, and intelligent workflow orchestration."
 
-### Refresh Token Flow
+--------------------------------------------------
 
-Session Management handles seamless token rotation to minimize access interruption.
+2. Project Overview
 
-```mermaid
-graph TD
-    A[Access Token Expired] --> B[Frontend Calls Refresh Endpoint]
-    B --> C[Verify Refresh Token]
-    C --> D[Verify Session]
-    D --> E[Generate New Access Token]
-    E --> F[Update Cookie]
-    F --> G[Continue Session]
-```
+Write 2-3 paragraphs explaining:
 
-## 5. Caching Strategy
+- Why Synapse was built.
+- Problems it solves.
+- Enterprise use cases.
+- Inspiration behind the platform.
+- Focus on scalability and AI.
 
-The system utilizes Redis as an in-memory data store to minimize relational database saturation during high-frequency read operations.
+--------------------------------------------------
 
-### Redis Cache Flow
+3. Key Highlights
 
-```mermaid
-graph TD
-    A[Client Request] --> B[Redis Lookup]
-    B --> C{Cache Hit?}
-    C -->|Yes| D[Return Data]
-    C -->|No| E[Prisma Query]
-    E --> F[PostgreSQL]
-    F --> G[Cache Result]
-    G --> H[Return Response]
-```
+Use concise bullet points.
 
-## 6. Event-Driven Communication
+Examples:
 
-Event propagation is localized to connected clients through a centralized WebSocket interface.
+- Multi-tenant workspace architecture.
+- Hierarchical RBAC.
+- AI-powered task decomposition.
+- Real-time notifications with Socket.IO.
+- Redis-backed caching layer.
+- JWT authentication with refresh token rotation.
+- PostgreSQL + Prisma ORM.
+- Production deployment.
 
-### Notification Architecture
+--------------------------------------------------
 
-```mermaid
-graph TD
-    A[User Action] --> B[Notification Service]
-    B --> C[Redis Queue]
-    C --> D[Socket.IO]
-    D --> E[Connected Users]
-```
+4. System Architecture
 
-### Socket.IO Workflow
+Include ONLY ONE Mermaid flowchart.
 
-```mermaid
-graph TD
-    A[Client Connects] --> B[Authenticate]
-    B --> C[Join User Room]
-    C --> D[Join Workspace Room]
-    D --> E[Listen for Events]
-    E --> F[Receive Live Updates]
-```
+Flow:
 
-## 7. AI Suggestion Workflow
+User
+↓
+Frontend
+↓
+Express API
+↓
+Service Layer
+↓
+Redis
+↓
+Prisma
+↓
+PostgreSQL
 
-The Service Layer integrates with the Gemini API to orchestrate intelligent decomposition of complex project definitions.
+Keep it clean and simple.
 
-```mermaid
-graph TD
-    A[Task Created] --> B[Gemini API]
-    B --> C[Generate SubTasks]
-    C --> D[Generate WorkItems]
-    D --> E[Team Lead Reviews]
-    E --> F[Accept / Reject]
-    F --> G[Persist to Database]
-```
+--------------------------------------------------
 
-## 8. Request Lifecycle
+5. Platform Hierarchy
 
-The API request lifecycle enforces strict boundary separation across middleware and service layers.
+Include ONE Mermaid diagram:
 
-```mermaid
-graph TD
-    A[Browser] --> B[Axios]
-    B --> C[Middleware]
-    C --> D[Controller]
-    D --> E[Service]
-    E --> F[Prisma]
-    F --> G[PostgreSQL]
-    G --> H[Response]
-```
+Owner
+↓
+Workspace
+↓
+Manager
+↓
+Department
+↓
+Team
+↓
+Team Lead
+↓
+Employee
 
-## 9. Database Architecture
+--------------------------------------------------
 
-The persistence layer guarantees ACID compliance and referential integrity.
+6. Core Features
 
-### Database ER Diagram
+Organize into sections:
 
-```mermaid
-erDiagram
-    User ||--o{ Workspace : "owns"
-    User ||--o{ Notification : "receives"
-    Workspace ||--o{ Department : "contains"
-    Department ||--o{ Team : "allocates"
-    Team ||--o{ Project : "assigned"
-    Project ||--o{ Task : "divided into"
-    Task ||--o{ SubTask : "decomposed into"
-    SubTask ||--o{ WorkItem : "broken down into"
+### Workspace Management
+### Project Management
+### AI Features
+### Real-Time Features
+### Security Features
 
-    User {
-        uuid id
-    }
-    Workspace {
-        uuid id
-    }
-    Department {
-        uuid id
-    }
-    Team {
-        uuid id
-    }
-    Project {
-        uuid id
-    }
-    Task {
-        uuid id
-    }
-    SubTask {
-        uuid id
-    }
-    WorkItem {
-        uuid id
-    }
-    Notification {
-        uuid id
-    }
-```
+Each section should contain 3-5 bullets.
 
-## 10. Production Deployment
+--------------------------------------------------
 
-The infrastructure leverages a distributed set of managed platforms for high availability and horizontal scalability.
+7. AI Capabilities
 
-### Deployment Architecture
+Explain:
 
-```mermaid
-graph TD
-    A[Vercel] --> B[Railway]
-    B --> C[PostgreSQL]
-    B --> D[Redis]
-    B --> E[Cloudinary]
-    B --> F[Gemini]
-```
+- Department Suggestions
+- Team Suggestions
+- AI Task Generation
+- AI Subtask Generation
+- AI Work Item Generation
+- Employee Performance Analysis
 
-## 11. Specifications and Requirements
+Explain how AI is integrated into the workflow.
 
-### Tech Stack
+--------------------------------------------------
 
-| Domain | Technology |
-| --- | --- |
-| Frontend | React, Vite |
-| UI Framework | Tailwind CSS |
-| Backend API | Node.js, Express.js |
-| Database | PostgreSQL |
-| ORM | Prisma |
-| Caching & Pub/Sub | Redis |
-| Real-Time Engine | Socket.IO |
-| AI Integration | Gemini API |
-| Media Storage | Cloudinary |
+8. Authentication & Security
 
-### Feature Matrix
+Explain:
 
-| Feature | Subsystem | Status |
-| --- | --- | --- |
-| JWT Authentication | Security Layer | Production Ready |
-| Role-Based Access Control | Authorization Layer | Production Ready |
-| Telemetry & Broadcasting | Event-Driven Communication | Production Ready |
-| AI Auto-Generation | Service Layer | Production Ready |
-| Distributed Object Storage | Asset Delivery | Production Ready |
+- JWT Authentication
+- Access Tokens
+- Refresh Tokens
+- HTTP-only Cookies
+- RBAC
+- Encryption Layer
 
-### Role Permissions
+Include ONE Mermaid diagram for:
 
-| Role | Scope | Permissions |
-| --- | --- | --- |
-| Owner | Workspace | Full Workspace Configuration, Global Privileges |
-| Manager | Department | Manage Projects, Allocate Teams |
-| Team Lead | Project | Manage SubTasks, Review WorkItems |
-| Employee | WorkItem | Execute WorkItems, Update Status |
+Login
+↓
+Access Token
+↓
+Refresh Token
+↓
+Protected Routes
 
-### Environment Variables
+--------------------------------------------------
 
-| Variable | Requirement | Description |
-| --- | --- | --- |
-| `DATABASE_URL` | Required | Relational database connection string. |
-| `ACCESS_TOKEN_SECRET` | Required | Cryptographic secret for JWT signing. |
-| `REFRESH_TOKEN_SECRET` | Required | Cryptographic secret for session rotation. |
-| `REDIS_URL` | Optional | Cache endpoint configuration. |
-| `GEMINI_API_KEY` | Required | Access token for AI orchestration layer. |
-| `CLOUDINARY_URL` | Required | Connection string for media persistence. |
+9. Engineering Decisions
 
-### API Overview
+This is VERY IMPORTANT.
 
-| Module | Protocol | Pattern | Responsibility |
-| --- | --- | --- | --- |
-| Auth | REST | `/api/auth/*` | Session Management |
-| Users | REST | `/api/users/*` | Identity Configuration |
-| Workspaces | REST | `/api/workspace/*` | Resource Boundary Management |
-| Projects | REST | `/api/project/*` | Scope Allocation |
-| Sockets | WSS | `/socket.io/*` | Event Telemetry |
+Include:
 
-### Deployment Checklist
+### Why PostgreSQL over MongoDB?
 
-| Phase | Task | Status |
-| --- | --- | --- |
-| Security | Configure Cross-Origin Resource Sharing (CORS). | Pending |
-| Security | Disable verbose error reporting on public endpoints. | Pending |
-| Infrastructure | Apply Prisma schema migrations to production RDS. | Pending |
-| Infrastructure | Initialize Upstash Redis instance bounds. | Pending |
-| Telemetry | Implement application logging aggregation. | Pending |
+### Why Prisma?
 
-## 12. Folder Structure
+### Why Redis?
 
-```text
-Synapse/
-├── backend/
-│   ├── src/
-│   ├── controllers/
-│   ├── routes/
-│   ├── middleware/
-│   ├── services/
-│   ├── prisma/
-│   └── sockets/
-├── frontend/
-│   ├── components/
-│   ├── hooks/
-│   ├── pages/
-│   ├── context/
-│   ├── services/
-│   └── utils/
-└── README.md
-```
+### Why Socket.IO?
+
+### Why React + Vite?
+
+### Why Multi-Tenant Architecture?
+
+Write thoughtful engineering explanations.
+
+--------------------------------------------------
+
+10. Technology Stack
+
+Use ONE clean table.
+
+Frontend:
+- React
+- Vite
+- Tailwind
+
+Backend:
+- Node.js
+- Express
+
+Infrastructure:
+- PostgreSQL
+- Redis
+- Cloudinary
+
+AI:
+- OpenRouter
+
+--------------------------------------------------
+
+11. Folder Structure
+
+Show a simplified structure.
+
+DO NOT include every folder.
+
+--------------------------------------------------
+
+12. Local Development
+
+Include:
+
+git clone
+npm install
+npm run dev
+
+--------------------------------------------------
+
+13. Environment Variables
+
+Only include major variables:
+
+DATABASE_URL
+ACCESS_TOKEN_SECRET
+REFRESH_TOKEN_SECRET
+REDIS_URL
+OPENROUTER_API_KEY
+
+--------------------------------------------------
+
+14. Deployment
+
+Mention:
+
+- Frontend → Vercel
+- Backend → Render
+- Database → Neon PostgreSQL
+- Cache → Redis
+- Media → Cloudinary
+
+--------------------------------------------------
+
+15. Challenges Faced
+
+This section is mandatory.
+
+Examples:
+
+- Designing hierarchical RBAC.
+- Real-time notification architecture.
+- Socket.IO room management.
+- Token rotation.
+- Redis caching strategy.
+- AI workflow orchestration.
+- Multi-tenant isolation.
+
+--------------------------------------------------
+
+16. Lessons Learned
+
+Write thoughtful engineering lessons.
+
+Examples:
+
+- Designing scalable systems.
+- Managing distributed state.
+- Building production APIs.
+- Implementing real-time systems.
+- Thinking beyond CRUD applications.
+
+--------------------------------------------------
+
+17. Future Roadmap
+
+Include:
+
+- Audit Logs
+- Activity Timelines
+- Calendar Integration
+- Advanced Analytics
+- Mobile Application
+- Multi-workspace Support
+- AI Assistant
+
+--------------------------------------------------
+
+18. Closing Statement
+
+End with:
+
+"Synapse was built to explore the intersection of enterprise software, AI, and distributed systems. The project reflects my interest in system design, scalable architectures, and building products that solve real organizational problems."
+
+--------------------------------------------------
+
+STYLE REQUIREMENTS
+
+- Professional.
+- Minimal.
+- Engineering-focused.
+- No childish language.
+- No excessive formatting.
+- No marketing language.
+- No emojis except possibly 1-2.
+- No giant badges section.
+- No excessive tables.
+- No unnecessary flowcharts.
+- Keep Mermaid diagrams limited to:
+    1. System Architecture
+    2. Platform Hierarchy
+    3. Authentication Flow
+
+The final README should feel like something a Software Engineer with 3-5 years of experience would maintain for a production-grade project rather than a student project.
