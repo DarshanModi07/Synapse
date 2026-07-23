@@ -14,7 +14,9 @@ const ProjectDepartments = ({
 
     projectId,
 
-    refresh
+    refresh,
+
+    hideAssign
 
 }) => {
 
@@ -54,27 +56,29 @@ const ProjectDepartments = ({
 
                 </div>
 
-                <button
+                {!hideAssign && (
+                    <button
 
-                    onClick={() =>
-                        setAssignOpen(true)
-                    }
+                        onClick={() =>
+                            setAssignOpen(true)
+                        }
 
-                    className="flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 sm:w-auto"
+                        className="flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 sm:w-auto"
 
-                    style={{
-                        background:
-                            theme.primary,
-                        color: "#fff"
-                    }}
+                        style={{
+                            background:
+                                theme.primary,
+                            color: "#fff"
+                        }}
 
-                >
+                    >
 
-                    <Plus size={18}/>
+                        <Plus size={18}/>
 
-                    Assign Department
+                        Assign Department
 
-                </button>
+                    </button>
+                )}
 
             </div>
 

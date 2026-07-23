@@ -90,6 +90,7 @@ const ManagerProjectDashboardPage = () => {
                 projectId={projectId}
                 departments={dashboard.departments}
                 refresh={refresh}
+                hideAssign={true}
             />
 
             <ProjectTeams
@@ -98,6 +99,7 @@ const ManagerProjectDashboardPage = () => {
                 teams={dashboard.teams}
                 departments={dashboard.departments}
                 refresh={refresh}
+                hideAssign={true}
             />
 
             <div className="flex items-center justify-between mt-12 mb-4">

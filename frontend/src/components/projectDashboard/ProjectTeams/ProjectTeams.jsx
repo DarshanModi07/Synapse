@@ -17,7 +17,8 @@ const ProjectTeams = ({
     project,
     teams = [],
     departments = [],
-    refresh
+    refresh,
+    hideAssign
 }) => {
 
     const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -144,14 +145,16 @@ const ProjectTeams = ({
                     </div>
 
                     <div className="flex w-full gap-3 sm:w-auto">
-                        <button
-                            onClick={() =>
-                                setAssignOpen(true)
-                            }
-                            className="flex-1 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium transition hover:bg-violet-500 sm:flex-none"
-                        >
-                            Assign Team
-                        </button>
+                        {!hideAssign && (
+                            <button
+                                onClick={() =>
+                                    setAssignOpen(true)
+                                }
+                                className="flex-1 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium transition hover:bg-violet-500 sm:flex-none"
+                            >
+                                Assign Team
+                            </button>
+                        )}
                         
                         <button
                             onClick={() => setAiModalOpen(true)}
